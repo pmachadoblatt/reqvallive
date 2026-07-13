@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reqvallive"
+version = "0.1.0"
+description = "Validação de requisitos em tempo real via MQTT com geração SysML V2"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    {name = "Pedro", email = "pedro@conceptio.ita.br"},
+]
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "paho-mqtt>=2.0",
+    "pydantic>=2.0,<3.0",
+    "pydantic-settings>=2.0",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.9",
+    # Instalar antes: pip install -e ../Sim_Req_Validator
+    "simreqvalidator>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "httpx>=0.27",
+]
+
+[project.scripts]
+reqvallive = "reqvallive.main:run"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+reqvallive = ["static/*", "templates/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"

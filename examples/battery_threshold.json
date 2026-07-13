@@ -1,0 +1,21 @@
+{
+  "req_id": "RQ-BAT-001",
+  "title": "Nível mínimo de bateria durante a missão",
+  "text": "O sistema deve manter o nível de bateria da aeronave acima de 20% durante toda a operação",
+  "rationale": "Evitar RTL forçado e perda de telemetria por descarga crítica.",
+  "level": "system",
+  "conops_ref": "CONOPS-UTM §4.2",
+  "source": "ReqValLive MVP",
+  "priority": "high",
+  "vv_method": "test",
+  "success_criteria": {
+    "type": "threshold",
+    "metric": "battery_level",
+    "operator": ">=",
+    "value": 20.0,
+    "unit": "percent",
+    "scope": "all_timesteps",
+    "tolerance": 0.0
+  },
+  "tags": ["battery", "safety", "mqtt"]
+}
