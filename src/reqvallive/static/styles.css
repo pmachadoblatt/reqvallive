@@ -71,6 +71,16 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   min-height: 320px;
   overflow: auto;
 }
+.diagram-tabs { display: flex; gap: .75rem; align-items: center; margin: .35rem 0 .5rem; }
+.small { font-size: .8rem; }
+.mermaid {
+  background: #f8fafc;
+  border: 1px solid #475569;
+  padding: 1rem;
+  overflow: auto;
+  min-height: 220px;
+}
+.mermaid svg { max-width: 100%; height: auto; }
 .magic-board { display: grid; gap: .75rem; }
 .board-label {
   font-size: .75rem; font-weight: 700; color: #1e293b;

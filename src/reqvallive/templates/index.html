@@ -4,8 +4,25 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ReqValLive</title>
-  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="stylesheet" href="/static/styles.css?v=4" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "base",
+      securityLevel: "loose",
+      themeVariables: {
+        primaryColor: "#9ad0a8",
+        primaryTextColor: "#1c1917",
+        primaryBorderColor: "#1e293b",
+        lineColor: "#334155",
+        secondaryColor: "#e8a0bc",
+        tertiaryColor: "#9db4e0",
+      },
+    });
+    window.mermaid = mermaid;
+  </script>
 </head>
 <body>
   <header class="top">
@@ -94,7 +111,7 @@
       <pre id="out-4" class="out"></pre>
     </section>
   </main>
-  <script src="/static/diagram.js?v=3"></script>
-  <script src="/static/app.js?v=3"></script>
+  <script src="/static/diagram.js?v=4"></script>
+  <script src="/static/app.js?v=4"></script>
 </body>
 </html>

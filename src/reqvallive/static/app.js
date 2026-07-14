@@ -65,10 +65,15 @@ function mqttBody() {
 
 function renderSession(session) {
   state.sessionId = session.id;
-  if (window.ReqValDiagram) {
-    window.ReqValDiagram.render($("sysml-canvas"), session);
-    window.ReqValDiagram.render($("sysml-live"), session);
-  }
+  const draw = () => {
+    if (window.ReqValDiagram) {
+      window.ReqValDiagram.render($("sysml-canvas"), session);
+      window.ReqValDiagram.render($("sysml-live"), session);
+    }
+  };
+  // Mermaid ESM pode carregar depois
+  if (window.mermaid) draw();
+  else setTimeout(draw, 300);
   if ($("sysml-preview")) $("sysml-preview").textContent = session.sysml_preview || "";
   if ($("btn-dl-sysml")) $("btn-dl-sysml").href = `/api/sessions/${session.id}/sysml`;
   if ($("btn-dl-md")) $("btn-dl-md").href = `/api/sessions/${session.id}/model.md`;
