@@ -99,25 +99,59 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .diagram {
-  border: 1px dashed var(--line);
+  border: 1px solid #9ca3af;
   padding: 1rem;
-  background: #f8faf9;
+  background: #eceff3;
   min-height: 220px;
+  display: grid;
+  gap: 0.75rem;
 }
-.block {
-  border: 1px solid var(--line);
+.small { font-size: 0.85rem; }
+.sysml-part,
+.sysml-req,
+.sysml-verif,
+.sysml-satisfy {
+  border: 1px solid #4b5563;
   background: #fff;
-  padding: 0.85rem;
 }
-.block .label {
-  display: block;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
+.sysml-header {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-bottom: 1px solid #4b5563;
 }
-.arrow { text-align: center; margin: 0.5rem 0; color: var(--muted); }
-.muted { color: var(--muted); }
+.sysml-body {
+  padding: 0.55rem 0.65rem;
+  font-size: 0.86rem;
+}
+.sysml-body p { margin: 0.25rem 0; }
+.part-h { background: #b7e0c2; }
+.req-h { background: #f3c6d8; }
+.ver-h { background: #b9c7e8; }
+.sat-h { background: #f3c6d8; }
+.sysml-satisfy {
+  margin-top: 0.6rem;
+}
+.sysml-satisfy.fail {
+  outline: 2px solid var(--nok);
+}
+.sysml-satisfy.pass {
+  outline: 2px solid var(--ok);
+}
+.sysml-satisfy .sat-body.fail-text #d-satisfy-result {
+  color: var(--nok);
+  font-weight: 700;
+}
+.sysml-satisfy .sat-body.pass-text #d-satisfy-result {
+  color: var(--ok);
+  font-weight: 700;
+}
+.doc {
+  font-style: italic;
+  color: #374151;
+  border-left: 3px solid #f3c6d8;
+  padding-left: 0.5rem;
+}
 
 .badge {
   display: inline-block;

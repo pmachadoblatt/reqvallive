@@ -52,22 +52,31 @@ python battery_publisher.py
 
 Ou use o broker do lab no `.env` / formulário da UI (`MQTT_BROKER`, `MQTT_USERNAME`, `MQTT_PASSWORD`, `MQTT_TOPIC`).
 
-## Exemplo de requisito
-
-Ver [`examples/battery_threshold.json`](examples/battery_threshold.json) — métrica `battery_level`, limiar `>= 20`.
-
 ## Envelope MQTT
+
+**Campo directo** (genérico): o nome da métrica no JSON do requisito deve existir no payload:
+
+```json
+{ "battery_level": 85.0, "timestamp": 1710000000 }
+```
+
+**Distância / separação** (`min_separation_m`, `collision_distance`, …):
 
 ```json
 {
-  "battery_level": 85.0,
-  "latitude": -30.0,
-  "longitude": -51.2,
+  "entities": [
+    { "id": "drone-a", "latitude": -30.0, "longitude": -51.2 },
+    { "id": "drone-b", "latitude": -30.0002, "longitude": -51.2002 }
+  ],
   "timestamp": 1710000000
 }
 ```
 
-MVP live: apenas `threshold` / `range` sobre `battery_level`.
+Ou valor pré-calculado: `{ "min_separation_m": 25.4, ... }`.
+
+MVP live: `threshold` / `range` sobre qualquer métrica fornecível pelo payload.
+
+Exemplos: [`examples/battery_threshold.json`](examples/battery_threshold.json), [`examples/min_separation.json`](examples/min_separation.json).
 
 ## API
 

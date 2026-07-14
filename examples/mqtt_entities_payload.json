@@ -1,0 +1,7 @@
+{
+  "entities": [
+    { "id": "drone-a", "latitude": -30.0, "longitude": -51.2 },
+    { "id": "drone-b", "latitude": -30.0002, "longitude": -51.2002 }
+  ],
+  "timestamp": 1710000000
+}

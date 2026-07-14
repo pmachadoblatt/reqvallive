@@ -29,6 +29,7 @@ def metric_name(req: RequirementRecord) -> str:
 
 
 def is_mvp_supported(req: RequirementRecord) -> bool:
+    """Live MVP: threshold/range. A métrica pode ser qualquer campo/cálculo no MQTT."""
     sc = req.success_criteria
     if not isinstance(sc, (ThresholdCriteria, RangeCriteria)):
         return False

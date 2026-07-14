@@ -26,9 +26,10 @@
   <main>
     <section id="panel-1" class="panel active">
       <h2>Requisito (JSON guiado)</h2>
-      <p>Cole um <code>RequirementRecord</code> ou use o exemplo de bateria.</p>
+      <p>Cole um <code>RequirementRecord</code>. Exemplos: bateria (campo directo) ou separação mínima (distância calculada).</p>
       <div class="row">
-        <button type="button" id="btn-load-example">Carregar exemplo bateria</button>
+        <button type="button" id="btn-load-example">Exemplo bateria</button>
+        <button type="button" id="btn-load-distance">Exemplo distância</button>
         <button type="button" id="btn-validate" class="primary">Validar</button>
         <button type="button" id="btn-create-session" class="primary" disabled>Gerar modelo / sessão</button>
       </div>
@@ -40,20 +41,40 @@
       <h2>Modelo SysML + MQTT</h2>
       <div class="grid-2">
         <div>
-          <h3>Diagrama</h3>
-          <div id="diagram" class="diagram">
-            <div class="block req">
-              <span class="label">requirement</span>
-              <strong id="d-req-id">—</strong>
-              <p id="d-req-title">—</p>
-              <p id="d-constraint" class="muted">—</p>
+          <h3>Diagrama SysML (pré-visualização)</h3>
+          <p class="muted small">Vista estilo Solution Architecture — o que o texto SysML descreve ao colar no Magic.</p>
+          <div id="diagram" class="diagram sysml-view">
+            <div class="sysml-part">
+              <div class="sysml-header part-h">«part» SystemUnderTest</div>
+              <div class="sysml-body">
+                <p><code id="d-metric">—</code> = <strong id="d-value">—</strong></p>
+                <p class="muted" id="d-metric-hint">—</p>
+                <div id="d-satisfy" class="sysml-satisfy">
+                  <div class="sysml-header sat-h">«satisfy requirement» <span id="d-satisfy-name">—</span></div>
+                  <div class="sysml-body sat-body">
+                    <p id="d-satisfy-result">satisfy = —</p>
+                    <p id="d-threshold-line" class="muted">—</p>
+                    <p>actualValue = <strong id="d-actual">—</strong></p>
+                    <span class="badge" id="d-badge">—</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="arrow">↓ satisfy</div>
-            <div class="block part">
-              <span class="label">validator</span>
-              <p>métrica: <code id="d-metric">—</code></p>
-              <p>valor: <strong id="d-value">—</strong></p>
-              <p class="badge" id="d-badge">—</p>
+            <div class="sysml-req">
+              <div class="sysml-header req-h">«requirement» <span id="d-req-id">—</span></div>
+              <div class="sysml-body">
+                <p><strong id="d-req-title">—</strong></p>
+                <p class="doc" id="d-req-text">—</p>
+                <p class="muted">subject: SystemUnderTest</p>
+                <p id="d-constraint">require constraint { — }</p>
+              </div>
+            </div>
+            <div class="sysml-verif">
+              <div class="sysml-header ver-h">«verification» <span id="d-verif-name">—</span></div>
+              <div class="sysml-body">
+                <p>objective: verify <span id="d-verif-obj">—</span></p>
+                <p class="muted">topic MQTT: <code id="d-topic">—</code></p>
+              </div>
             </div>
           </div>
           <div class="mqtt-form">

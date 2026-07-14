@@ -88,14 +88,22 @@ class MeasurementSession:
 
     def to_public_dict(self) -> dict[str, Any]:
         with self._lock:
+            from reqvallive.eval.live import constraint_text
+            from reqvallive.metrics.registry import metric_source_hint
+
             sc = self.requirement.success_criteria
+            metric = metric_name(self.requirement)
+            sc_dump = sc.model_dump(mode="json")
             return {
                 "id": self.id,
                 "req_id": self.requirement.req_id,
                 "title": self.requirement.title,
-                "metric": metric_name(self.requirement),
+                "text": self.requirement.text,
+                "metric": metric,
+                "metric_hint": metric_source_hint(metric),
                 "criteria_type": getattr(sc, "type", type(sc).__name__),
-                "success_criteria": sc.model_dump(mode="json"),
+                "success_criteria": sc_dump,
+                "constraint_text": constraint_text(self.requirement),
                 "mqtt_broker": self.mqtt_broker,
                 "mqtt_port": self.mqtt_port,
                 "mqtt_topic": self.mqtt_topic,

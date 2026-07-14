@@ -116,7 +116,7 @@ def start_session(session_id: str) -> dict[str, Any]:
     if not session.supported_live:
         raise HTTPException(
             status_code=400,
-            detail="Critério/métrica não suportados no MVP live (use threshold|range + battery_level)",
+            detail="Critério não suportado no MVP live (use success_criteria type threshold ou range)",
         )
     mqtt_manager.start(session)
     return session.to_public_dict()

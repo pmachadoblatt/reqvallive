@@ -1,0 +1,21 @@
+{
+  "req_id": "RQ-SEP-001",
+  "title": "Separação mínima entre entidades",
+  "text": "O sistema deve manter separação mínima de 20 metros entre quaisquer duas entidades em operação simultânea",
+  "rationale": "Segurança operacional em espaço aéreo compartilhado.",
+  "level": "system",
+  "conops_ref": "CONOPS-UTM §3.2",
+  "source": "ReqValLive MVP",
+  "priority": "high",
+  "vv_method": "test",
+  "success_criteria": {
+    "type": "threshold",
+    "metric": "min_separation_m",
+    "operator": ">=",
+    "value": 20.0,
+    "unit": "meters",
+    "scope": "all_timesteps",
+    "tolerance": 0.0
+  },
+  "tags": ["safety", "separation", "mqtt"]
+}

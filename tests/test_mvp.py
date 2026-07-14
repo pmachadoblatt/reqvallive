@@ -37,9 +37,27 @@ def test_sysml_contains_constraint(battery_req: dict):
     req = RequirementRecord.model_validate(battery_req)
     text = generate_sysml(req, "conceptio/reqval")
     assert "requirement def" in text
-    assert "currentValue >= 20.0" in text
+    assert "actualValue >= thresholdValue" in text or "actualValue >= 20.0" in text
     assert "conceptio/reqval" in text
-    assert "batteryLevel" in text or "battery_level" in text
+    assert "SystemUnderTest" in text
+    assert "verification def" in text
+
+
+def test_distance_metric_from_entities():
+    from reqvallive.metrics.registry import extract_metric
+
+    payload = {
+        "entities": [
+            {"id": "a", "latitude": -30.0, "longitude": -51.2},
+            {"id": "b", "latitude": -30.001, "longitude": -51.2},
+        ]
+    }
+    dist = extract_metric("min_separation_m", payload)
+    assert dist is not None
+    assert dist > 50  # ~111m per 0.001 deg lat
+    assert extract_metric("battery_level", {"battery_level": 42}) == 42.0
+    # métrica genérica: qualquer campo numérico
+    assert extract_metric("custom_speed", {"custom_speed": 12.5}) == 12.5
 
 
 def test_validate_api(client: TestClient, battery_req: dict):
