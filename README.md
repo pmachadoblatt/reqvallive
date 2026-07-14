@@ -34,12 +34,12 @@ http://127.0.0.1:8080
 No `.env` (nunca commitar a chave):
 
 ```
-LLM_BASE_URL=http://161.24.23.15:11434/v1
+LLM_BASE_URL=https://ollama.conceptio.com.br/v1
 LLM_API_KEY=<token>
 LLM_MODEL=qwen3.6:35b
 ```
 
-Endpoint OpenAI-compatible (`/v1/chat/completions`). Ajuste host/porta se o lab usar Open WebUI noutra URL.
+Na UI: botão **Testar LLM** → `GET /api/llm/probe`.
 
 ## Payload do laboratório
 

@@ -9,17 +9,16 @@ from typing import Any
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
-from simreqvalidator.schema.validator import SchemaValidator
+import httpx
 
 from reqvallive.config import settings
-from reqvallive.eval.live import is_mvp_supported, metric_name
+from reqvallive.eval.live import is_mvp_supported
 from reqvallive.llm.client import interpret_requirements_markdown
 from reqvallive.models.session import store
 from reqvallive.mqtt.subscriber import mqtt_manager
 from reqvallive.reports.html_report import build_html_report
 
 router = APIRouter(prefix="/api")
-_validator = SchemaValidator()
 
 
 class MdInterpretBody(BaseModel):
@@ -268,6 +267,61 @@ async def stream_session(session_id: str, request: Request) -> StreamingResponse
             await asyncio.sleep(0.4)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+@router.get("/llm/probe")
+async def llm_probe() -> dict[str, Any]:
+    """Testa conectividade com Ollama / OpenAI-compatible no lab."""
+    base = settings.llm_base_url.rstrip("/")
+    root = base[:-3] if base.endswith("/v1") else base
+    headers: dict[str, str] = {}
+    if settings.llm_api_key:
+        headers["Authorization"] = f"Bearer {settings.llm_api_key}"
+
+    result: dict[str, Any] = {
+        "base_url": settings.llm_base_url,
+        "model": settings.llm_model,
+        "api_key_set": bool(settings.llm_api_key),
+        "tags": None,
+        "models": None,
+        "chat": None,
+        "ok": False,
+        "error": None,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # Ollama nativo
+            try:
+                tags = await client.get(f"{root}/api/tags", headers=headers)
+                result["tags"] = {"status": tags.status_code, "body": tags.text[:800]}
+            except Exception as exc:
+                result["tags"] = {"error": str(exc)}
+
+            # OpenAI-compatible models
+            try:
+                models = await client.get(f"{base}/models", headers=headers)
+                result["models"] = {"status": models.status_code, "body": models.text[:800]}
+            except Exception as exc:
+                result["models"] = {"error": str(exc)}
+
+            chat = await client.post(
+                f"{base}/chat/completions",
+                headers={**headers, "Content-Type": "application/json"},
+                json={
+                    "model": settings.llm_model,
+                    "temperature": 0,
+                    "messages": [{"role": "user", "content": "Responda exatamente: PONG"}],
+                },
+            )
+            result["chat"] = {"status": chat.status_code, "body": chat.text[:800]}
+            result["ok"] = chat.status_code < 400
+            if not result["ok"]:
+                result["error"] = f"chat HTTP {chat.status_code}"
+    except Exception as exc:
+        result["error"] = str(exc)
+
+    return result
 
 
 @router.get("/health")
