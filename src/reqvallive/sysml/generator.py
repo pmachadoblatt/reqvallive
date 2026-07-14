@@ -1,4 +1,4 @@
-"""Geração de SysML V2 textual a partir de um RequirementRecord."""
+"""Geração de SysML V2 textual (single ou multi-requisito)."""
 
 from __future__ import annotations
 
@@ -28,32 +28,43 @@ def _camel_metric(metric: str) -> str:
 
 
 def generate_sysml(req: RequirementRecord, mqtt_topic: str) -> str:
-    req_name = _safe_id(req.req_id)
-    metric = metric_name(req)
-    attr = _camel_metric(metric)
-    satisfy_name = f"satisfy_{req_name}"
-    verification_name = f"Verify_{req_name}"
-    unit = getattr(req.success_criteria, "unit", None) or ""
-    unit_comment = f" // {unit}" if unit else ""
-    hint = metric_source_hint(metric)
-    sc = req.success_criteria
+    return generate_sysml_multi([req], mqtt_topic)
 
-    if isinstance(sc, ThresholdCriteria):
-        op = sc.operator.value if hasattr(sc.operator, "value") else str(sc.operator)
-        threshold_attrs = f"""
+
+def generate_sysml_multi(requirements: list[RequirementRecord], mqtt_topic: str) -> str:
+    if not requirements:
+        raise ValueError("Lista de requisitos vazia")
+
+    pkg = _safe_id(requirements[0].req_id)
+    blocks: list[str] = []
+    satisfy_blocks: list[str] = []
+    verify_lines: list[str] = []
+
+    for req in requirements:
+        req_name = _safe_id(req.req_id)
+        metric = metric_name(req)
+        attr = _camel_metric(metric)
+        unit = getattr(req.success_criteria, "unit", None) or ""
+        unit_comment = f" // {unit}" if unit else ""
+        sc = req.success_criteria
+        doc_text = req.text.replace("*/", "* /")
+
+        if isinstance(sc, ThresholdCriteria):
+            op = sc.operator.value if hasattr(sc.operator, "value") else str(sc.operator)
+            req_body = f"""
         attribute thresholdValue : Real = {sc.value};{unit_comment}
         attribute actualValue : Real;{unit_comment}
         attribute metricName : String = "{metric}";
         require constraint {{
             actualValue {op} thresholdValue
         }}"""
-        satisfy_bind = f"""
-        satisfy requirement {satisfy_name} : {req_name} {{
+            satisfy = f"""
+        satisfy requirement satisfy_{req_name} : {req_name} {{
             :>> actualValue = {attr};
             :>> thresholdValue = {sc.value};
         }}"""
-    elif isinstance(sc, RangeCriteria):
-        threshold_attrs = f"""
+        elif isinstance(sc, RangeCriteria):
+            req_body = f"""
         attribute minValue : Real = {sc.min_value};{unit_comment}
         attribute maxValue : Real = {sc.max_value};{unit_comment}
         attribute actualValue : Real;{unit_comment}
@@ -61,68 +72,126 @@ def generate_sysml(req: RequirementRecord, mqtt_topic: str) -> str:
         require constraint {{
             actualValue >= minValue and actualValue <= maxValue
         }}"""
-        satisfy_bind = f"""
-        satisfy requirement {satisfy_name} : {req_name} {{
+            satisfy = f"""
+        satisfy requirement satisfy_{req_name} : {req_name} {{
             :>> actualValue = {attr};
             :>> minValue = {sc.min_value};
             :>> maxValue = {sc.max_value};
         }}"""
-    else:
-        constraint = constraint_text(req).replace("metricValue", "actualValue")
-        threshold_attrs = f"""
+        else:
+            constraint = constraint_text(req).replace("metricValue", "actualValue")
+            req_body = f"""
         attribute actualValue : Real;
         attribute metricName : String = "{metric}";
         require constraint {{
             {constraint}
         }}"""
-        satisfy_bind = f"""
-        satisfy requirement {satisfy_name} : {req_name} {{
+            satisfy = f"""
+        satisfy requirement satisfy_{req_name} : {req_name} {{
             :>> actualValue = {attr};
         }}"""
 
-    doc_text = req.text.replace("*/", "* /")
-
-    return f"""package ReqValLive_{req_name} {{
-    private import ScalarValues::*;
-
-    doc /*
-        Gerado automaticamente pelo ReqValLive.
-        req_id: {req.req_id}
-        title: {req.title}
-        MQTT topic: {mqtt_topic}
-        Métrica MQTT: {hint}
-        Colar no Textual Editor do CATIA Magic (referência textual).
-    */
-
+        blocks.append(
+            f"""
     requirement def {req_name} {{
         doc /* {doc_text} */
         subject s : SystemUnderTest;
-{threshold_attrs}
-    }}
+{req_body}
+    }}"""
+        )
+        satisfy_blocks.append(satisfy)
+        verify_lines.append(f"            verify {req_name};")
+
+        # attribute on part
+        satisfy_blocks.insert(
+            0 if len(satisfy_blocks) == 1 else len(satisfy_blocks) - 1,
+            f"\n        attribute {attr} : Real := 0.0;{unit_comment}"
+            f"\n        // {metric_source_hint(metric)}",
+        )
+
+    # Fix attribute ordering: collect unique attrs first
+    attr_lines: list[str] = []
+    seen_attrs: set[str] = set()
+    sat_only: list[str] = []
+    for req in requirements:
+        metric = metric_name(req)
+        attr = _camel_metric(metric)
+        if attr not in seen_attrs:
+            seen_attrs.add(attr)
+            unit = getattr(req.success_criteria, "unit", None) or ""
+            unit_comment = f" // {unit}" if unit else ""
+            attr_lines.append(
+                f"        attribute {attr} : Real := 0.0;{unit_comment}\n"
+                f"        // {metric_source_hint(metric)}"
+            )
+        # regenerate satisfy cleanly
+    sat_only = []
+    for req in requirements:
+        req_name = _safe_id(req.req_id)
+        metric = metric_name(req)
+        attr = _camel_metric(metric)
+        sc = req.success_criteria
+        if isinstance(sc, ThresholdCriteria):
+            sat_only.append(
+                f"""
+        satisfy requirement satisfy_{req_name} : {req_name} {{
+            :>> actualValue = {attr};
+            :>> thresholdValue = {sc.value};
+        }}"""
+            )
+        elif isinstance(sc, RangeCriteria):
+            sat_only.append(
+                f"""
+        satisfy requirement satisfy_{req_name} : {req_name} {{
+            :>> actualValue = {attr};
+            :>> minValue = {sc.min_value};
+            :>> maxValue = {sc.max_value};
+        }}"""
+            )
+        else:
+            sat_only.append(
+                f"""
+        satisfy requirement satisfy_{req_name} : {req_name} {{
+            :>> actualValue = {attr};
+        }}"""
+            )
+
+    hints = ", ".join(metric_name(r) for r in requirements)
+
+    return f"""package ReqValLive_{pkg} {{
+    private import ScalarValues::*;
+
+    doc /*
+        Gerado pelo ReqValLive (+ LLM opcional).
+        MQTT topic: {mqtt_topic}
+        Métricas: {hints}
+        Suporta múltiplos drones (instances) no runtime da ferramenta.
+        Colar no Textual Editor do CATIA Magic.
+    */
+{''.join(blocks)}
 
     part def SystemUnderTest {{
-        attribute {attr} : Real := 0.0;{unit_comment}
         attribute mqttTopic : String = "{mqtt_topic}";
-{satisfy_bind}
+        attribute droneName : String;
+{chr(10).join(attr_lines)}
+{''.join(sat_only)}
     }}
 
-    verification def {verification_name} {{
+    verification def VerifyMission {{
         subject systemUnderTest : SystemUnderTest;
         objective {{
-            doc /* Verificar {req.req_id}: {req.title} */
-            verify {req_name};
+            doc /* Verificar requisitos da missão */
+{chr(10).join(verify_lines)}
         }}
     }}
 
     part missionValidation {{
-        part systemUnderTest : SystemUnderTest;
-        verification case testCase : {verification_name} {{
-            subject systemUnderTest = systemUnderTest;
-        }}
+        part droneA : SystemUnderTest;
+        part droneB : SystemUnderTest;
+        part droneC : SystemUnderTest;
+        verification case testCase : VerifyMission;
     }}
 
-    view SolutionArchitecture : DS_Views::SymbolicViews::gv {{
-        // Vista de referência: part + requirement + satisfy + verification
-    }}
+    view SolutionArchitecture : DS_Views::SymbolicViews::gv;
 }}
 """

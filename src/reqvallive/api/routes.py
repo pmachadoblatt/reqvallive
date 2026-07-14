@@ -6,14 +6,14 @@ import asyncio
 import json
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
-from simreqvalidator.schema.requirement import RequirementRecord
 from simreqvalidator.schema.validator import SchemaValidator
 
 from reqvallive.config import settings
 from reqvallive.eval.live import is_mvp_supported, metric_name
+from reqvallive.llm.client import interpret_requirements_markdown
 from reqvallive.models.session import store
 from reqvallive.mqtt.subscriber import mqtt_manager
 from reqvallive.reports.html_report import build_html_report
@@ -22,14 +22,8 @@ router = APIRouter(prefix="/api")
 _validator = SchemaValidator()
 
 
-class ValidateBody(BaseModel):
-    requirement: dict[str, Any] | None = None
-    requirements: list[dict[str, Any]] | None = None
-
-
-class SessionCreateBody(BaseModel):
-    requirement: dict[str, Any] | None = None
-    requirements: list[dict[str, Any]] | None = None
+class MdInterpretBody(BaseModel):
+    markdown: str
     mqtt_broker: str | None = None
     mqtt_port: int | None = None
     mqtt_username: str | None = None
@@ -37,74 +31,158 @@ class SessionCreateBody(BaseModel):
     mqtt_topic: str | None = None
 
 
-def _extract_one(body: ValidateBody | SessionCreateBody) -> dict[str, Any]:
-    if body.requirement is not None:
-        return body.requirement
-    if body.requirements:
-        return body.requirements[0]
-    raise HTTPException(status_code=400, detail="Forneça 'requirement' ou 'requirements[0]'")
+class SessionCreateBody(BaseModel):
+    requirement: dict[str, Any] | None = None
+    requirements: list[dict[str, Any]] | None = None
+    source_markdown: str | None = None
+    llm_notes: str | None = None
+    mqtt_broker: str | None = None
+    mqtt_port: int | None = None
+    mqtt_username: str | None = None
+    mqtt_password: str | None = None
+    mqtt_topic: str | None = None
 
 
-def _parse_requirement(data: dict[str, Any]) -> tuple[RequirementRecord, list[dict[str, Any]]]:
-    # Aceita payload wrapped {requirements:[...]} colado por engano
-    if "requirements" in data and isinstance(data["requirements"], list) and data.get("req_id") is None:
-        if not data["requirements"]:
-            raise HTTPException(status_code=400, detail="Lista requirements vazia")
-        data = data["requirements"][0]
-
-    req, issues = _validator.validate_single(data)
-    issue_dicts = [
-        {
-            "code": getattr(i, "code", ""),
-            "message": getattr(i, "message", str(i)),
-            "severity": str(getattr(i, "severity", "")),
-            "field": getattr(i, "field", None),
-        }
-        for i in issues
-    ]
-    if req is None:
-        raise HTTPException(
-            status_code=422,
-            detail={"message": "Requisito inválido (Vampire/Schema)", "issues": issue_dicts},
-        )
-    return req, issue_dicts
+class MqttConfigBody(BaseModel):
+    mqtt_broker: str | None = None
+    mqtt_port: int | None = None
+    mqtt_username: str | None = None
+    mqtt_password: str | None = None
+    mqtt_topic: str | None = None
 
 
-@router.post("/requirements/validate")
-def validate_requirement(body: ValidateBody) -> dict[str, Any]:
-    data = _extract_one(body)
-    req, issues = _parse_requirement(data)
+def _mqtt_kwargs(body: Any) -> dict[str, Any]:
     return {
-        "ok": True,
-        "supported_live": is_mvp_supported(req),
-        "metric": metric_name(req),
-        "requirement": req.model_dump(mode="json"),
-        "issues": issues,
+        "mqtt_broker": getattr(body, "mqtt_broker", None) or settings.mqtt_broker,
+        "mqtt_port": getattr(body, "mqtt_port", None)
+        if getattr(body, "mqtt_port", None) is not None
+        else settings.mqtt_port,
+        "mqtt_username": getattr(body, "mqtt_username", None)
+        if getattr(body, "mqtt_username", None) is not None
+        else settings.mqtt_username,
+        "mqtt_password": getattr(body, "mqtt_password", None)
+        if getattr(body, "mqtt_password", None) is not None
+        else settings.mqtt_password,
+        "mqtt_topic": getattr(body, "mqtt_topic", None) or settings.mqtt_topic,
     }
+
+
+@router.get("/defaults")
+def defaults() -> dict[str, Any]:
+    return {
+        "mqtt_broker": settings.mqtt_broker,
+        "mqtt_port": settings.mqtt_port,
+        "mqtt_username": settings.mqtt_username,
+        "mqtt_topic": settings.mqtt_topic,
+        "llm_model": settings.llm_model,
+        "llm_base_url": settings.llm_base_url,
+        "llm_configured": bool(settings.llm_api_key),
+    }
+
+
+@router.post("/requirements/from-markdown")
+async def from_markdown(body: MdInterpretBody) -> dict[str, Any]:
+    if not body.markdown.strip():
+        raise HTTPException(400, detail="Markdown vazio")
+    try:
+        parsed = await interpret_requirements_markdown(body.markdown)
+    except Exception as exc:
+        raise HTTPException(502, detail=f"Falha LLM: {exc}") from exc
+
+    reqs = parsed["requirements"]
+    session = store.create_from_requirements(
+        reqs,
+        source_markdown=body.markdown,
+        llm_notes=str(parsed.get("sysml_notes", "")),
+        **_mqtt_kwargs(body),
+    )
+    public = session.to_public_dict()
+    public["metrics_needed"] = parsed.get("metrics_needed", [])
+    return public
+
+
+@router.post("/requirements/from-markdown-file")
+async def from_markdown_file(
+    file: UploadFile = File(...),
+    mqtt_broker: str | None = Form(None),
+    mqtt_port: int | None = Form(None),
+    mqtt_username: str | None = Form(None),
+    mqtt_password: str | None = Form(None),
+    mqtt_topic: str | None = Form(None),
+) -> dict[str, Any]:
+    raw = (await file.read()).decode("utf-8")
+    body = MdInterpretBody(
+        markdown=raw,
+        mqtt_broker=mqtt_broker,
+        mqtt_port=mqtt_port,
+        mqtt_username=mqtt_username,
+        mqtt_password=mqtt_password,
+        mqtt_topic=mqtt_topic,
+    )
+    return await from_markdown(body)
 
 
 @router.post("/sessions")
 def create_session(body: SessionCreateBody) -> dict[str, Any]:
-    data = _extract_one(body)
-    req, issues = _parse_requirement(data)
-    session = store.create(
-        req,
-        mqtt_broker=body.mqtt_broker or settings.mqtt_broker,
-        mqtt_port=body.mqtt_port if body.mqtt_port is not None else settings.mqtt_port,
-        mqtt_username=body.mqtt_username if body.mqtt_username is not None else settings.mqtt_username,
-        mqtt_password=body.mqtt_password if body.mqtt_password is not None else settings.mqtt_password,
-        mqtt_topic=body.mqtt_topic or settings.mqtt_topic,
-    )
-    public = session.to_public_dict()
-    public["issues"] = issues
-    return public
+    if body.requirements:
+        reqs = body.requirements
+    elif body.requirement:
+        reqs = [body.requirement]
+    else:
+        raise HTTPException(400, detail="Forneça requirement ou requirements")
+    try:
+        session = store.create_from_requirements(
+            reqs,
+            source_markdown=body.source_markdown or "",
+            llm_notes=body.llm_notes or "",
+            **_mqtt_kwargs(body),
+        )
+    except ValueError as exc:
+        raise HTTPException(422, detail=str(exc)) from exc
+    return session.to_public_dict()
 
 
 @router.get("/sessions/{session_id}")
 def get_session(session_id: str) -> dict[str, Any]:
     session = store.get(session_id)
     if session is None:
-        raise HTTPException(status_code=404, detail="Sessão não encontrada")
+        raise HTTPException(404, detail="Sessão não encontrada")
+    return session.to_public_dict()
+
+
+@router.post("/sessions/{session_id}/mqtt")
+def update_mqtt(session_id: str, body: MqttConfigBody) -> dict[str, Any]:
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    if body.mqtt_broker is not None:
+        session.mqtt_broker = body.mqtt_broker
+    if body.mqtt_port is not None:
+        session.mqtt_port = body.mqtt_port
+    if body.mqtt_username is not None:
+        session.mqtt_username = body.mqtt_username
+    if body.mqtt_password is not None:
+        session.mqtt_password = body.mqtt_password
+    if body.mqtt_topic is not None:
+        session.mqtt_topic = body.mqtt_topic
+    return session.to_public_dict()
+
+
+@router.post("/sessions/{session_id}/connect")
+def connect_mqtt(session_id: str) -> dict[str, Any]:
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    mqtt_manager.connect(session)
+    return session.to_public_dict()
+
+
+@router.post("/sessions/{session_id}/disconnect")
+def disconnect_mqtt(session_id: str) -> dict[str, Any]:
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    mqtt_manager.disconnect(session_id)
     return session.to_public_dict()
 
 
@@ -112,13 +190,12 @@ def get_session(session_id: str) -> dict[str, Any]:
 def start_session(session_id: str) -> dict[str, Any]:
     session = store.get(session_id)
     if session is None:
-        raise HTTPException(status_code=404, detail="Sessão não encontrada")
-    if not session.supported_live:
-        raise HTTPException(
-            status_code=400,
-            detail="Critério não suportado no MVP live (use success_criteria type threshold ou range)",
-        )
-    mqtt_manager.start(session)
+        raise HTTPException(404, detail="Sessão não encontrada")
+    if not all(is_mvp_supported(r) for r in session.requirements):
+        raise HTTPException(400, detail="Há requisitos com critério não suportado (use threshold/range)")
+    if not session.connected:
+        mqtt_manager.connect(session)
+    session.measuring = True
     return session.to_public_dict()
 
 
@@ -126,7 +203,7 @@ def start_session(session_id: str) -> dict[str, Any]:
 def stop_session(session_id: str) -> dict[str, Any]:
     session = store.get(session_id)
     if session is None:
-        raise HTTPException(status_code=404, detail="Sessão não encontrada")
+        raise HTTPException(404, detail="Sessão não encontrada")
     mqtt_manager.stop(session_id)
     session.measuring = False
     return session.to_public_dict()
@@ -136,11 +213,24 @@ def stop_session(session_id: str) -> dict[str, Any]:
 def download_sysml(session_id: str) -> StreamingResponse:
     session = store.get(session_id)
     if session is None:
-        raise HTTPException(status_code=404, detail="Sessão não encontrada")
-    filename = f"{session.requirement.req_id}.sysml"
+        raise HTTPException(404, detail="Sessão não encontrada")
+    filename = f"{session.primary_requirement().req_id}.sysml"
     return StreamingResponse(
         iter([session.sysml_text.encode("utf-8")]),
         media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/sessions/{session_id}/model.md")
+def download_model_md(session_id: str) -> StreamingResponse:
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    filename = f"{session.primary_requirement().req_id}_model.md"
+    return StreamingResponse(
+        iter([session.model_markdown.encode("utf-8")]),
+        media_type="text/markdown; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
@@ -149,7 +239,7 @@ def download_sysml(session_id: str) -> StreamingResponse:
 def download_report(session_id: str) -> HTMLResponse:
     session = store.get(session_id)
     if session is None:
-        raise HTTPException(status_code=404, detail="Sessão não encontrada")
+        raise HTTPException(404, detail="Sessão não encontrada")
     return HTMLResponse(build_html_report(session))
 
 
@@ -157,10 +247,10 @@ def download_report(session_id: str) -> HTMLResponse:
 async def stream_session(session_id: str, request: Request) -> StreamingResponse:
     session = store.get(session_id)
     if session is None:
-        raise HTTPException(status_code=404, detail="Sessão não encontrada")
+        raise HTTPException(404, detail="Sessão não encontrada")
 
     async def event_generator():
-        last_fingerprint: str | None = None
+        last_fp = None
         while True:
             if await request.is_disconnected():
                 break
@@ -168,15 +258,18 @@ async def stream_session(session_id: str, request: Request) -> StreamingResponse
             if current is None:
                 break
             public = current.to_public_dict()
-            fingerprint = f"{public['measuring']}:{public['mqtt_connected']}:{len(public['samples'])}:{public['last_value']}:{public['last_ok']}"
-            if fingerprint != last_fingerprint:
-                last_fingerprint = fingerprint
+            fp = (
+                f"{public['mqtt_status']}:{public['measuring']}:{public['summary']}"
+                f":{len(public.get('message_log', []))}:{public.get('overall_ok')}"
+            )
+            if fp != last_fp:
+                last_fp = fp
                 yield f"data: {json.dumps(public)}\n\n"
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.4)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @router.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> dict[str, Any]:
+    return {"status": "ok", "llm_configured": bool(settings.llm_api_key)}

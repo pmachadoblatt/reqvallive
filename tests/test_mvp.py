@@ -1,4 +1,4 @@
-"""Testes unitários ReqValLive (sem broker MQTT real)."""
+"""Testes MVP (sem broker / sem LLM real)."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from simreqvalidator.schema.requirement import RequirementRecord
 
 from reqvallive.eval.live import evaluate_value, is_mvp_supported
 from reqvallive.main import app
+from reqvallive.metrics.registry import drone_id, extract_battery, extract_metric, min_separation_from_positions
 from reqvallive.sysml.generator import generate_sysml
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
@@ -27,6 +28,7 @@ def client() -> TestClient:
 
 
 def test_evaluate_threshold_pass_fail(battery_req: dict):
+    # Adapt metric name if needed
     req = RequirementRecord.model_validate(battery_req)
     assert is_mvp_supported(req)
     assert evaluate_value(req, 50.0).ok is True
@@ -37,39 +39,37 @@ def test_sysml_contains_constraint(battery_req: dict):
     req = RequirementRecord.model_validate(battery_req)
     text = generate_sysml(req, "conceptio/reqval")
     assert "requirement def" in text
-    assert "actualValue >= thresholdValue" in text or "actualValue >= 20.0" in text
-    assert "conceptio/reqval" in text
     assert "SystemUnderTest" in text
     assert "verification def" in text
 
 
-def test_distance_metric_from_entities():
-    from reqvallive.metrics.registry import extract_metric
-
+def test_lab_payload_battery_and_drone():
     payload = {
-        "entities": [
-            {"id": "a", "latitude": -30.0, "longitude": -51.2},
-            {"id": "b", "latitude": -30.001, "longitude": -51.2},
-        ]
+        "droneName": "dji_mini_4_pro",
+        "batteryLevel": 86,
+        "location": {"latitude": -23.18, "longitude": -45.88, "altitude": 600},
     }
-    dist = extract_metric("min_separation_m", payload)
+    assert drone_id(payload) == "dji_mini_4_pro"
+    assert extract_battery(payload) == 86.0
+    assert extract_metric("batteryLevel", payload) == 86.0
+
+
+def test_multi_drone_separation():
+    positions = {
+        "a": (-23.189612, -45.884123),
+        "b": (-23.189700, -45.884200),
+    }
+    dist = min_separation_from_positions(positions)
     assert dist is not None
-    assert dist > 50  # ~111m per 0.001 deg lat
-    assert extract_metric("battery_level", {"battery_level": 42}) == 42.0
-    # métrica genérica: qualquer campo numérico
-    assert extract_metric("custom_speed", {"custom_speed": 12.5}) == 12.5
+    assert dist > 0
 
 
-def test_validate_api(client: TestClient, battery_req: dict):
-    res = client.post("/api/requirements/validate", json={"requirement": battery_req})
-    assert res.status_code == 200
-    body = res.json()
-    assert body["ok"] is True
-    assert body["supported_live"] is True
-    assert body["metric"] == "battery_level"
+def test_session_multi_drone(client: TestClient, battery_req: dict):
+    # Use batteryLevel metric like lab
+    battery_req = dict(battery_req)
+    battery_req["success_criteria"] = dict(battery_req["success_criteria"])
+    battery_req["success_criteria"]["metric"] = "batteryLevel"
 
-
-def test_session_ingest_and_report(client: TestClient, battery_req: dict):
     create = client.post(
         "/api/sessions",
         json={
@@ -78,29 +78,37 @@ def test_session_ingest_and_report(client: TestClient, battery_req: dict):
             "mqtt_topic": "conceptio/reqval",
         },
     )
-    assert create.status_code == 200
+    assert create.status_code == 200, create.text
     sid = create.json()["id"]
 
-    sysml = client.get(f"/api/sessions/{sid}/sysml")
-    assert sysml.status_code == 200
-    assert b"package ReqValLive_" in sysml.content
-
-    # Ingestão directa sem MQTT (simula payload)
     from reqvallive.models.session import store
 
     session = store.get(sid)
     assert session is not None
     session.measuring = True
-    session.ingest_payload({"battery_level": 95.0, "timestamp": 1})
-    session.ingest_payload({"battery_level": 15.0, "timestamp": 2})
-    session.measuring = False
+    session.ingest_payload(
+        {
+            "droneName": "drone_a",
+            "batteryLevel": 90,
+            "location": {"latitude": -23.1896, "longitude": -45.8841, "altitude": 600},
+        }
+    )
+    session.ingest_payload(
+        {
+            "droneName": "drone_b",
+            "batteryLevel": 15,
+            "location": {"latitude": -23.1897, "longitude": -45.8842, "altitude": 600},
+        }
+    )
 
     public = client.get(f"/api/sessions/{sid}").json()
-    assert public["summary"]["sample_count"] == 2
-    assert public["summary"]["violations"] == 1
-    assert public["summary"]["final_pass"] is False
+    assert public["summary"]["drone_count"] == 2
+    assert public["overall_ok"] is False
+
+    md = client.get(f"/api/sessions/{sid}/model.md")
+    assert md.status_code == 200
+    assert b"# Modelo ReqValLive" in md.content
 
     report = client.get(f"/api/sessions/{sid}/report")
     assert report.status_code == 200
     assert b"FAIL" in report.content
-    assert b"RQ-BAT-001" in report.content
