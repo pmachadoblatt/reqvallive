@@ -1,82 +1,225 @@
-"""Relatório HTML multi-drone."""
+"""Relatório HTML multi-drone — foco em o quê falhou e porquê."""
 
 from __future__ import annotations
 
 import html
-import json
 from datetime import datetime, timezone
 
+from reqvallive.eval.live import constraint_text, metric_name
+from reqvallive.metrics.registry import DISTANCE_METRICS
 from reqvallive.models.session import MeasurementSession
+
+
+def _ok_label(ok: bool | None) -> tuple[str, str]:
+    if ok is True:
+        return "PASS", "pass"
+    if ok is False:
+        return "FAIL", "fail"
+    return "PENDENTE", "na"
+
+
+def _fmt(v: float | None, unit: str = "") -> str:
+    if v is None:
+        return "—"
+    u = f" {html.escape(unit)}" if unit else ""
+    return f"{v:g}{u}"
 
 
 def build_html_report(session: MeasurementSession) -> str:
     summary = session.summary()
+    findings = session.findings()
     overall = summary.get("overall_ok")
-    if overall is True:
-        verdict, verdict_class = "PASS", "pass"
-    elif overall is False:
-        verdict, verdict_class = "FAIL", "fail"
-    else:
-        verdict, verdict_class = "N/A", "na"
+    verdict, verdict_class = _ok_label(overall if isinstance(overall, bool) else None)
+    if overall is None:
+        verdict, verdict_class = "INCONCLUSIVO", "na"
 
-    req_rows = []
-    for req in session.requirements:
-        sc = html.escape(req.success_criteria.model_dump_json())
-        req_rows.append(
-            f"<tr><td>{html.escape(req.req_id)}</td><td>{html.escape(req.title)}</td>"
-            f"<td><code>{sc}</code></td></tr>"
+    tracked = summary.get("tracked_metrics") or session.tracked_metrics()
+    show_battery = any("batter" in str(m).lower() or m == "remainingCharge" for m in tracked)
+
+    fail_cards = []
+    pass_cards = []
+    pending_cards = []
+    for f in findings:
+        label, klass = _ok_label(f.get("ok"))
+        entities_html = ""
+        ents = f.get("entities") or []
+        if ents:
+            rows = []
+            for e in ents:
+                el, ek = _ok_label(e.get("ok"))
+                rows.append(
+                    f"<tr class='{ek}'><td>{html.escape(str(e.get('id')))}</td>"
+                    f"<td>{_fmt(e.get('actual'), f.get('unit') or '')}</td>"
+                    f"<td><strong>{el}</strong></td>"
+                    f"<td class='muted'>{html.escape(str(e.get('detail') or ''))}</td></tr>"
+                )
+            entities_html = (
+                "<table class='mini'><thead><tr><th>Drone</th><th>Valor</th>"
+                "<th>Resultado</th><th>Comparação</th></tr></thead>"
+                f"<tbody>{''.join(rows)}</tbody></table>"
+            )
+
+        actual_txt = _fmt(f.get("actual"), f.get("unit") or "")
+        if f.get("scope") == "per_drone":
+            actual_txt = "ver tabela por drone"
+
+        card = f"""
+        <div class="finding {klass}">
+          <div class="finding-head">
+            <span class="badge {klass}">{label}</span>
+            <strong>{html.escape(f.get('req_id') or '')}</strong>
+            — {html.escape(f.get('title') or '')}
+          </div>
+          <p class="why">{html.escape(f.get('why') or '')}</p>
+          <dl>
+            <dt>Métrica</dt><dd><code>{html.escape(str(f.get('metric')))}</code></dd>
+            <dt>Critério esperado</dt><dd><code>{html.escape(str(f.get('expected')))}</code></dd>
+            <dt>Valor observado</dt><dd>{actual_txt}</dd>
+            <dt>Âmbito</dt><dd>{html.escape(str(f.get('scope')))}</dd>
+          </dl>
+          {entities_html}
+        </div>"""
+        if f.get("ok") is False:
+            fail_cards.append(card)
+        elif f.get("ok") is True:
+            pass_cards.append(card)
+        else:
+            pending_cards.append(card)
+
+    started = (
+        datetime.fromtimestamp(session.started_at, tz=timezone.utc).strftime("%H:%M:%S")
+        if session.started_at
+        else "—"
+    )
+    ended = (
+        datetime.fromtimestamp(session.ended_at, tz=timezone.utc).strftime("%H:%M:%S")
+        if session.ended_at
+        else ("em curso" if session.measuring else "—")
+    )
+    generated = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+    # Tabela resumo
+    summary_rows = []
+    for f in findings:
+        label, klass = _ok_label(f.get("ok"))
+        summary_rows.append(
+            f"<tr class='{klass}'><td>{html.escape(f.get('req_id') or '')}</td>"
+            f"<td>{html.escape(f.get('title') or '')}</td>"
+            f"<td><code>{html.escape(str(f.get('metric')))}</code></td>"
+            f"<td><code>{html.escape(str(f.get('expected')))}</code></td>"
+            f"<td><strong>{label}</strong></td>"
+            f"<td>{html.escape(f.get('why') or '')}</td></tr>"
         )
 
-    drone_rows = []
-    for d in session.drones.values():
-        drone_rows.append(
+    # Mensagens: só colunas das métricas pedidas
+    msg_headers = ["Hora", "Drone"] + [html.escape(m) for m in tracked] + ["Lat", "Lon"]
+    msg_rows = []
+    for m in session.message_log[-40:]:
+        ts = datetime.fromtimestamp(m["ts"], tz=timezone.utc).strftime("%H:%M:%S")
+        cells = [ts, html.escape(str(m.get("drone")))]
+        for metric in tracked:
+            val = m.get(metric)
+            cells.append("—" if val is None else str(val))
+        cells.append(str(m.get("lat") if m.get("lat") is not None else "—"))
+        cells.append(str(m.get("lon") if m.get("lon") is not None else "—"))
+        msg_rows.append("<tr>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>")
+
+    bat_li = ""
+    if show_battery:
+        bat_li = (
+            f"<li>Bateria min/max: {summary.get('min_battery')} / {summary.get('max_battery')}</li>"
+        )
+    sep_li = ""
+    if any(m in DISTANCE_METRICS for m in tracked):
+        sep_li = f"<li>Separação mínima observada: {summary.get('min_separation_m')}</li>"
+
+    req_def_rows = []
+    for req in session.requirements:
+        req_def_rows.append(
             "<tr>"
-            f"<td>{html.escape(d.id)}</td>"
-            f"<td>{d.battery}</td>"
-            f"<td>{d.latitude}</td>"
-            f"<td>{d.longitude}</td>"
-            f"<td>{html.escape(json.dumps(d.ok_by_req))}</td>"
+            f"<td>{html.escape(req.req_id)}</td>"
+            f"<td>{html.escape(req.title)}</td>"
+            f"<td>{html.escape(req.text)}</td>"
+            f"<td><code>{html.escape(constraint_text(req))}</code> "
+            f"({html.escape(metric_name(req))})</td>"
             "</tr>"
         )
 
-    msg_rows = []
-    for m in session.message_log[-50:]:
-        ts = datetime.fromtimestamp(m["ts"], tz=timezone.utc).strftime("%H:%M:%S")
-        msg_rows.append(
-            f"<tr><td>{ts}</td><td>{html.escape(str(m.get('drone')))}</td>"
-            f"<td>{m.get('batteryLevel')}</td><td>{m.get('lat')}</td><td>{m.get('lon')}</td></tr>"
-        )
-
-    generated = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     return f"""<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"/>
-<title>Relatório ReqValLive</title>
+<title>Relatório ReqValLive — {verdict}</title>
 <style>
-body{{font-family:Segoe UI,sans-serif;margin:2rem;background:#f7f7f5;color:#1a1a1a}}
-.card{{background:#fff;border:1px solid #ddd;padding:1.25rem;margin-bottom:1rem}}
-.pass{{color:#0a7a2f}}.fail{{color:#b00020}}.na{{color:#666}}
-.verdict{{font-size:1.75rem;font-weight:700}}
+:root {{ --bg:#f4f6f8; --card:#fff; --ink:#16202a; --muted:#5a6a7a; --line:#e2e8ee;
+  --pass:#0a7a2f; --fail:#b00020; --na:#6b7280; --pass-bg:#e8f7ee; --fail-bg:#fde8ec; --na-bg:#f3f4f6; }}
+body{{font-family:"Segoe UI",system-ui,sans-serif;margin:0;background:var(--bg);color:var(--ink);line-height:1.45}}
+.wrap{{max-width:980px;margin:0 auto;padding:1.5rem}}
+.hero{{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.5rem;margin-bottom:1rem}}
+.verdict{{font-size:2rem;font-weight:750;letter-spacing:.02em}}
+.pass{{color:var(--pass)}}.fail{{color:var(--fail)}}.na{{color:var(--na)}}
+.meta{{color:var(--muted);font-size:.95rem}}
+.grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:1rem}}
+.stat{{background:var(--bg);border-radius:8px;padding:.75rem}}
+.stat b{{display:block;font-size:1.4rem}}
+h2{{margin:1.5rem 0 .75rem;font-size:1.15rem}}
+.card{{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem;margin-bottom:1rem}}
+.finding{{border:1px solid var(--line);border-radius:10px;padding:1rem;margin:.75rem 0;background:#fff}}
+.finding.fail{{background:var(--fail-bg);border-color:#f0b4bf}}
+.finding.pass{{background:var(--pass-bg);border-color:#b7e4c7}}
+.finding.na{{background:var(--na-bg)}}
+.finding-head{{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.35rem}}
+.badge{{font-size:.75rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;background:#fff;border:1px solid currentColor}}
+.why{{font-size:1.05rem;margin:.4rem 0 .8rem}}
+dl{{display:grid;grid-template-columns:160px 1fr;gap:.25rem .75rem;margin:0;font-size:.92rem}}
+dt{{color:var(--muted)}} dd{{margin:0}}
 table{{width:100%;border-collapse:collapse;font-size:.9rem}}
-th,td{{border-bottom:1px solid #eee;padding:.4rem .5rem;text-align:left}}
-code{{background:#f0f0ee;padding:.1rem .3rem}}
-</style></head><body>
-<h1>Laudo de validação — ReqValLive</h1>
-<p>Gerado em {generated}</p>
-<div class="card"><div class="verdict {verdict_class}">{verdict}</div>
-<p>Broker <code>{html.escape(session.mqtt_broker)}:{session.mqtt_port}</code> · tópico <code>{html.escape(session.mqtt_topic)}</code></p>
-<ul>
-<li>Drones: {summary.get("drone_count")}</li>
-<li>Mensagens: {summary.get("message_count")}</li>
-<li>Bateria min/max: {summary.get("min_battery")} / {summary.get("max_battery")}</li>
-<li>Separação mín.: {summary.get("min_separation_m")}</li>
-</ul></div>
-<div class="card"><h2>Requisitos</h2>
-<table><thead><tr><th>ID</th><th>Título</th><th>Critério</th></tr></thead>
-<tbody>{''.join(req_rows) or '<tr><td colspan=3>—</td></tr>'}</tbody></table></div>
-<div class="card"><h2>Drones</h2>
-<table><thead><tr><th>ID</th><th>Bateria</th><th>Lat</th><th>Lon</th><th>OK/req</th></tr></thead>
-<tbody>{''.join(drone_rows) or '<tr><td colspan=5>Nenhum drone</td></tr>'}</tbody></table></div>
-<div class="card"><h2>Últimas mensagens</h2>
-<table><thead><tr><th>Hora</th><th>Drone</th><th>Bat</th><th>Lat</th><th>Lon</th></tr></thead>
-<tbody>{''.join(msg_rows) or '<tr><td colspan=5>—</td></tr>'}</tbody></table></div>
-</body></html>"""
+th,td{{border-bottom:1px solid var(--line);padding:.45rem .5rem;text-align:left;vertical-align:top}}
+tr.fail td:nth-child(5), tr.fail strong{{color:var(--fail)}}
+tr.pass td:nth-child(5), tr.pass strong{{color:var(--pass)}}
+code{{background:#eef2f6;padding:.1rem .35rem;border-radius:4px;font-size:.88em}}
+.mini{{margin-top:.75rem;background:rgba(255,255,255,.6)}}
+.muted{{color:var(--muted)}}
+@media (max-width:700px){{.grid{{grid-template-columns:1fr}} dl{{grid-template-columns:1fr}}}}
+</style></head><body><div class="wrap">
+<div class="hero">
+  <div class="verdict {verdict_class}">{verdict}</div>
+  <p class="meta">Laudo ReqValLive · gerado {generated}</p>
+  <p class="meta">Broker <code>{html.escape(session.mqtt_broker)}:{session.mqtt_port}</code>
+     · tópico <code>{html.escape(session.mqtt_topic)}</code>
+     · medição {started} → {ended}
+     {"· <strong>ENCERRADA</strong>" if session.measurement_ended else ("· <strong>A MEDIR</strong>" if session.measuring else "")}</p>
+  <div class="grid">
+    <div class="stat"><span class="muted">Requisitos OK</span><b class="pass">{summary.get("reqs_pass", 0)}</b></div>
+    <div class="stat"><span class="muted">Requisitos FAIL</span><b class="fail">{summary.get("reqs_fail", 0)}</b></div>
+    <div class="stat"><span class="muted">Pendentes</span><b class="na">{summary.get("reqs_pending", 0)}</b></div>
+  </div>
+  <ul class="meta">
+    <li>Drones: {summary.get("drone_count")} · Mensagens (durante medição/setup): {summary.get("message_count")}</li>
+    <li>Métricas sob teste: <code>{html.escape(", ".join(tracked) or "—")}</code></li>
+    {bat_li}{sep_li}
+  </ul>
+</div>
+
+<div class="card">
+  <h2>Resumo por requisito</h2>
+  <table><thead><tr>
+    <th>ID</th><th>Título</th><th>Métrica</th><th>Esperado</th><th>Resultado</th><th>Porquê</th>
+  </tr></thead>
+  <tbody>{''.join(summary_rows) or '<tr><td colspan=6>—</td></tr>'}</tbody></table>
+</div>
+
+{f'<div class="card"><h2>O que falhou</h2>{"".join(fail_cards)}</div>' if fail_cards else ''}
+{f'<div class="card"><h2>O que passou</h2>{"".join(pass_cards)}</div>' if pass_cards else ''}
+{f'<div class="card"><h2>Pendentes / sem amostra</h2>{"".join(pending_cards)}</div>' if pending_cards else ''}
+
+<div class="card">
+  <h2>Definição dos requisitos</h2>
+  <table><thead><tr><th>ID</th><th>Título</th><th>Texto</th><th>Critério</th></tr></thead>
+  <tbody>{''.join(req_def_rows)}</tbody></table>
+</div>
+
+<div class="card">
+  <h2>Amostras MQTT (métricas pedidas)</h2>
+  <table><thead><tr>{''.join(f"<th>{h}</th>" for h in msg_headers)}</tr></thead>
+  <tbody>{''.join(msg_rows) or '<tr><td colspan="' + str(len(msg_headers)) + '">—</td></tr>'}</tbody></table>
+</div>
+</div></body></html>"""

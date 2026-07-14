@@ -85,7 +85,7 @@ def test_session_multi_drone(client: TestClient, battery_req: dict):
 
     session = store.get(sid)
     assert session is not None
-    session.measuring = True
+    session.start_measurement()
     session.ingest_payload(
         {
             "droneName": "drone_a",

@@ -18,7 +18,7 @@ window.ReqValDiagram = {
         </div>
         <pre class="mermaid" id="${container.id}-mmd">${escapeHtml(mermaidSrc)}</pre>
         <div class="board-label">Instâncias / satisfy (runtime)</div>
-        <div class="board-row parts">${renderDroneBoxes(drones, reqs)}</div>
+        <div class="board-row parts">${renderDroneBoxes(drones, reqs, session)}</div>
         <div class="board-row reqs">${renderReqBoxes(reqs)}</div>
         <div class="board-row">${renderVerif(topic, sep, overall, reqs, session)}</div>
       </div>`;
@@ -41,12 +41,13 @@ function isDistanceMetric(metric) {
 function buildMermaid(session) {
   const reqs = session.requirements || [];
   const drones = session.drones || [];
+  const tracked = session.tracked_metrics || reqs.map((r) => r.metric).filter(Boolean);
   const lines = ["classDiagram", "direction TB"];
-  lines.push('class SystemUnderTest {');
+  lines.push("class SystemUnderTest {");
   lines.push("  +String droneName");
-  lines.push("  +Real batteryLevel");
-  lines.push("  +Real altitudeAGL");
-  lines.push("  +Real distanceToHome");
+  for (const m of tracked.slice(0, 6)) {
+    lines.push(`  +Real ${String(m).replace(/[^A-Za-z0-9_]/g, "_")}`);
+  }
   lines.push("  +String mqttTopic");
   lines.push("}");
 
@@ -70,7 +71,11 @@ function buildMermaid(session) {
     const did = safeId(d.id || "drone");
     lines.push(`class ${did} {`);
     lines.push("  <<part>>");
-    lines.push(`  +battery ${d.battery ?? "—"}`);
+    for (const m of tracked) {
+      if (isDistanceMetric(m)) continue;
+      const v = d.metrics?.[m] ?? (m === "batteryLevel" ? d.battery : null);
+      if (v != null) lines.push(`  +${safeId(m)} ${v}`);
+    }
     if (d.latitude != null) lines.push(`  +lat ${Number(d.latitude).toFixed(4)}`);
     lines.push("}");
     lines.push(`${did} --|> SystemUnderTest`);
@@ -79,7 +84,9 @@ function buildMermaid(session) {
   lines.push("class VerifyMission {");
   lines.push("  <<verification>>");
   const sep = session.global_metrics?.min_separation_m;
-  if (sep != null) lines.push(`  +min_separation_m ${Number(sep).toFixed(1)}`);
+  if (sep != null && tracked.some((m) => isDistanceMetric(m))) {
+    lines.push(`  +min_separation_m ${Number(sep).toFixed(1)}`);
+  }
   lines.push(`  +overall ${session.overall_ok === true ? "PASS" : session.overall_ok === false ? "FAIL" : "PENDING"}`);
   lines.push("}");
   lines.push("VerifyMission ..> SystemUnderTest : subject");
@@ -90,26 +97,36 @@ function buildMermaid(session) {
   return lines.join("\n");
 }
 
-function renderDroneBoxes(drones, reqs) {
+function renderDroneBoxes(drones, reqs, session) {
+  const tracked = session?.tracked_metrics || reqs.map((r) => r.metric).filter(Boolean);
   const list = drones.length ? drones : [{ id: "droneA" }, { id: "droneB" }, { id: "droneC" }];
   return list
     .slice(0, 6)
     .map((d) => {
-      const bat = d.battery ?? "—";
       const oks = d.ok_by_req || {};
       const localReqs = reqs.filter((r) => !isDistanceMetric(r.metric));
       const flags = localReqs.map((r) => oks[r.req_id]).filter((v) => v !== undefined && v !== null);
       let klass = "part-box";
       if (flags.length && flags.every((v) => v === true)) klass += " pass";
       if (flags.length && flags.some((v) => v === false)) klass += " fail";
+      const metricLines = tracked
+        .filter((m) => !isDistanceMetric(m))
+        .map((m) => {
+          const v = d.metrics?.[m] ?? (m === "batteryLevel" ? d.battery : null);
+          return `<div>${escapeHtml(m)} = <strong>${v ?? "—"}</strong></div>`;
+        })
+        .join("");
       const satInner = localReqs
         .map((r) => {
           const ok = oks[r.req_id];
           const okLabel = ok === true ? "true" : ok === false ? "false" : "—";
-          const actual = d.metrics?.[r.metric] ?? (r.metric === "batteryLevel" || r.metric === "battery_level" ? bat : "—");
+          const actual =
+            d.actual_by_req?.[r.req_id] ??
+            d.metrics?.[r.metric] ??
+            (r.metric === "batteryLevel" ? d.battery : "—");
           const tip =
             r.success_criteria?.type === "threshold"
-              ? `threshold=${r.success_criteria.value} · actual=${actual}`
+              ? `expected ${r.success_criteria.operator} ${r.success_criteria.value} · actual=${actual}`
               : r.metric;
           return `<div class="sat-box ${ok === true ? "pass" : ok === false ? "fail" : ""}">
               <div class="box-title sat">«satisfy requirement» ${escapeHtml(r.req_id)}</div>
@@ -123,7 +140,7 @@ function renderDroneBoxes(drones, reqs) {
       return `<div class="${klass}">
           <div class="box-title part">«part» ${escapeHtml(d.id)} :> SystemUnderTest</div>
           <div class="box-body">
-            <div>batteryLevel = <strong>${bat}</strong></div>
+            ${metricLines || '<div class="muted">sem métricas por entidade</div>'}
             <div class="muted">${d.latitude != null ? `${Number(d.latitude).toFixed(5)}, ${d.longitude}` : "sem posição"}</div>
             ${satInner || '<div class="muted">sem requisito por entidade</div>'}
           </div>

@@ -82,21 +82,29 @@ def defaults() -> dict[str, Any]:
 @router.post("/requirements/from-markdown")
 async def from_markdown(body: MdInterpretBody) -> dict[str, Any]:
     if not body.markdown.strip():
-        raise HTTPException(400, detail="Markdown vazio")
+        raise HTTPException(status_code=400, detail="Markdown vazio")
     try:
         parsed = await interpret_requirements_markdown(body.markdown)
     except Exception as exc:
-        raise HTTPException(502, detail=f"Falha LLM: {exc}") from exc
+        raise HTTPException(status_code=502, detail=f"Falha LLM: {exc}") from exc
 
-    reqs = parsed["requirements"]
-    session = store.create_from_requirements(
-        reqs,
-        source_markdown=body.markdown,
-        llm_notes=str(parsed.get("sysml_notes", "")),
-        **_mqtt_kwargs(body),
-    )
+    reqs = parsed.get("requirements") or []
+    try:
+        session = store.create_from_requirements(
+            reqs,
+            source_markdown=body.markdown,
+            llm_notes=str(parsed.get("sysml_notes", "")),
+            **_mqtt_kwargs(body),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Requisitos gerados pelo LLM inválidos para o schema: {exc}",
+        ) from exc
+
     public = session.to_public_dict()
     public["metrics_needed"] = parsed.get("metrics_needed", [])
+    public["llm_notes"] = parsed.get("sysml_notes", "")
     return public
 
 
@@ -194,7 +202,7 @@ def start_session(session_id: str) -> dict[str, Any]:
         raise HTTPException(400, detail="Há requisitos com critério não suportado (use threshold/range)")
     if not session.connected:
         mqtt_manager.connect(session)
-    session.measuring = True
+    session.start_measurement()
     return session.to_public_dict()
 
 
@@ -203,8 +211,8 @@ def stop_session(session_id: str) -> dict[str, Any]:
     session = store.get(session_id)
     if session is None:
         raise HTTPException(404, detail="Sessão não encontrada")
-    mqtt_manager.stop(session_id)
-    session.measuring = False
+    session.stop_measurement()
+    # Mantém MQTT ligado para nova corrida; resultados ficam congelados
     return session.to_public_dict()
 
 
@@ -258,8 +266,8 @@ async def stream_session(session_id: str, request: Request) -> StreamingResponse
                 break
             public = current.to_public_dict()
             fp = (
-                f"{public['mqtt_status']}:{public['measuring']}:{public['summary']}"
-                f":{len(public.get('message_log', []))}:{public.get('overall_ok')}"
+                f"{public['mqtt_status']}:{public['measuring']}:{public.get('measurement_ended')}"
+                f":{public['summary']}:{len(public.get('message_log', []))}:{public.get('overall_ok')}"
             )
             if fp != last_fp:
                 last_fp = fp

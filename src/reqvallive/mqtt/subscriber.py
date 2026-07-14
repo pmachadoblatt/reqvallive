@@ -151,11 +151,11 @@ class MqttManager:
         session.measuring = True
 
     def stop(self, session_id: str) -> None:
-        """Para medição mas mantém conexão se worker activo."""
+        """Para medição mas mantém conexão MQTT."""
         with self._lock:
             worker = self._workers.get(session_id)
         if worker:
-            worker.session.measuring = False
+            worker.session.stop_measurement()
 
 
 mqtt_manager = MqttManager()
