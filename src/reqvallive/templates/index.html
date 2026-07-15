@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ReqValLive</title>
-  <link rel="stylesheet" href="/static/styles.css?v=4" />
+  <title>ReqValLive — Validador de requisitos</title>
+  <link rel="stylesheet" href="/static/styles.css?v=9" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script type="module">
     import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
@@ -27,36 +27,54 @@
 <body>
   <header class="top">
     <p class="brand">ReqValLive</p>
-    <h1>Validação de requisitos via MQTT + SysML</h1>
-    <p class="lede">Markdown → LLM → modelo SysML → monitor multi-drone</p>
+    <h1>Validador de requisitos durante a missão</h1>
+    <p class="lede">
+      Inclua o documento da missão ou descreva os requisitos com critério de validação.
+      Receba o modelo SysML V2 e meça em tempo real via MQTT.
+    </p>
   </header>
 
   <nav class="steps">
-    <button type="button" class="step active" data-step="1">1. Requisitos (.md)</button>
-    <button type="button" class="step" data-step="2" disabled>2. Modelo SysML</button>
+    <button type="button" class="step active" data-step="1">1. Entrada</button>
+    <button type="button" class="step" data-step="2" disabled>2. Modelo</button>
     <button type="button" class="step" data-step="3" disabled>3. MQTT</button>
-    <button type="button" class="step" data-step="4" disabled>4. Monitor</button>
+    <button type="button" class="step" data-step="4" disabled>4. Medição</button>
   </nav>
 
   <main>
     <section id="panel-1" class="panel active">
-      <h2>Entrada Markdown</h2>
-      <p>Descreva requisitos e critérios. A LLM do lab interpreta e gera o modelo.</p>
-      <div class="row">
-        <input type="file" id="md-file" accept=".md,text/markdown,text/plain" />
-        <button type="button" id="btn-load-sample-md">Carregar exemplo</button>
-        <button type="button" id="btn-probe-llm">Testar LLM</button>
-        <button type="button" id="btn-interpret" class="primary">Interpretar com LLM</button>
+      <div class="hero-actions row">
+        <label class="file-btn button">
+          Carregar documento
+          <input type="file" id="md-file" accept=".md,text/markdown,text/plain" hidden />
+        </label>
+        <button type="button" id="btn-interpret" class="primary">Interpretar e gerar modelo</button>
+        <button type="button" id="btn-open-sc-help">Como deve ser o critério?</button>
+        <a id="btn-dl-sc-example" class="button" href="/api/criteria/example.md" download="success_criteria_modelo.md">Baixar exemplo</a>
       </div>
-      <textarea id="md-input" rows="18" spellcheck="false" placeholder="# Requisitos&#10;&#10;## RQ-001 Bateria&#10;O drone deve manter bateria acima de 20%..."></textarea>
-      <pre id="out-1" class="out"></pre>
+      <textarea
+        id="md-input"
+        rows="12"
+        spellcheck="false"
+        placeholder="Cole aqui os requisitos da missão&#10;&#10;Ex.: Cada drone não deve ficar com a bateria abaixo de 20%."
+      ></textarea>
+      <div id="gate-preview" class="gate-preview muted hidden">Gate: —</div>
+      <pre id="out-1" class="out muted small-out"></pre>
+      <details class="advanced">
+        <summary>Opções avançadas</summary>
+        <div class="row">
+          <button type="button" id="btn-load-sample-md">Preencher com exemplo completo</button>
+          <button type="button" id="btn-probe-llm">Testar ligação LLM</button>
+        </div>
+      </details>
     </section>
 
     <section id="panel-2" class="panel">
       <h2>Modelo SysML</h2>
+      <div id="gate-panel-2" class="gate-preview muted hidden"></div>
       <div class="grid-2">
         <div>
-          <h3>Diagrama (estilo Magic)</h3>
+          <h3>Diagrama</h3>
           <div id="sysml-canvas" class="sysml-canvas"></div>
           <div class="row">
             <a id="btn-dl-sysml" class="button" href="#">Baixar .sysml</a>
@@ -64,15 +82,15 @@
           </div>
         </div>
         <div>
-          <h3>Textual SysML V2</h3>
+          <h3>SysML V2 (textual)</h3>
           <pre id="sysml-preview" class="code"></pre>
         </div>
       </div>
-      <button type="button" id="btn-goto-mqtt" class="primary">Definir MQTT</button>
+      <button type="button" id="btn-goto-mqtt" class="primary">Continuar para MQTT</button>
     </section>
 
     <section id="panel-3" class="panel">
-      <h2>Parâmetros MQTT</h2>
+      <h2>Ligação MQTT</h2>
       <div class="mqtt-form">
         <label>Broker IP <input id="mqtt-broker" /></label>
         <label>Porta <input id="mqtt-port" type="number" /></label>
@@ -85,33 +103,67 @@
         <button type="button" id="btn-disconnect">Desconectar</button>
         <span id="conn-pill" class="pill">desconectado</span>
       </div>
-      <button type="button" id="btn-start-monitor" class="primary" disabled>Iniciar monitoramento</button>
+      <button type="button" id="btn-start-monitor" class="primary" disabled>Iniciar medição</button>
       <pre id="out-3" class="out"></pre>
     </section>
 
     <section id="panel-4" class="panel">
-      <h2>Monitoramento</h2>
+      <h2>Medição ao vivo</h2>
       <div class="row">
         <span id="mqtt-status-pill" class="pill">—</span>
+        <span id="verdict-pill" class="pill">—</span>
         <button type="button" id="btn-stop-monitor">Encerrar medição</button>
         <a id="btn-report" class="button primary" href="#" target="_blank">Relatório HTML</a>
       </div>
+      <div id="live-verdict" class="live-verdict muted">Aguardando início da medição…</div>
       <div class="grid-2">
         <div>
-          <h3>Modelo ao vivo</h3>
-          <div id="sysml-live" class="sysml-canvas"></div>
+          <h3>Evidência por drone</h3>
+          <p class="muted small">Atual continua a actualizar; FAIL fica latched se houve violação.</p>
           <div class="live-stats" id="drone-stats"></div>
+          <details class="advanced">
+            <summary>Diagrama SysML ao vivo</summary>
+            <div id="sysml-live" class="sysml-canvas"></div>
+          </details>
         </div>
         <div>
-          <h3>Mensagens MQTT</h3>
+          <h3>Tendência e limiar</h3>
+          <canvas id="live-chart" height="140"></canvas>
+          <h3>Feed MQTT</h3>
           <div id="msg-feed" class="msg-feed"></div>
-          <canvas id="live-chart" height="100"></canvas>
         </div>
       </div>
       <pre id="out-4" class="out"></pre>
     </section>
   </main>
-  <script src="/static/diagram.js?v=6"></script>
-  <script src="/static/app.js?v=6"></script>
+
+  <div id="sc-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="sc-modal-title">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="sc-modal-title">Como deve ser o critério de validação</h2>
+        <button type="button" class="modal-close" data-close-modal aria-label="Fechar">×</button>
+      </div>
+      <p class="muted">
+        O critério (Success Criteria) define o que é «passar» na verificação — idealmente aprovado
+        <em>antes</em> de medir (MSFC / SIS-08 Methods).
+      </p>
+      <ol id="sc-lifecycle" class="sc-lifecycle"></ol>
+      <h3>8 pontos a cobrir</h3>
+      <div id="sc-dimensions" class="sc-dimensions"></div>
+      <h3>Método × critério</h3>
+      <ul id="sc-methods" class="sc-methods"></ul>
+      <h3>Exemplo bem feito</h3>
+      <pre id="sc-md-example" class="code sc-example"></pre>
+      <div class="row">
+        <button type="button" id="btn-load-sc-model" class="primary">Usar no editor</button>
+        <a class="button" href="/api/criteria/example.md" download="success_criteria_modelo.md">Baixar .md</a>
+        <button type="button" data-close-modal>Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/diagram.js?v=9"></script>
+  <script src="/static/app.js?v=9"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-"""Relatório HTML multi-drone — foco em o quê falhou e porquê."""
+"""Relatório HTML — veredicto + evidência (atual / min / 1ª violação / #falhas)."""
 
 from __future__ import annotations
 
@@ -25,6 +25,12 @@ def _fmt(v: float | None, unit: str = "") -> str:
     return f"{v:g}{u}"
 
 
+def _fmt_ts(ts: float | None) -> str:
+    if ts is None:
+        return "—"
+    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%H:%M:%S")
+
+
 def build_html_report(session: MeasurementSession) -> str:
     summary = session.summary()
     findings = session.findings()
@@ -36,11 +42,19 @@ def build_html_report(session: MeasurementSession) -> str:
     tracked = summary.get("tracked_metrics") or session.tracked_metrics()
     show_battery = any("batter" in str(m).lower() or m == "remainingCharge" for m in tracked)
 
+    note = (
+        "<p class='note'>O resultado usa âmbito <strong>all_timesteps</strong>: "
+        "se qualquer amostra violar o limiar, o requisito fica <strong>FAIL</strong> até ao fim. "
+        "A tabela mostra o valor <em>atual</em> (último), o <em>mínimo</em> da corrida e a "
+        "<em>1ª violação</em> — para não confundir o número «travado» do fail com o valor presente.</p>"
+    )
+
     fail_cards = []
     pass_cards = []
     pending_cards = []
     for f in findings:
         label, klass = _ok_label(f.get("ok"))
+        unit = f.get("unit") or ""
         entities_html = ""
         ents = f.get("entities") or []
         if ents:
@@ -48,20 +62,24 @@ def build_html_report(session: MeasurementSession) -> str:
             for e in ents:
                 el, ek = _ok_label(e.get("ok"))
                 rows.append(
-                    f"<tr class='{ek}'><td>{html.escape(str(e.get('id')))}</td>"
-                    f"<td>{_fmt(e.get('actual'), f.get('unit') or '')}</td>"
+                    f"<tr class='{ek}'>"
+                    f"<td>{html.escape(str(e.get('id')))}</td>"
+                    f"<td>{_fmt(e.get('last'), unit)}</td>"
+                    f"<td>{_fmt(e.get('min'), unit)}</td>"
+                    f"<td>{_fmt(e.get('max'), unit)}</td>"
+                    f"<td>{_fmt(e.get('first_fail'), unit)}</td>"
+                    f"<td>{_fmt_ts(e.get('first_fail_ts'))}</td>"
+                    f"<td>{e.get('fail_count', 0)} / {e.get('sample_count', 0)}</td>"
                     f"<td><strong>{el}</strong></td>"
-                    f"<td class='muted'>{html.escape(str(e.get('detail') or ''))}</td></tr>"
+                    f"</tr>"
                 )
             entities_html = (
-                "<table class='mini'><thead><tr><th>Drone</th><th>Valor</th>"
-                "<th>Resultado</th><th>Comparação</th></tr></thead>"
+                "<table class='mini'><thead><tr>"
+                "<th>Drone</th><th>Atual</th><th>Mín</th><th>Máx</th>"
+                "<th>1ª violação</th><th>Hora</th><th>Falhas / amostras</th><th>Resultado</th>"
+                "</tr></thead>"
                 f"<tbody>{''.join(rows)}</tbody></table>"
             )
-
-        actual_txt = _fmt(f.get("actual"), f.get("unit") or "")
-        if f.get("scope") == "per_drone":
-            actual_txt = "ver tabela por drone"
 
         card = f"""
         <div class="finding {klass}">
@@ -73,9 +91,8 @@ def build_html_report(session: MeasurementSession) -> str:
           <p class="why">{html.escape(f.get('why') or '')}</p>
           <dl>
             <dt>Métrica</dt><dd><code>{html.escape(str(f.get('metric')))}</code></dd>
-            <dt>Critério esperado</dt><dd><code>{html.escape(str(f.get('expected')))}</code></dd>
-            <dt>Valor observado</dt><dd>{actual_txt}</dd>
-            <dt>Âmbito</dt><dd>{html.escape(str(f.get('scope')))}</dd>
+            <dt>Critério</dt><dd><code>{html.escape(str(f.get('expected')))}</code></dd>
+            <dt>Âmbito</dt><dd>{html.escape(str(f.get('scope')))} (todas as amostras)</dd>
           </dl>
           {entities_html}
         </div>"""
@@ -98,7 +115,6 @@ def build_html_report(session: MeasurementSession) -> str:
     )
     generated = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    # Tabela resumo
     summary_rows = []
     for f in findings:
         label, klass = _ok_label(f.get("ok"))
@@ -111,23 +127,26 @@ def build_html_report(session: MeasurementSession) -> str:
             f"<td>{html.escape(f.get('why') or '')}</td></tr>"
         )
 
-    # Mensagens: só colunas das métricas pedidas
-    msg_headers = ["Hora", "Drone"] + [html.escape(m) for m in tracked] + ["Lat", "Lon"]
+    msg_headers = ["Hora", "Drone"] + [html.escape(m) for m in tracked] + ["Estado", "Lat", "Lon"]
     msg_rows = []
-    for m in session.message_log[-40:]:
+    for m in session.message_log[-50:]:
         ts = datetime.fromtimestamp(m["ts"], tz=timezone.utc).strftime("%H:%M:%S")
+        viol = bool(m.get("violation"))
         cells = [ts, html.escape(str(m.get("drone")))]
         for metric in tracked:
             val = m.get(metric)
             cells.append("—" if val is None else str(val))
+        cells.append("VIOLAÇÃO" if viol else "ok")
         cells.append(str(m.get("lat") if m.get("lat") is not None else "—"))
         cells.append(str(m.get("lon") if m.get("lon") is not None else "—"))
-        msg_rows.append("<tr>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>")
+        cls = " class='sample-fail'" if viol else ""
+        msg_rows.append(f"<tr{cls}>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>")
 
     bat_li = ""
     if show_battery:
         bat_li = (
-            f"<li>Bateria min/max: {summary.get('min_battery')} / {summary.get('max_battery')}</li>"
+            f"<li>Bateria min/max na medição: {summary.get('min_battery')} / "
+            f"{summary.get('max_battery')}</li>"
         )
     sep_li = ""
     if any(m in DISTANCE_METRICS for m in tracked):
@@ -152,11 +171,12 @@ def build_html_report(session: MeasurementSession) -> str:
 :root {{ --bg:#f4f6f8; --card:#fff; --ink:#16202a; --muted:#5a6a7a; --line:#e2e8ee;
   --pass:#0a7a2f; --fail:#b00020; --na:#6b7280; --pass-bg:#e8f7ee; --fail-bg:#fde8ec; --na-bg:#f3f4f6; }}
 body{{font-family:"Segoe UI",system-ui,sans-serif;margin:0;background:var(--bg);color:var(--ink);line-height:1.45}}
-.wrap{{max-width:980px;margin:0 auto;padding:1.5rem}}
+.wrap{{max-width:1040px;margin:0 auto;padding:1.5rem}}
 .hero{{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.5rem;margin-bottom:1rem}}
 .verdict{{font-size:2rem;font-weight:750;letter-spacing:.02em}}
 .pass{{color:var(--pass)}}.fail{{color:var(--fail)}}.na{{color:var(--na)}}
 .meta{{color:var(--muted);font-size:.95rem}}
+.note{{background:#fffbeb;border:1px solid #f6d98b;border-radius:8px;padding:.75rem 1rem;font-size:.9rem}}
 .grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:1rem}}
 .stat{{background:var(--bg);border-radius:8px;padding:.75rem}}
 .stat b{{display:block;font-size:1.4rem}}
@@ -168,15 +188,17 @@ h2{{margin:1.5rem 0 .75rem;font-size:1.15rem}}
 .finding.na{{background:var(--na-bg)}}
 .finding-head{{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.35rem}}
 .badge{{font-size:.75rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;background:#fff;border:1px solid currentColor}}
-.why{{font-size:1.05rem;margin:.4rem 0 .8rem}}
-dl{{display:grid;grid-template-columns:160px 1fr;gap:.25rem .75rem;margin:0;font-size:.92rem}}
+.why{{font-size:1.02rem;margin:.4rem 0 .8rem}}
+dl{{display:grid;grid-template-columns:140px 1fr;gap:.25rem .75rem;margin:0;font-size:.92rem}}
 dt{{color:var(--muted)}} dd{{margin:0}}
-table{{width:100%;border-collapse:collapse;font-size:.9rem}}
-th,td{{border-bottom:1px solid var(--line);padding:.45rem .5rem;text-align:left;vertical-align:top}}
-tr.fail td:nth-child(5), tr.fail strong{{color:var(--fail)}}
-tr.pass td:nth-child(5), tr.pass strong{{color:var(--pass)}}
+table{{width:100%;border-collapse:collapse;font-size:.88rem}}
+th,td{{border-bottom:1px solid var(--line);padding:.4rem .45rem;text-align:left;vertical-align:top}}
+tr.fail td:last-child, tr.fail strong{{color:var(--fail)}}
+tr.pass td:last-child, tr.pass strong{{color:var(--pass)}}
+tr.sample-fail{{background:#fde8ec}}
+tr.sample-fail td{{color:var(--fail)}}
 code{{background:#eef2f6;padding:.1rem .35rem;border-radius:4px;font-size:.88em}}
-.mini{{margin-top:.75rem;background:rgba(255,255,255,.6)}}
+.mini{{margin-top:.75rem;background:rgba(255,255,255,.65)}}
 .muted{{color:var(--muted)}}
 @media (max-width:700px){{.grid{{grid-template-columns:1fr}} dl{{grid-template-columns:1fr}}}}
 </style></head><body><div class="wrap">
@@ -193,10 +215,11 @@ code{{background:#eef2f6;padding:.1rem .35rem;border-radius:4px;font-size:.88em}
     <div class="stat"><span class="muted">Pendentes</span><b class="na">{summary.get("reqs_pending", 0)}</b></div>
   </div>
   <ul class="meta">
-    <li>Drones: {summary.get("drone_count")} · Mensagens (durante medição/setup): {summary.get("message_count")}</li>
-    <li>Métricas sob teste: <code>{html.escape(", ".join(tracked) or "—")}</code></li>
+    <li>Drones: {summary.get("drone_count")} · Mensagens: {summary.get("message_count")}</li>
+    <li>Métricas: <code>{html.escape(", ".join(tracked) or "—")}</code></li>
     {bat_li}{sep_li}
   </ul>
+  {note}
 </div>
 
 <div class="card">
@@ -207,9 +230,9 @@ code{{background:#eef2f6;padding:.1rem .35rem;border-radius:4px;font-size:.88em}
   <tbody>{''.join(summary_rows) or '<tr><td colspan=6>—</td></tr>'}</tbody></table>
 </div>
 
-{f'<div class="card"><h2>O que falhou</h2>{"".join(fail_cards)}</div>' if fail_cards else ''}
+{f'<div class="card"><h2>Evidência das falhas</h2>{"".join(fail_cards)}</div>' if fail_cards else ''}
 {f'<div class="card"><h2>O que passou</h2>{"".join(pass_cards)}</div>' if pass_cards else ''}
-{f'<div class="card"><h2>Pendentes / sem amostra</h2>{"".join(pending_cards)}</div>' if pending_cards else ''}
+{f'<div class="card"><h2>Pendentes</h2>{"".join(pending_cards)}</div>' if pending_cards else ''}
 
 <div class="card">
   <h2>Definição dos requisitos</h2>
@@ -218,7 +241,8 @@ code{{background:#eef2f6;padding:.1rem .35rem;border-radius:4px;font-size:.88em}
 </div>
 
 <div class="card">
-  <h2>Amostras MQTT (métricas pedidas)</h2>
+  <h2>Últimas amostras MQTT</h2>
+  <p class="muted">Linhas vermelhas = amostra que violou o limiar naquele instante.</p>
   <table><thead><tr>{''.join(f"<th>{h}</th>" for h in msg_headers)}</tr></thead>
   <tbody>{''.join(msg_rows) or '<tr><td colspan="' + str(len(msg_headers)) + '">—</td></tr>'}</tbody></table>
 </div>

@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import asyncio
 import json
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
 import httpx
 
 from reqvallive.config import settings
+from reqvallive.eval.criteria_gate import success_criteria_model_doc
 from reqvallive.eval.live import is_mvp_supported
 from reqvallive.llm.client import interpret_requirements_markdown
 from reqvallive.models.session import store
@@ -19,6 +21,8 @@ from reqvallive.mqtt.subscriber import mqtt_manager
 from reqvallive.reports.html_report import build_html_report
 
 router = APIRouter(prefix="/api")
+
+_EXAMPLES_DIR = Path(__file__).resolve().parents[3] / "examples"
 
 
 class MdInterpretBody(BaseModel):
@@ -175,11 +179,57 @@ def update_mqtt(session_id: str, body: MqttConfigBody) -> dict[str, Any]:
     return session.to_public_dict()
 
 
+@router.get("/criteria/model")
+def criteria_model() -> dict[str, Any]:
+    """Modelo pedagógico de Success Criteria (MSFC / SIS-08 Methods)."""
+    return success_criteria_model_doc()
+
+
+@router.get("/criteria/example.md")
+def criteria_example_md() -> PlainTextResponse:
+    """Exemplo bem feito de Success Criteria (download)."""
+    path = _EXAMPLES_DIR / "success_criteria_model.md"
+    if path.is_file():
+        text = path.read_text(encoding="utf-8")
+    else:
+        text = success_criteria_model_doc().get("markdown_example") or ""
+    return PlainTextResponse(
+        text,
+        media_type="text/markdown; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="success_criteria_modelo.md"'},
+    )
+
+
+@router.post("/sessions/{session_id}/criteria/evaluate")
+def reevaluate_criteria(session_id: str) -> dict[str, Any]:
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    session.refresh_criteria_gate()
+    return session.to_public_dict()
+
+
+def _require_gate_accept(session) -> None:
+    if not session.gate_allows_measurement():
+        gate = session.criteria_gate.to_dict() if session.criteria_gate else {}
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": (
+                    "Medição bloqueada: Success Criteria não aprovados no gate "
+                    "(MSFC: critérios devem estar maduros antes da actividade de V&V)."
+                ),
+                "criteria_gate": gate,
+            },
+        )
+
+
 @router.post("/sessions/{session_id}/connect")
 def connect_mqtt(session_id: str) -> dict[str, Any]:
     session = store.get(session_id)
     if session is None:
         raise HTTPException(404, detail="Sessão não encontrada")
+    _require_gate_accept(session)
     mqtt_manager.connect(session)
     return session.to_public_dict()
 
@@ -198,6 +248,7 @@ def start_session(session_id: str) -> dict[str, Any]:
     session = store.get(session_id)
     if session is None:
         raise HTTPException(404, detail="Sessão não encontrada")
+    _require_gate_accept(session)
     if not all(is_mvp_supported(r) for r in session.requirements):
         raise HTTPException(400, detail="Há requisitos com critério não suportado (use threshold/range)")
     if not session.connected:

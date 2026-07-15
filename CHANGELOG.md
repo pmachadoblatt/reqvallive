@@ -9,11 +9,26 @@ Datas no formato `AAAA-MM-DD`.
 
 ## [Unreleased]
 
+### Added (2026-07-15)
+
+- Motor `eval/criteria_gate.py`: gate ACCEPT/REJECT de Success Criteria (SIS-08 Methods / MSFC-3173)
+- Bloqueio de `/connect` e `/start` com HTTP 409 se gate ≠ ACCEPT
+- `GET /api/criteria/model` + modelo pedagógico na página inicial (modal) + `GET /api/criteria/example.md`
+- `POST /sessions/{id}/criteria/evaluate` para reavaliar
+- Testes `tests/test_criteria_gate.py` e `examples/success_criteria_model.md`
+- **Fix:** veredicto live **latcheia FAIL** se qualquer amostra violar o limiar (`all_timesteps`); já não usa só o último valor (caso charlie 15%→25% com relatório PASS errado)
+- Relatório e medição ao vivo mostram **atual + mínimo + 1ª violação + #falhas/amostras** (sem confundir o valor «travado» com o presente)
+- UI de medição: faixa PASS/FAIL, cartões por drone, feed com violações, gráfico atual vs mínimo
+- Home simplificada + modal «Como deve ser o critério?» + download do exemplo
+- Material SIS-08 Methods em `docs/` e exemplos de laudos PASS/FAIL
+
 _Próximas iterações (backlog)_
 
+- Passo UI dedicado «Critério de validação» (painel completo errors/warnings/sugestões)
 - Critérios live booleanos / temporais (além de `threshold` e `range`)
 - Enricher de diagrama (PlantUML/Kroki) se Mermaid não bastar
 - Parser livre de PDF/Word além de Markdown + LLM
+- Secção do gate no relatório HTML
 
 ---
 
