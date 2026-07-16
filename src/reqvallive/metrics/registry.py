@@ -95,8 +95,14 @@ def extract_metric_from_payload(metric: str, payload: dict[str, Any]) -> float |
         if isinstance(speed, dict):
             return _as_float(speed.get("horizontal"))
 
-    if metric == "altitudeAGL":
-        return _as_float(payload.get("altitudeAGL"))
+    if metric in ("altitudeAGL", "altitude", "altitude_m", "alt"):
+        for key in ("altitudeAGL", "altitude", "altitude_m"):
+            val = _as_float(payload.get(key))
+            if val is not None:
+                return val
+        loc = payload.get("location")
+        if isinstance(loc, dict):
+            return _as_float(loc.get("altitude"))
 
     if metric == "distanceToHome":
         return _as_float(payload.get("distanceToHome"))

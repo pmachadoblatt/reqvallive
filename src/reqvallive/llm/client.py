@@ -45,11 +45,13 @@ Responda APENAS com JSON válido (sem markdown fences, sem texto antes/depois) n
 
 Regras:
 - Extraia APENAS os requisitos explicitamente pedidos no Markdown. NÃO invente requisitos extra (ex.: bateria) se o documento não os mencionar.
-- Só use success_criteria.type: "threshold" ou "range"
-- metric deve ser exactamente a métrica do texto MQTT: batteryLevel, altitudeAGL, distanceToHome, min_separation_m, speed_horizontal, satelliteCount, remainingFlightTime, etc.
-- Se o documento fala só de distância/separação, a lista requirements deve ter só esses requisitos; metrics_needed idem.
+- success_criteria.type: "threshold", "range" OU "statistical"
+- metric deve ser exactamente o campo MQTT (NÃO invente métricas derivadas): batteryLevel, altitudeAGL, distanceToHome, min_separation_m, speed_horizontal, satelliteCount, remainingFlightTime, etc.
+- Variação / amplitude / «não variar mais de X» / peak-to-peak: use type "statistical", aggregation "range", operator "<=", value = X, metric = o campo telemetria (ex.: altitudeAGL). NÃO crie metric inventada tipo altitude_variation.
+- Máximo/mínimo na janela de medição: statistical com aggregation "max" ou "min".
+- NÃO use aggregation mean/std/percentile (ainda não suportadas no live).
 - operator: ">=", "<=", ">", "<", "==", "!="
-- scope: "all_entities" ou "all_timesteps"
+- scope (threshold/range): "all_entities" ou "all_timesteps"
 - req_id: só letras, números, hífen e underscore
 - text com pelo menos 10 caracteres
 """
@@ -135,12 +137,32 @@ def _normalize_requirement(raw: dict[str, Any], idx: int) -> dict[str, Any]:
     if not isinstance(sc, dict):
         sc = {}
     sc_type = str(sc.get("type") or "threshold").lower()
-    if sc_type not in ("threshold", "range"):
+    if sc_type not in ("threshold", "range", "statistical"):
         sc_type = "threshold"
     sc["type"] = sc_type
 
     metric = str(sc.get("metric") or "batteryLevel")
     metric = metric.replace("speed.horizontal", "speed_horizontal")
+    if metric in ("altitude", "altitude_m", "alt"):
+        metric = "altitudeAGL"
+    # Não inventar métricas de variação: forçar statistical+range
+    variation_aliases = (
+        "altitude_variation",
+        "altitude_variation_m",
+        "variation",
+        "peak_to_peak",
+        "amplitude",
+    )
+    if metric.lower() in variation_aliases or metric.lower().endswith("_variation"):
+        base = "altitudeAGL" if "alt" in metric.lower() else metric.replace("_variation", "").replace("_m", "")
+        if not base or base.lower() in variation_aliases:
+            base = "altitudeAGL"
+        metric = base if base else "altitudeAGL"
+        sc_type = "statistical"
+        sc["type"] = "statistical"
+        sc["aggregation"] = "range"
+        if "operator" not in sc:
+            sc["operator"] = "<="
     sc["metric"] = metric
 
     if sc_type == "threshold":
@@ -154,7 +176,19 @@ def _normalize_requirement(raw: dict[str, Any], idx: int) -> dict[str, Any]:
             sc["value"] = 0.0
         sc.setdefault("unit", "")
         sc.setdefault("tolerance", 0.0)
-    else:
+        scope = str(sc.get("scope") or "all_entities")
+        allowed = {
+            "all_timesteps",
+            "all_flights",
+            "final_state",
+            "any_timestep",
+            "all_entities",
+            "per_entity",
+        }
+        if scope not in allowed:
+            scope = "all_entities"
+        sc["scope"] = scope
+    elif sc_type == "range":
         try:
             sc["min_value"] = float(sc.get("min_value", 0))
             sc["max_value"] = float(sc.get("max_value", 100))
@@ -164,19 +198,37 @@ def _normalize_requirement(raw: dict[str, Any], idx: int) -> dict[str, Any]:
         sc.setdefault("unit", "")
         sc.setdefault("inclusive_min", True)
         sc.setdefault("inclusive_max", True)
+        scope = str(sc.get("scope") or "all_entities")
+        allowed = {
+            "all_timesteps",
+            "all_flights",
+            "final_state",
+            "any_timestep",
+            "all_entities",
+            "per_entity",
+        }
+        if scope not in allowed:
+            scope = "all_entities"
+        sc["scope"] = scope
+    else:
+        # statistical — janela live: range | max | min
+        agg = str(sc.get("aggregation") or "range").lower().strip()
+        if agg not in ("range", "max", "min"):
+            # mean/etc. → forçar range se o texto/context sugerir variação; senão range default
+            agg = "range"
+        sc["aggregation"] = agg
+        op = str(sc.get("operator") or "<=")
+        if op not in (">=", "<=", ">", "<", "==", "!="):
+            op = "<="
+        sc["operator"] = op
+        try:
+            sc["value"] = float(sc.get("value", 0))
+        except (TypeError, ValueError):
+            sc["value"] = 0.0
+        sc.setdefault("unit", "")
+        sc.pop("percentile_value", None)
+        sc.pop("scope", None)  # StatisticalCriteria schema sem scope
 
-    scope = str(sc.get("scope") or "all_entities")
-    allowed = {
-        "all_timesteps",
-        "all_flights",
-        "final_state",
-        "any_timestep",
-        "all_entities",
-        "per_entity",
-    }
-    if scope not in allowed:
-        scope = "all_entities"
-    sc["scope"] = scope
     data["success_criteria"] = sc
     return data
 

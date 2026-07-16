@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 from pathlib import Path
 from typing import Any
@@ -250,11 +251,28 @@ def start_session(session_id: str) -> dict[str, Any]:
         raise HTTPException(404, detail="Sessão não encontrada")
     _require_gate_accept(session)
     if not all(is_mvp_supported(r) for r in session.requirements):
-        raise HTTPException(400, detail="Há requisitos com critério não suportado (use threshold/range)")
+        raise HTTPException(
+            400,
+            detail="Há requisitos com critério não suportado (use threshold/range ou statistical range|max|min)",
+        )
     if not session.connected:
         mqtt_manager.connect(session)
     session.start_measurement()
     return session.to_public_dict()
+
+
+@router.get("/sessions/{session_id}/approved-sc")
+def get_approved_sc(session_id: str) -> dict[str, Any]:
+    """Snapshot imutável do Success Criteria aprovado no /start."""
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    if session.approved_sc_snapshot is None:
+        raise HTTPException(
+            404,
+            detail="Snapshot ainda não existe — inicie a medição (POST .../start) para congelar o SC.",
+        )
+    return copy.deepcopy(session.approved_sc_snapshot)
 
 
 @router.post("/sessions/{session_id}/stop")

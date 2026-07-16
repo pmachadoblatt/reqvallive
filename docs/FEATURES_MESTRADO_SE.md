@@ -91,7 +91,7 @@ Cada bloco abaixo traduz isso em **features**.
 |----|---------|------------|--------------|---------------|
 | F-EV-01 | Ingestão MQTT conforme **protocolo padronizado do lab** | **P0** | Evidência real, contrato conhecido | **BASE** (Conceptio) |
 | F-EV-02 | Multi-entidade (`droneName`) e métricas por entidade + agregadas | **P0** | Missões multiagente | **BASE** |
-| F-EV-03 | Avaliação `threshold`/`range` com regra temporal honesta (`all_timesteps` → **FAIL latch**) | **P0** | Veredicto ≠ último valor | **BASE** |
+| F-EV-03 | Avaliação `threshold`/`range`/`statistical(range|max|min)` com regra temporal honesta (`all_timesteps` → **FAIL latch**) | **P0** | Veredicto ≠ último valor; variação = peak-to-peak na janela | **BASE** |
 | F-EV-04 | Registrar **atual, mínimo/máximo, 1ª violação, #falhas/amostras** | **P0** | Momentos críticos / evidência objetiva | **BASE** |
 | F-EV-05 | Timeline / lista de eventos críticos no laudo (instantes de violação) | **P1** | Narrativa SE da missão | Parcial — aprofundar |
 | F-EV-06 | Contagem e qualidade da amostra (perda de link, gaps) | **P1** | Validade da evidência | Gap leve |

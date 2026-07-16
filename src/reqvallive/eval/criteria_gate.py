@@ -22,7 +22,9 @@ from typing import Any
 
 from simreqvalidator.schema.requirement import RequirementRecord
 from simreqvalidator.schema.success_criteria import (
+    Aggregation,
     RangeCriteria,
+    StatisticalCriteria,
     ThresholdCriteria,
 )
 from simreqvalidator.schema.vv_method import VVMethod
@@ -61,6 +63,8 @@ KNOWN_TELEMETRY_METRICS = frozenset(
         *BATTERY_ALIASES,
         *DISTANCE_METRICS,
         "altitudeAGL",
+        "altitude",
+        "altitude_m",
         "distanceToHome",
         "speed_horizontal",
         "speed.horizontal",
@@ -73,6 +77,9 @@ KNOWN_TELEMETRY_METRICS = frozenset(
         "seriousLowBatteryThreshold",
     }
 )
+
+# Agregações estatísticas executáveis na janela de medição MQTT (sobre a métrica telemetria)
+LIVE_WINDOW_AGGREGATIONS = frozenset({"range", "max", "min"})
 
 # Métodos que NÃO produzem evidência por amostragem MQTT contínua (Methods slides)
 NON_LIVE_METHODS = frozenset(
@@ -251,7 +258,17 @@ def _normalize_metric(metric: str) -> str:
     m = metric.strip()
     if m == "speed.horizontal":
         return "speed_horizontal"
+    if m in ("altitude", "altitude_m", "alt"):
+        return "altitudeAGL"
     return m
+
+
+def _agg_name(aggregation: Aggregation | str | None) -> str:
+    if aggregation is None:
+        return ""
+    if isinstance(aggregation, Aggregation):
+        return aggregation.value
+    return str(aggregation).lower().strip()
 
 
 def _is_known_telemetry(metric: str) -> bool:
@@ -566,6 +583,79 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
                     suggestion="Defina scope (ex.: all_entities).",
                 )
             )
+
+    elif isinstance(sc, StatisticalCriteria):
+        ctype = "statistical"
+        metric = _normalize_metric(str(sc.metric or ""))
+        agg = _agg_name(sc.aggregation)
+        if not metric:
+            reasons.append(
+                GateReason(
+                    code="SC_METRIC_MISSING",
+                    severity=ReasonSeverity.ERROR,
+                    message="Statistical sem metric (Performance criteria).",
+                    dimension=MsfcDimension.PERFORMANCE,
+                    suggestion="Indique a métrica MQTT (ex.: altitudeAGL, batteryLevel).",
+                )
+            )
+        if agg not in LIVE_WINDOW_AGGREGATIONS:
+            reasons.append(
+                GateReason(
+                    code="SC_AGGREGATION_UNSUPPORTED",
+                    severity=ReasonSeverity.ERROR,
+                    message=(
+                        f"Agregação «{agg or '?'}» fora do live MQTT "
+                        f"(aceites: {', '.join(sorted(LIVE_WINDOW_AGGREGATIONS))}). "
+                        "mean/std/percentile: backlog."
+                    ),
+                    dimension=MsfcDimension.LIVE_EXECUTABLE,
+                    suggestion=(
+                        "Para variação («não variar mais de X»), use aggregation=range "
+                        "com operator <= e value=X sobre a métrica telemetria."
+                    ),
+                )
+            )
+            live_executable = False
+        else:
+            try:
+                op = sc.operator
+                if op is None:
+                    raise ValueError("missing")
+            except Exception:
+                reasons.append(
+                    GateReason(
+                        code="SC_OPERATOR_MISSING",
+                        severity=ReasonSeverity.ERROR,
+                        message="Statistical sem operador de comparação válido.",
+                        dimension=MsfcDimension.PERFORMANCE,
+                        suggestion="Use um de: >=, <=, >, <, ==, !=.",
+                    )
+                )
+            if sc.value is None:
+                reasons.append(
+                    GateReason(
+                        code="SC_VALUE_MISSING",
+                        severity=ReasonSeverity.ERROR,
+                        message="Statistical sem value numérico.",
+                        dimension=MsfcDimension.PERFORMANCE,
+                        suggestion="Defina o limiar do agregado (ex.: range <= 1.0).",
+                    )
+                )
+            elif agg in LIVE_WINDOW_AGGREGATIONS:
+                live_executable = True
+
+        kind = _metric_needs_unit(metric) if metric else None
+        if kind and not _unit_ok(sc.unit, kind):
+            reasons.append(
+                GateReason(
+                    code="SC_UNIT_MISSING",
+                    severity=ReasonSeverity.ERROR,
+                    message=f"Unidade ausente ou incoerente para «{metric}» (esperado: {kind}).",
+                    dimension=MsfcDimension.PERFORMANCE,
+                    suggestion=f"Preencha success_criteria.unit (ex.: {kind}).",
+                )
+            )
+
     else:
         ctype = type(sc).__name__
         reasons.append(
@@ -573,11 +663,15 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
                 code="SC_TYPE_UNSUPPORTED",
                 severity=ReasonSeverity.ERROR,
                 message=(
-                    f"Tipo de critério «{ctype}» fora do MVP live (só threshold/range). "
-                    "Boolean/temporal/estatístico: backlog."
+                    f"Tipo de critério «{ctype}» fora do MVP live "
+                    "(threshold/range/statistical com range|max|min). "
+                    "Boolean/temporal/mean: backlog."
                 ),
                 dimension=MsfcDimension.PERFORMANCE,
-                suggestion="Reformule como threshold ou range numérico telemetrizado.",
+                suggestion=(
+                    "Reformule como threshold/range, ou statistical aggregation=range "
+                    "para variação peak-to-peak."
+                ),
             )
         )
         reasons.append(
@@ -640,16 +734,27 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
     )
 
     if metric and _PERCENTILE.search(req.text or ""):
-        reasons.append(
-            GateReason(
-                code="SC_AGGREGATION_UNSUPPORTED",
-                severity=ReasonSeverity.ERROR,
-                message="Agregação estatística temporal (média/percentil) ainda não suportada no motor live.",
-                dimension=MsfcDimension.LIVE_EXECUTABLE,
-                suggestion="Use limiar instantâneo (threshold/range) por amostra no MVP.",
-            )
+        # Texto pede média/percentil — só aceite se o SC já for window-agg suportada
+        # e o texto não for o único indício (ainda rejeitamos mean/percentile no motor).
+        sc_agg = (
+            _agg_name(sc.aggregation)
+            if isinstance(sc, StatisticalCriteria)
+            else ""
         )
-        live_executable = False
+        if sc_agg not in LIVE_WINDOW_AGGREGATIONS:
+            reasons.append(
+                GateReason(
+                    code="SC_AGGREGATION_UNSUPPORTED",
+                    severity=ReasonSeverity.ERROR,
+                    message="Agregação estatística temporal (média/percentil) ainda não suportada no motor live.",
+                    dimension=MsfcDimension.LIVE_EXECUTABLE,
+                    suggestion=(
+                        "Use limiar por amostra (threshold/range) ou variation peak-to-peak "
+                        "(statistical aggregation=range)."
+                    ),
+                )
+            )
+            live_executable = False
 
     # Telemetria / live
     if metric:
@@ -675,14 +780,15 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
                 )
             )
 
-    if vv == VVMethod.TEST.value and ctype not in ("threshold", "range"):
+    _LIVE_NUMERIC_TYPES = ("threshold", "range", "statistical")
+    if vv == VVMethod.TEST.value and ctype not in _LIVE_NUMERIC_TYPES:
         reasons.append(
             GateReason(
                 code="VV_TEST_WITHOUT_NUMERIC",
                 severity=ReasonSeverity.ERROR,
                 message="Método Test sem limiar numérico claro (Methods: Test obtém dados detalhados).",
                 dimension=MsfcDimension.METHOD_COHERENCE,
-                suggestion="Associe threshold/range com value ou min/max.",
+                suggestion="Associe threshold/range ou statistical (range|max|min) com value.",
             )
         )
         method_coherence = "fail"
@@ -697,7 +803,7 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
 
     errors = [r for r in reasons if r.severity == ReasonSeverity.ERROR]
     numeric_ready = (
-        ctype in ("threshold", "range")
+        ctype in _LIVE_NUMERIC_TYPES
         and bool(metric)
         and _is_known_telemetry(metric or "")
         and live_executable
@@ -818,8 +924,22 @@ def success_criteria_model_doc() -> dict[str, Any]:
             "**min_separation_m >= 20 meters** (métrica global).\n\n"
             "- **Success Criteria:** threshold metric=min_separation_m "
             "operator=>= value=20 unit=meters scope=all_entities\n"
-            "- **Pré-condição:** ≥2 drones com GPS\n"
+            "- **Pré-condição:** ≥2 drones com GPS\n\n"
+            "## RQ-ALT-VAR-001 — Variação de altitude (system / test)\n"
+            "altitudeAGL **não deve variar mais de 1 meter** na janela de medição.\n\n"
+            "- **Success Criteria:** statistical metric=altitudeAGL aggregation=range "
+            "operator=<= value=1 unit=meters\n"
+            "- **Nota:** não inventar métrica `altitude_variation` — o agregado é sobre o campo MQTT\n"
         ),
+        "live_statistical_window": {
+            "aggregations": ["range", "max", "min"],
+            "meaning": {
+                "range": "max(série) − min(série) na janela measuring=true",
+                "max": "máximo da série na janela",
+                "min": "mínimo da série na janela",
+            },
+            "not_supported_yet": ["mean", "std", "percentile", "median"],
+        },
         "json_example": {
             "req_id": "RQ-BAT-001",
             "title": "Nível mínimo de bateria",

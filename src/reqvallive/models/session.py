@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import threading
 import time
 import uuid
@@ -16,7 +17,14 @@ from reqvallive.eval.criteria_gate import (
     SessionGateSummary,
     evaluate_session_criteria,
 )
-from reqvallive.eval.live import constraint_text, evaluate_value, is_mvp_supported, metric_name
+from reqvallive.eval.live import (
+    constraint_text,
+    evaluate_sample,
+    evaluate_value,
+    is_mvp_supported,
+    is_window_statistical,
+    metric_name,
+)
 from reqvallive.metrics.registry import (
     BATTERY_ALIASES,
     DISTANCE_METRICS,
@@ -83,6 +91,9 @@ class MeasurementSession:
     started_at: float | None = None
     ended_at: float | None = None
     criteria_gate: SessionGateSummary | None = None
+    # Cópia imutável do SC aprovado no instante do /start (auditoria da corrida)
+    approved_sc_snapshot: dict[str, Any] | None = None
+    _approved_requirements: list[RequirementRecord] | None = None
     mqtt_status: str = "disconnected"  # disconnected|connecting|listening|no_messages|error
     last_error: str | None = None
     drones: dict[str, DroneState] = field(default_factory=dict)
@@ -104,10 +115,16 @@ class MeasurementSession:
     last_message_at: float | None = None
     _lock: threading.RLock = field(default_factory=threading.RLock)
 
+    def active_requirements(self) -> list[RequirementRecord]:
+        """Requisitos da corrida: snapshot aprovado após /start; senão a lista de trabalho."""
+        if self._approved_requirements is not None:
+            return self._approved_requirements
+        return self.requirements
+
     def tracked_metrics(self) -> list[str]:
-        """Métricas pedidas pelos requisitos (única fonte para UI/relatório)."""
+        """Métricas pedidas pelos requisitos activos (única fonte para UI/relatório)."""
         seen: list[str] = []
-        for req in self.requirements:
+        for req in self.active_requirements():
             m = metric_name(req)
             if m and m not in seen:
                 seen.append(m)
@@ -115,6 +132,7 @@ class MeasurementSession:
 
     def refresh_criteria_gate(self) -> SessionGateSummary:
         with self._lock:
+            # Gate reavalia a lista de trabalho; o snapshot da corrida não muda.
             summary = evaluate_session_criteria(self.requirements)
             self.criteria_gate = summary
             return summary
@@ -126,8 +144,28 @@ class MeasurementSession:
             assert self.criteria_gate is not None
             return self.criteria_gate.global_status == GateStatus.ACCEPT
 
+    def freeze_approved_sc(self) -> dict[str, Any]:
+        """Congela SC + gate no instante do start (deep copy via JSON do schema)."""
+        dumped = [r.model_dump(mode="json") for r in self.requirements]
+        self._approved_requirements = [RequirementRecord.model_validate(d) for d in dumped]
+        gate = self.criteria_gate.to_dict() if self.criteria_gate else None
+        self.approved_sc_snapshot = {
+            "frozen_at": time.time(),
+            "session_id": self.id,
+            "gate_status": (gate or {}).get("global_status"),
+            "gate": gate,
+            "requirements": dumped,
+            "mqtt": {
+                "broker": self.mqtt_broker,
+                "port": self.mqtt_port,
+                "topic": self.mqtt_topic,
+            },
+        }
+        return self.approved_sc_snapshot
+
     def start_measurement(self) -> None:
         with self._lock:
+            self.freeze_approved_sc()
             self.measuring = True
             self.measurement_ended = False
             self.started_at = time.time()
@@ -163,9 +201,11 @@ class MeasurementSession:
             self.measuring = False
             self.measurement_ended = True
             self.ended_at = time.time()
+            # Mantém approved_sc_snapshot — é a prova do que valeu nesta corrida
 
     def primary_requirement(self) -> RequirementRecord:
-        return self.requirements[0]
+        reqs = self.active_requirements()
+        return reqs[0]
 
     @staticmethod
     def _latch_ok(previous: bool | None, sample_ok: bool | None) -> bool | None:
@@ -216,7 +256,7 @@ class MeasurementSession:
                 drone.latitude, drone.longitude, drone.altitude = pos[0], pos[1], pos[2]
 
             # métricas por requisito (excepto distância global)
-            for req in self.requirements:
+            for req in self.active_requirements():
                 metric = metric_name(req)
                 if metric in DISTANCE_METRICS:
                     continue
@@ -227,39 +267,57 @@ class MeasurementSession:
                 if self.measuring:
                     self._note_extrema(metric, float(val))
                 if self.measuring and is_mvp_supported(req):
-                    verdict = evaluate_value(req, val)
-                    sample_ok = verdict.ok if verdict.supported else None
                     rid = req.req_id
+                    raw = float(val)
+                    # Extremos da série da métrica MQTT (sempre sobre o valor bruto)
+                    if rid not in drone.min_actual_by_req:
+                        drone.min_actual_by_req[rid] = raw
+                        drone.max_actual_by_req[rid] = raw
+                    else:
+                        drone.min_actual_by_req[rid] = min(drone.min_actual_by_req[rid], raw)
+                        drone.max_actual_by_req[rid] = max(drone.max_actual_by_req[rid], raw)
+
+                    verdict = evaluate_sample(
+                        req,
+                        raw,
+                        sample_min=drone.min_actual_by_req[rid],
+                        sample_max=drone.max_actual_by_req[rid],
+                    )
+                    sample_ok = verdict.ok if verdict.supported else None
                     prev = drone.ok_by_req.get(rid)
                     latched = self._latch_ok(prev, sample_ok)
                     drone.ok_by_req[rid] = latched
-                    fv = float(val)
-                    drone.last_actual_by_req[rid] = fv
+                    # Valor observado no critério: amostra (threshold/range) ou agregado (statistical)
+                    observed = (
+                        float(verdict.value)
+                        if verdict.value is not None
+                        else raw
+                    )
+                    drone.last_actual_by_req[rid] = observed
                     drone.last_detail_by_req[rid] = verdict.detail
                     drone.sample_count_by_req[rid] = drone.sample_count_by_req.get(rid, 0) + 1
-                    if rid not in drone.min_actual_by_req:
-                        drone.min_actual_by_req[rid] = fv
-                        drone.max_actual_by_req[rid] = fv
-                    else:
-                        drone.min_actual_by_req[rid] = min(drone.min_actual_by_req[rid], fv)
-                        drone.max_actual_by_req[rid] = max(drone.max_actual_by_req[rid], fv)
                     if sample_ok is False:
                         drone.fail_count_by_req[rid] = drone.fail_count_by_req.get(rid, 0) + 1
                         if rid not in drone.fail_actual_by_req:
-                            drone.fail_actual_by_req[rid] = fv
+                            drone.fail_actual_by_req[rid] = observed
                             drone.fail_detail_by_req[rid] = verdict.detail
                             drone.fail_ts_by_req[rid] = time.time()
                     # Relatório: evidência de falha se FAIL, senão último valor
                     if latched is False and rid in drone.fail_actual_by_req:
                         drone.actual_by_req[rid] = drone.fail_actual_by_req[rid]
+                        series_note = (
+                            f"série=[{drone.min_actual_by_req[rid]:g}..{drone.max_actual_by_req[rid]:g}]"
+                            if is_window_statistical(req)
+                            else f"min={drone.min_actual_by_req[rid]:g}"
+                        )
                         drone.detail_by_req[rid] = (
                             f"1ª violação: {drone.fail_detail_by_req[rid]} "
-                            f"(atual={fv:g}, min={drone.min_actual_by_req[rid]:g}, "
+                            f"(atual={observed:g}, {series_note}, "
                             f"falhas={drone.fail_count_by_req.get(rid, 0)}/"
                             f"{drone.sample_count_by_req.get(rid, 0)})"
                         )
                     else:
-                        drone.actual_by_req[rid] = fv
+                        drone.actual_by_req[rid] = observed
                         drone.detail_by_req[rid] = verdict.detail
 
             self.drones[did] = drone
@@ -275,7 +333,7 @@ class MeasurementSession:
                 self.global_metrics["min_separation_m"] = sep
                 if self.measuring:
                     self._note_extrema("min_separation_m", float(sep))
-                for req in self.requirements:
+                for req in self.active_requirements():
                     if metric_name(req) in DISTANCE_METRICS and self.measuring:
                         verdict = evaluate_value(req, sep)
                         sample_ok = verdict.ok if verdict.supported else None
@@ -311,7 +369,7 @@ class MeasurementSession:
             # Log só com campos relevantes aos requisitos + id
             log_entry: dict[str, Any] = {"ts": time.time(), "drone": did, "violation": False}
             sample_violation = False
-            for req in self.requirements:
+            for req in self.active_requirements():
                 metric = metric_name(req)
                 if metric in DISTANCE_METRICS:
                     continue
@@ -352,7 +410,7 @@ class MeasurementSession:
     def overall_ok(self) -> bool | None:
         with self._lock:
             flags: list[bool] = []
-            for req in self.requirements:
+            for req in self.active_requirements():
                 metric = metric_name(req)
                 if metric in DISTANCE_METRICS:
                     v = self.global_ok_by_req.get(req.req_id)
@@ -371,7 +429,7 @@ class MeasurementSession:
         """Lista legível: por requisito, o que era esperado vs o que ocorreu."""
         with self._lock:
             out: list[dict[str, Any]] = []
-            for req in self.requirements:
+            for req in self.active_requirements():
                 metric = metric_name(req)
                 sc = req.success_criteria
                 expected = constraint_text(req)
@@ -521,8 +579,9 @@ class MeasurementSession:
 
     def to_public_dict(self) -> dict[str, Any]:
         with self._lock:
+            active = self.active_requirements()
             reqs = []
-            for req in self.requirements:
+            for req in active:
                 sc = req.success_criteria
                 metric = metric_name(req)
                 reqs.append(
@@ -571,7 +630,11 @@ class MeasurementSession:
                 if d.latitude is not None and d.longitude is not None
             }
 
-            primary = self.requirements[0]
+            primary = active[0]
+            snap = None
+            if self.approved_sc_snapshot is not None:
+                snap = copy.deepcopy(self.approved_sc_snapshot)
+
             return {
                 "id": self.id,
                 "req_id": primary.req_id,
@@ -600,15 +663,17 @@ class MeasurementSession:
                 "summary": self.summary(),
                 "findings": self.findings(),
                 "overall_ok": self.overall_ok(),
-                "supported_live": all(is_mvp_supported(r) for r in self.requirements),
+                "supported_live": all(is_mvp_supported(r) for r in active),
                 "criteria_gate": self.criteria_gate.to_dict() if self.criteria_gate else None,
+                "approved_sc_snapshot": snap,
+                "sc_frozen": snap is not None,
                 "thresholds": [
                     {
                         "req_id": r.req_id,
                         "metric": metric_name(r),
                         "success_criteria": r.success_criteria.model_dump(mode="json"),
                     }
-                    for r in self.requirements
+                    for r in active
                 ],
             }
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import json as _json
 from datetime import datetime, timezone
 
 from reqvallive.eval.live import constraint_text, metric_name
@@ -29,6 +30,38 @@ def _fmt_ts(ts: float | None) -> str:
     if ts is None:
         return "—"
     return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%H:%M:%S")
+
+
+def _snapshot_section(session: MeasurementSession) -> str:
+    snap = session.approved_sc_snapshot
+    if not snap:
+        return (
+            '<div class="card"><h2>Success Criteria aprovado (snapshot)</h2>'
+            '<p class="muted">Ainda sem snapshot — o SC é congelado ao iniciar a medição.</p></div>'
+        )
+    frozen = _fmt_ts(snap.get("frozen_at"))
+    gate_st = html.escape(str(snap.get("gate_status") or "—"))
+    rows = []
+    for req in snap.get("requirements") or []:
+        sc = req.get("success_criteria") or {}
+        sc_pretty = html.escape(_json.dumps(sc, ensure_ascii=False, indent=2))
+        rows.append(
+            "<tr>"
+            f"<td>{html.escape(str(req.get('req_id') or ''))}</td>"
+            f"<td>{html.escape(str(req.get('title') or ''))}</td>"
+            f"<td>{html.escape(str(req.get('vv_method') or ''))}</td>"
+            f"<td><pre class='sc-json'>{sc_pretty}</pre></td>"
+            "</tr>"
+        )
+    return f"""
+<div class="card">
+  <h2>Success Criteria aprovado (snapshot)</h2>
+  <p class="meta">Congelado em <strong>{frozen}</strong> UTC · gate <strong>{gate_st}</strong>
+     · sessão <code>{html.escape(str(snap.get('session_id') or ''))}</code></p>
+  <p class="muted">Cópia imutável do critério que valeu nesta corrida (não muda se o requisito de trabalho for alterado depois).</p>
+  <table><thead><tr><th>ID</th><th>Título</th><th>Método</th><th>success_criteria</th></tr></thead>
+  <tbody>{''.join(rows) or '<tr><td colspan=4>—</td></tr>'}</tbody></table>
+</div>"""
 
 
 def build_html_report(session: MeasurementSession) -> str:
@@ -153,7 +186,7 @@ def build_html_report(session: MeasurementSession) -> str:
         sep_li = f"<li>Separação mínima observada: {summary.get('min_separation_m')}</li>"
 
     req_def_rows = []
-    for req in session.requirements:
+    for req in session.active_requirements():
         req_def_rows.append(
             "<tr>"
             f"<td>{html.escape(req.req_id)}</td>"
@@ -163,6 +196,8 @@ def build_html_report(session: MeasurementSession) -> str:
             f"({html.escape(metric_name(req))})</td>"
             "</tr>"
         )
+
+    snapshot_html = _snapshot_section(session)
 
     return f"""<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"/>
@@ -198,13 +233,14 @@ tr.pass td:last-child, tr.pass strong{{color:var(--pass)}}
 tr.sample-fail{{background:#fde8ec}}
 tr.sample-fail td{{color:var(--fail)}}
 code{{background:#eef2f6;padding:.1rem .35rem;border-radius:4px;font-size:.88em}}
+.sc-json{{margin:0;white-space:pre-wrap;font-size:.8rem;background:#eef2f6;padding:.5rem;border-radius:6px;max-width:420px}}
 .mini{{margin-top:.75rem;background:rgba(255,255,255,.65)}}
 .muted{{color:var(--muted)}}
 @media (max-width:700px){{.grid{{grid-template-columns:1fr}} dl{{grid-template-columns:1fr}}}}
 </style></head><body><div class="wrap">
 <div class="hero">
   <div class="verdict {verdict_class}">{verdict}</div>
-  <p class="meta">Laudo ReqValLive · gerado {generated}</p>
+  <p class="meta">Relatório ReqValLive · gerado {generated}</p>
   <p class="meta">Broker <code>{html.escape(session.mqtt_broker)}:{session.mqtt_port}</code>
      · tópico <code>{html.escape(session.mqtt_topic)}</code>
      · medição {started} → {ended}
@@ -222,6 +258,8 @@ code{{background:#eef2f6;padding:.1rem .35rem;border-radius:4px;font-size:.88em}
   {note}
 </div>
 
+{snapshot_html}
+
 <div class="card">
   <h2>Resumo por requisito</h2>
   <table><thead><tr>
@@ -235,7 +273,7 @@ code{{background:#eef2f6;padding:.1rem .35rem;border-radius:4px;font-size:.88em}
 {f'<div class="card"><h2>Pendentes</h2>{"".join(pending_cards)}</div>' if pending_cards else ''}
 
 <div class="card">
-  <h2>Definição dos requisitos</h2>
+  <h2>Definição dos requisitos (corrida)</h2>
   <table><thead><tr><th>ID</th><th>Título</th><th>Texto</th><th>Critério</th></tr></thead>
   <tbody>{''.join(req_def_rows)}</tbody></table>
 </div>

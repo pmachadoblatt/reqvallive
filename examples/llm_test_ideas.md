@@ -29,6 +29,14 @@ Separação mínima entre quaisquer dois drones: `min_separation_m >= 20` (metro
 ### RQ-ALT-001
 Altitude AGL em envelope seguro: `altitudeAGL` entre 5 e 120 metros (range).
 
+### RQ-ALT-VAR-001
+Altitude não deve **variar** mais de 1 m na janela de medição:
+`statistical` + `aggregation=range` + `metric=altitudeAGL` + `operator=<=` + `value=1`
+(sem inventar métrica `altitude_variation` — o agregado é sobre o campo MQTT).
+
+### RQ-BAT-VAR-001
+`batteryLevel` não deve variar mais de 5% na janela (`range(batteryLevel) <= 5`).
+
 ---
 
 ## Suite 3 — Navegação / missão
@@ -89,6 +97,7 @@ Gere success_criteria threshold/range com metric igual ao nome do campo MQTT.
 | Métrica | Fonte |
 |---------|--------|
 | `batteryLevel` | por drone |
-| `altitudeAGL`, `distanceToHome`, `speed_horizontal` | por drone (campo/path) |
+| `altitudeAGL`, `distanceToHome`, `speed_horizontal` | por drone (campo/path; `location.altitude` → altitudeAGL) |
 | `min_separation_m` | calculada entre todos os drones com `location` |
-| boolean / estatístico / temporal | ainda não no motor live (só threshold/range) |
+| `statistical` `range`/`max`/`min` | agregado na **janela de medição** sobre a métrica MQTT acima (peak-to-peak, etc.) |
+| boolean / temporal / mean·percentile | ainda não no motor live |

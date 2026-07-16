@@ -1,0 +1,20 @@
+{
+  "req_id": "RQ-ALT-VAR-001",
+  "title": "Variação de altitude AGL",
+  "text": "A altitudeAGL de cada drone não deve variar mais de 1 meter durante a medição",
+  "rationale": "Envelope de altitude estável; peak-to-peak na janela MQTT",
+  "level": "system",
+  "vv_method": "test",
+  "priority": "high",
+  "conops_ref": "CONOPS-UTM §4",
+  "source": "example",
+  "success_criteria": {
+    "type": "statistical",
+    "metric": "altitudeAGL",
+    "aggregation": "range",
+    "operator": "<=",
+    "value": 1.0,
+    "unit": "meters"
+  },
+  "tags": ["altitude", "variation"]
+}

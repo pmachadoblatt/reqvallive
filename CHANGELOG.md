@@ -9,6 +9,26 @@ Datas no formato `AAAA-MM-DD`.
 
 ## [Unreleased]
 
+### Added (2026-07-16)
+
+- Suporte genérico a critérios `statistical` live com `aggregation = range|max|min` sobre a **mesma métrica MQTT** já existente
+- Caso de uso de variação temporal: `range(metric) <= X` para requisitos como “não variar mais de X” sem criar métricas artificiais
+- Exemplo `examples/altitude_variation.json`
+- Testes `tests/test_window_variation.py` para variação de altitude e bateria com o mesmo mecanismo
+- Testes `tests/test_sc_snapshot.py` para o freeze do SC aprovado no instante do `start`
+- Endpoint `GET /api/sessions/{id}/approved-sc` para consultar o snapshot imutável da corrida
+- Nova secção no relatório HTML: **Success Criteria aprovado (snapshot)**
+- Documento `docs/ROTEIRO_IMPLEMENTACAO.md` com plano P0/P1 da PoC
+
+### Changed (2026-07-16)
+
+- `location.altitude` passa a servir como fallback para `altitudeAGL`
+- Prompt/normalização do LLM passam a mapear requisitos de variação para `success_criteria.type = statistical` com `aggregation = range`
+- Gate ACCEPT/REJECT agora aceita `statistical` com `range|max|min` no live MQTT
+- Ao iniciar a medição (`/start`), a sessão congela uma cópia do requisito + SC + gate em `approved_sc_snapshot`
+- A avaliação live, a API pública e o relatório passam a usar a cópia aprovada da corrida, não apenas o requisito editável
+- `docs/FEATURES_MESTRADO_SE.md` e `docs/ROTEIRO_IMPLEMENTACAO.md` atualizados para refletir o novo motor temporal e a conclusão do item 1.1
+
 ### Added (2026-07-15)
 
 - Motor `eval/criteria_gate.py`: gate ACCEPT/REJECT de Success Criteria (SIS-08 Methods / MSFC-3173)
