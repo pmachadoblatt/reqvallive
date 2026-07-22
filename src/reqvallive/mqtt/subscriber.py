@@ -95,8 +95,15 @@ class SessionMqttWorker:
         self.session.connected = True
         self.session.last_error = None
         self.session.mqtt_status = "no_messages"
-        client.subscribe(self.session.mqtt_topic)
-        logger.info("Subscribed %s → %s", self.session.id, self.session.mqtt_topic)
+        topic = (self.session.mqtt_topic or "").strip() or "conceptio/reqval"
+        client.subscribe(topic)
+        # Filhos (ex.: conceptio/reqval/drone1) — scripts/publish_three_drones.py
+        if "#" not in topic and "+" not in topic:
+            child = topic.rstrip("/") + "/#"
+            client.subscribe(child)
+            logger.info("Subscribed %s → %s e %s", self.session.id, topic, child)
+        else:
+            logger.info("Subscribed %s → %s", self.session.id, topic)
 
     def _on_disconnect(self, client, userdata, flags, reason_code, properties=None):
         self.session.connected = False

@@ -9,6 +9,24 @@ Datas no formato `AAAA-MM-DD`.
 
 ## [Unreleased]
 
+### Added (2026-07-22)
+
+- Relatório HTML reestruturado como **procedimento de V&V** (P0 1.2):
+  1. método + gate ACCEPT/REJECT por requisito  
+  2. condições de medição (MQTT broker/tópico, janela start/end, duração, drones)  
+  3. snapshot do SC aprovado  
+  4. esperado × observado com evidência  
+  5. amostras MQTT  
+- Teste `tests/test_procedure_report.py`
+- Script `scripts/publish_three_drones.py` reforçado para teste em casa (`.env`, modos battery/altitude, CLI)
+- Guia `scripts/README.md` + secção no README principal
+- Subscriber MQTT passa a escutar também `tópico/#` (mensagens `…/drone1`, etc.)
+
+### Security (2026-07-22)
+
+- Removida senha MQTT hardcoded do publisher; usa `MQTT_PASSWORD` / `--password`
+- `scripts/probe_llm.py` deixa de embutir API key (lê `.env`)
+
 ### Added (2026-07-16)
 
 - Suporte genérico a critérios `statistical` live com `aggregation = range|max|min` sobre a **mesma métrica MQTT** já existente

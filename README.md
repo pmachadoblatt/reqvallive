@@ -46,9 +46,35 @@ Na UI: botão **Testar LLM** → `GET /api/llm/probe`.
 Cada mensagem identifica um drone (`droneName`). Exemplos de campos usados:
 
 - `batteryLevel` / `remainingCharge`
-- `location.latitude` / `longitude`
+- `location.latitude` / `longitude` / `altitude`
+- `altitudeAGL`
 - Agregação: `min_separation_m` calculada entre todos os drones activos
+
+## Testar em casa (MQTT simulado)
+
+Para não depender dos drones reais, publica 3 drones simulados:
+
+```powershell
+# Terminal 1 — app
+reqvallive
+
+# Terminal 2 — telemetria
+python scripts/publish_three_drones.py
+```
+
+Credenciais MQTT vêm do `.env` (`MQTT_PASSWORD`, etc.).  
+Guia completo: [`scripts/README.md`](scripts/README.md).
+
+Modos úteis:
+
+```powershell
+python scripts/publish_three_drones.py --mode battery
+python scripts/publish_three_drones.py --mode altitude --altitude-span 2.5
+```
+
+Na UI usa o mesmo broker/tópico do `.env` (ex.: `conceptio/reqval`). O app escuta também `tópico/#`.
 
 ## Segurança
 
-Não partilhe tokens de LLM em chats públicos; rode a rotação da chave se foi exposta.
+Não partilhe tokens de LLM nem senhas MQTT em chats públicos; rode a rotação da chave se foi exposta.
+Credenciais ficam só no `.env` (gitignored).

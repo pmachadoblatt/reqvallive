@@ -46,16 +46,18 @@ Ordem sugerida; cada item é um PR pequeno.
 - API: campo `approved_sc_snapshot` / `sc_frozen` + `GET /api/sessions/{id}/approved-sc`.
 - **Aceite:** mutar o requisito de trabalho após o start não altera snapshot nem o limiar da corrida.
 
-### 1.2 Laudo de procedimento completo — **F-RP-03** (+ reforço F-RP-01/02) · **M**
+### 1.2 Relatório de procedimento completo — **F-RP-03** (+ reforço F-RP-01/02) · **M** · **FEITO**
 
-Incluir secções fixas no HTML:
-1. Método V&V (`test`) + resultado do gate  
-2. Broker/topic/protocolo + janela `start`/`end`  
-3. Snapshot SC  
+Secções fixas no HTML (`reports/html_report.py`):
+1. Método V&V (`test`) + resultado do gate (por requisito)  
+2. Broker/topic/protocolo MQTT + janela `start`/`end` + duração + entidades  
+3. Snapshot SC (do 1.1)  
 4. Esperado vs observado + 1ª violação / contagens  
+5. Últimas amostras MQTT  
 
 - **Depende de:** 1.1 (snapshot).
-- **Aceite:** um SE externo responde só com o laudo: *o que foi exigido, medido, passou/falhou, quando*.
+- **Aceite:** um SE externo responde só com o relatório: *o que foi exigido, medido, passou/falhou, quando*.
+- Teste: `tests/test_procedure_report.py`
 
 ### 1.3 Metadados de missão — **F-GOV-01** (mínimo) · **S**
 
@@ -133,7 +135,7 @@ Incluir secções fixas no HTML:
 Marca o que entra no próximo sprint:
 
 - [x] 1.1 Snapshot SC aprovado  
-- [ ] 1.2 Laudo de procedimento  
+- [x] 1.2 Relatório de procedimento  
 - [ ] 1.3 Metadados de missão  
 - [ ] 1.4 Disclaimer SysML  
 - [ ] 2.1 UI do gate  
@@ -143,4 +145,4 @@ Marca o que entra no próximo sprint:
 - [ ] 2.5 Qualidade da amostra  
 - [ ] (P2) project_id / hash / agregações mean…
 
-**Recomendação:** sprint seguinte = **1.1 + 1.2 + 1.4** (fecha P0 com pouco risco); 1.3 encaixa no mesmo PR do laudo.
+**Recomendação:** próximo sprint = **1.3 + 1.4** (fecha P0); depois UI do gate (2.1) se quiser demo de banca.
