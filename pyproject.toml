@@ -20,7 +20,9 @@ dependencies = [
     "jinja2>=3.1",
     "python-multipart>=0.0.9",
     "httpx>=0.27",
-    # Instalar antes: pip install -e ../Sim_Req_Validator
+    # OBRIGATÓRIO: pacote NÃO vem neste repo. Colocar pasta irmã Sim_Req_Validator
+    # e instalar ANTES: pip install -e ../Sim_Req_Validator
+    # Ver DEPENDENCIA_SIM_REQ_VALIDATOR.md
     "simreqvalidator>=0.1.0",
 ]
 

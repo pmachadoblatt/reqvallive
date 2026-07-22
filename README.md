@@ -2,6 +2,9 @@
 
 Validação de requisitos em tempo real via **MQTT multi-drone**, geração de **SysML V2** (diagrama visual + textual) e relatório HTML. Entrada preferencial: **Markdown** interpretado por **LLM local** (Qwen no lab).
 
+> **⚠️ Dependência externa obrigatória:** o pacote **`Sim_Req_Validator`** (`simreqvalidator`) **não está neste repositório**. Sem a pasta irmã `../Sim_Req_Validator` e `pip install -e ../Sim_Req_Validator`, a app **não funciona**.  
+> Ver: [`DEPENDENCIA_SIM_REQ_VALIDATOR.md`](DEPENDENCIA_SIM_REQ_VALIDATOR.md)
+
 ## Fluxo
 
 1. Colar / carregar `.md` de requisitos → **Interpretar com LLM**
@@ -11,11 +14,13 @@ Validação de requisitos em tempo real via **MQTT multi-drone**, geração de *
 
 ## Instalação
 
+**Antes de tudo:** garanta `Dissertacao/Sim_Req_Validator` ao lado de `Dissertacao/reqvallive` (ver aviso acima).
+
 ```powershell
 cd ReqValLive
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -e ..\Sim_Req_Validator
+pip install -e ..\Sim_Req_Validator   # OBRIGATÓRIO — schema Vampire
 pip install -e ".[dev]"
 copy .env.example .env
 # Editar .env: MQTT_PASSWORD, LLM_API_KEY, LLM_BASE_URL se necessário
