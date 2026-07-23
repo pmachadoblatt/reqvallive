@@ -16,10 +16,18 @@ import httpx
 from reqvallive.config import settings
 from reqvallive.eval.criteria_gate import success_criteria_model_doc
 from reqvallive.eval.live import is_mvp_supported
-from reqvallive.llm.client import interpret_requirements_markdown
+from reqvallive.llm.client import (
+    enrich_verification_update_with_llm,
+    interpret_requirements_markdown,
+)
 from reqvallive.models.session import store
 from reqvallive.mqtt.subscriber import mqtt_manager
+from reqvallive.reports.catia_update import build_verification_update
 from reqvallive.reports.html_report import build_html_report
+from reqvallive.sysml.import_catia import (
+    parse_sysml_export,
+    summary_dict,
+)
 
 router = APIRouter(prefix="/api")
 
@@ -84,6 +92,16 @@ def defaults() -> dict[str, Any]:
     }
 
 
+class SysmlImportBody(BaseModel):
+    sysml_text: str
+    create_session: bool = True
+    mqtt_broker: str | None = None
+    mqtt_port: int | None = None
+    mqtt_username: str | None = None
+    mqtt_password: str | None = None
+    mqtt_topic: str | None = None
+
+
 @router.post("/requirements/from-markdown")
 async def from_markdown(body: MdInterpretBody) -> dict[str, Any]:
     if not body.markdown.strip():
@@ -111,6 +129,107 @@ async def from_markdown(body: MdInterpretBody) -> dict[str, Any]:
     public["metrics_needed"] = parsed.get("metrics_needed", [])
     public["llm_notes"] = parsed.get("sysml_notes", "")
     return public
+
+
+@router.post("/requirements/parse-sysml")
+def parse_sysml_only(body: SysmlImportBody) -> dict[str, Any]:
+    """Passo 1: lê export CATIA e lista requisitos com _go_to_verification (sem criar sessão)."""
+    if not (body.sysml_text or "").strip():
+        raise HTTPException(400, detail="sysml_text vazio")
+    parsed = parse_sysml_export(body.sysml_text)
+    return summary_dict(parsed)
+
+
+@router.post("/requirements/from-sysml")
+def from_sysml(body: SysmlImportBody) -> dict[str, Any]:
+    """Lê export CATIA → requisitos tagged → gate OK/NOK (e opcionalmente cria sessão)."""
+    if not (body.sysml_text or "").strip():
+        raise HTTPException(400, detail="sysml_text vazio")
+
+    all_parsed = parse_sysml_export(body.sysml_text)
+    tagged = [r for r in all_parsed if r.tagged_for_verification]
+    if not tagged:
+        raise HTTPException(
+            422,
+            detail=(
+                "Nenhum requirement com doc contendo _go_to_verification. "
+                "No CATIA, marque o doc do requisito como o Prof. Christopher indicou."
+            ),
+        )
+
+    missing_sc = [r.name for r in tagged if not r.success_criteria]
+    if missing_sc:
+        raise HTTPException(
+            422,
+            detail={
+                "message": "Requisitos tagged sem Success Criteria parseável no doc.",
+                "requirements": missing_sc,
+                "hint": "Inclua JSON ```json {...}``` ou linhas metric:/operator:/value: no doc.",
+                "parse_summary": summary_dict(all_parsed),
+            },
+        )
+
+    reqs = [r.to_requirement_dict() for r in tagged]
+    out: dict[str, Any] = {
+        "source": "catia_sysml_export",
+        "parse_summary": summary_dict(all_parsed),
+        "requirements": reqs,
+    }
+    if not body.create_session:
+        return out
+
+    try:
+        session = store.create_from_requirements(
+            reqs,
+            source_markdown=body.sysml_text,
+            llm_notes="Importado de export SysML CATIA (_go_to_verification)",
+            **_mqtt_kwargs(body),
+        )
+    except ValueError as exc:
+        raise HTTPException(422, detail=str(exc)) from exc
+
+    public = session.to_public_dict()
+    public["source"] = "catia_sysml_export"
+    public["parse_summary"] = out["parse_summary"]
+    return public
+
+
+@router.post("/requirements/from-sysml-file")
+async def from_sysml_file(
+    file: UploadFile = File(...),
+    create_session: bool = Form(True),
+    mqtt_broker: str | None = Form(None),
+    mqtt_port: int | None = Form(None),
+    mqtt_username: str | None = Form(None),
+    mqtt_password: str | None = Form(None),
+    mqtt_topic: str | None = Form(None),
+) -> dict[str, Any]:
+    raw = (await file.read()).decode("utf-8")
+    return from_sysml(
+        SysmlImportBody(
+            sysml_text=raw,
+            create_session=create_session,
+            mqtt_broker=mqtt_broker,
+            mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
+            mqtt_topic=mqtt_topic,
+        )
+    )
+
+
+@router.get("/examples/catia-sysml")
+def example_catia_sysml() -> PlainTextResponse:
+    path = _EXAMPLES_DIR / "catia_export_go_to_verification.sysml"
+    if not path.is_file():
+        raise HTTPException(404, detail="Exemplo SysML não encontrado")
+    return PlainTextResponse(
+        path.read_text(encoding="utf-8"),
+        media_type="text/plain; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="catia_export_go_to_verification.sysml"'
+        },
+    )
 
 
 @router.post("/requirements/from-markdown-file")
@@ -210,6 +329,47 @@ def reevaluate_criteria(session_id: str) -> dict[str, Any]:
     return session.to_public_dict()
 
 
+@router.get("/sessions/{session_id}/validation-status")
+def get_validation_status(session_id: str) -> dict[str, Any]:
+    """OK/NOK do gate (artefato para o engenheiro / futuro UPDATE CATIA)."""
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    if session.criteria_gate is None:
+        session.refresh_criteria_gate()
+    return session.validation_status()
+
+
+@router.post("/sessions/{session_id}/gse/mount")
+def mount_gse(session_id: str) -> dict[str, Any]:
+    """Com gate ACCEPT: monta o GSE (config de medição MQTT)."""
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    _require_gate_accept(session)
+    try:
+        gse = session.mount_gse()
+    except ValueError as exc:
+        raise HTTPException(409, detail=str(exc)) from exc
+    public = session.to_public_dict()
+    public["gse_config"] = gse
+    public["gse_mounted"] = True
+    return public
+
+
+@router.get("/sessions/{session_id}/gse")
+def get_gse(session_id: str) -> dict[str, Any]:
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    if not session.gse_config:
+        raise HTTPException(
+            404,
+            detail="GSE ainda não montado — POST .../gse/mount após gate ACCEPT.",
+        )
+    return copy.deepcopy(session.gse_config)
+
+
 def _require_gate_accept(session) -> None:
     if not session.gate_allows_measurement():
         gate = session.criteria_gate.to_dict() if session.criteria_gate else {}
@@ -281,8 +441,51 @@ def stop_session(session_id: str) -> dict[str, Any]:
     if session is None:
         raise HTTPException(404, detail="Sessão não encontrada")
     session.stop_measurement()
-    # Mantém MQTT ligado para nova corrida; resultados ficam congelados
+    # Pacote base de UPDATE (sem LLM) — pronto para enriquecer / baixar
+    session.catia_update = build_verification_update(session)
     return session.to_public_dict()
+
+
+@router.post("/sessions/{session_id}/catia/update")
+async def generate_catia_update(session_id: str, use_llm: bool = True) -> dict[str, Any]:
+    """Após medição: gera UPDATE para o CATIA (evidência + opcionalmente LLM/Ollama)."""
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    if not session.measurement_ended:
+        raise HTTPException(
+            409,
+            detail="Encerre a medição antes de gerar o UPDATE para o CATIA.",
+        )
+    update = build_verification_update(session)
+    llm_error = None
+    if use_llm:
+        try:
+            update = await enrich_verification_update_with_llm(update)
+        except Exception as exc:
+            llm_error = str(exc)
+            update["llm_enrichment"] = {
+                "error": llm_error,
+                "note": "Artefato determinístico mantido; LLM indisponível ou falhou.",
+            }
+    session.catia_update = update
+    public = session.to_public_dict()
+    public["catia_update"] = update
+    public["llm_error"] = llm_error
+    return public
+
+
+@router.get("/sessions/{session_id}/catia/update")
+def get_catia_update(session_id: str) -> dict[str, Any]:
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    if not session.catia_update:
+        raise HTTPException(
+            404,
+            detail="UPDATE ainda não gerado — encerre a medição ou POST .../catia/update.",
+        )
+    return copy.deepcopy(session.catia_update)
 
 
 @router.get("/sessions/{session_id}/sysml")

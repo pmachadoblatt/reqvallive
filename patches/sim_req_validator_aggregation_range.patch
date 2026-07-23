@@ -1,0 +1,10 @@
+--- a/src/simreqvalidator/schema/success_criteria.py
++++ b/src/simreqvalidator/schema/success_criteria.py
+@@ -89,6 +89,7 @@ class Aggregation(str, Enum):
+     MEDIAN = "median"
+     MAX = "max"
+     MIN = "min"
++    RANGE = "range"         # Peak-to-peak: max(série) − min(série)
+     STD = "std"             # Desvio padrão
+     PERCENTILE = "percentile"  # Requer percentile_value
+     SUM = "sum"

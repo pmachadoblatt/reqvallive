@@ -241,7 +241,7 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--password",
-        default=os.environ.get("MQTT_PASSWORD", ""),
+        default=os.environ.get("MQTT_PASSWORD", "C1903it@"),
         help="Senha MQTT (prefira MQTT_PASSWORD no .env)",
     )
     p.add_argument(

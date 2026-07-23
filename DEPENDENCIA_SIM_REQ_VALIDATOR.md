@@ -22,12 +22,17 @@ Dissertacao/
 cd reqvallive
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+python scripts/ensure_simreq_range.py   # Aggregation.RANGE (variação live)
 pip install -e ..\Sim_Req_Validator
 pip install -e ".[dev]"
 copy .env.example .env
 # preencher MQTT_PASSWORD e LLM_API_KEY no .env
 reqvallive
 ```
+
+> O `Sim_Req_Validator` **não está no GitHub** (ainda). Copie a pasta do lab/USB/OneDrive
+> para a máquina de casa. O script `ensure_simreq_range.py` garante o enum `RANGE`
+> se a cópia for antiga (patch também em `patches/sim_req_validator_aggregation_range.patch`).
 
 ## Por que não está neste repo?
 

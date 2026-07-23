@@ -25,7 +25,24 @@ body {
 .top { padding: 1.5rem 0 0.75rem; }
 .brand { margin: 0; letter-spacing: .12em; text-transform: uppercase; font-size: .72rem; color: var(--accent); font-weight: 700; }
 h1 { margin: .3rem 0; font-size: 1.7rem; }
-.lede { margin: 0; color: var(--muted); }
+.lede { margin: 0; color: var(--muted); max-width: 52rem; }
+.panel-title { margin: 0 0 .75rem; font-size: 1.05rem; }
+.source-tabs { display: flex; gap: .35rem; margin-bottom: .75rem; flex-wrap: wrap; }
+.source-tab {
+  border: 1px solid #94a3b8; background: #f8fafc; padding: .45rem .8rem; cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.source-tab:hover { border-color: var(--accent); }
+.source-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.source-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.source-panel.hidden { display: none; }
+button, .button, .step, .source-tab { transition: background .15s ease, border-color .15s ease, opacity .15s ease; }
+button:focus-visible, .button:focus-visible, .step:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  button, .button, .step, .source-tab { transition: none; }
+}
 
 .steps { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .step { border: 1px solid #94a3b8; background: #fff; padding: .5rem .85rem; cursor: pointer; }

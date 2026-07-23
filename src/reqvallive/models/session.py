@@ -94,6 +94,9 @@ class MeasurementSession:
     # Cópia imutável do SC aprovado no instante do /start (auditoria da corrida)
     approved_sc_snapshot: dict[str, Any] | None = None
     _approved_requirements: list[RequirementRecord] | None = None
+    gse_config: dict[str, Any] | None = None
+    gse_mounted_at: float | None = None
+    catia_update: dict[str, Any] | None = None
     mqtt_status: str = "disconnected"  # disconnected|connecting|listening|no_messages|error
     last_error: str | None = None
     drones: dict[str, DroneState] = field(default_factory=dict)
@@ -675,8 +678,82 @@ class MeasurementSession:
                     }
                     for r in active
                 ],
+                "gse_mounted": self.gse_config is not None,
+                "gse_config": copy.deepcopy(self.gse_config) if self.gse_config else None,
+                "catia_update": copy.deepcopy(self.catia_update) if self.catia_update else None,
+                "has_catia_update": self.catia_update is not None,
             }
 
+    def validation_status(self) -> dict[str, Any]:
+        """OK/NOK do gate para o engenheiro / futuro UPDATE no CATIA."""
+        gate = self.criteria_gate.to_dict() if self.criteria_gate else None
+        results = []
+        for r in (gate or {}).get("results") or []:
+            results.append(
+                {
+                    "req_id": r.get("req_id"),
+                    "status": r.get("status"),  # ACCEPT / REJECT
+                    "ok": r.get("status") == "ACCEPT",
+                    "metric": r.get("metric"),
+                    "criteria_type": r.get("criteria_type"),
+                    "vv_method": r.get("vv_method"),
+                    "error_count": r.get("error_count"),
+                    "warning_count": r.get("warning_count"),
+                    "suggestions": r.get("suggestions") or [],
+                }
+            )
+        global_status = (gate or {}).get("global_status")
+        return {
+            "session_id": self.id,
+            "evaluated_at": (gate or {}).get("evaluated_at"),
+            "global_status": global_status,
+            "ok": global_status == "ACCEPT",
+            "can_mount_gse": global_status == "ACCEPT",
+            "results": results,
+            "theory_refs": (gate or {}).get("theory_refs") or [],
+        }
+
+    def mount_gse(self) -> dict[str, Any]:
+        """Monta o pacote GSE mínimo (config de medição) — só com gate ACCEPT."""
+        if not self.gate_allows_measurement():
+            raise ValueError("Gate ≠ ACCEPT — não é possível montar o GSE.")
+        active = self.active_requirements()
+        gate = self.criteria_gate.to_dict() if self.criteria_gate else None
+        self.gse_config = {
+            "mounted_at": time.time(),
+            "session_id": self.id,
+            "role": "GSE",
+            "description": (
+                "Ground Support Equipment lógico: subscribe MQTT + avaliar SC live + laudo"
+            ),
+            "mqtt": {
+                "broker": self.mqtt_broker,
+                "port": self.mqtt_port,
+                "topic": self.mqtt_topic,
+                "username": self.mqtt_username,
+                "subscribe_children": True,
+            },
+            "metrics": self.tracked_metrics(),
+            "requirements": [
+                {
+                    "req_id": r.req_id,
+                    "title": r.title,
+                    "text": r.text,
+                    "vv_method": getattr(r.vv_method, "value", None) or str(r.vv_method),
+                    "success_criteria": r.success_criteria.model_dump(mode="json"),
+                }
+                for r in active
+            ],
+            "gate_status": (gate or {}).get("global_status"),
+            "sysml_skeleton_available": bool(self.sysml_text),
+            "next_steps": [
+                "Conectar ao broker MQTT",
+                "Iniciar medição (freeze do SC + subscribe)",
+                "Encerrar e abrir relatório de procedimento",
+            ],
+        }
+        self.gse_mounted_at = self.gse_config["mounted_at"]
+        return copy.deepcopy(self.gse_config)
 
 
 class SessionStore:

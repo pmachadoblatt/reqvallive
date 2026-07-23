@@ -9,6 +9,16 @@ Datas no formato `AAAA-MM-DD`.
 
 ## [Unreleased]
 
+### Added (2026-07-23)
+
+- Entrada **Export CATIA (.sysml)** na UI web (assistente): carregar exemplo, upload, validar OK/NOK
+- Skill `ui-ux-pro-max` instalada em `.cursor/skills/` (e `~/.cursor/skills/`)
+- Teste ponta a ponta do passo 1: `tests/test_step1_catia_flow.py`
+- **Montar GSE** (`POST .../gse/mount`) + `validation_status.json` + UI no passo 2
+- **UPDATE CATIA pós-medição**: ao encerrar, gera `verification_update.json`; botão enriquece com Ollama/LLM
+- Guia `docs/RODAR_EM_CASA.md` para pull/setup em casa
+- `scripts/ensure_simreq_range.py` + patch `Aggregation.RANGE` para a pasta irmã `Sim_Req_Validator`
+
 ### Added (2026-07-22)
 
 - Relatório HTML reestruturado como **procedimento de V&V** (P0 1.2):

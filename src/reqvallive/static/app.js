@@ -221,9 +221,85 @@ function renderSession(session) {
   if ($("btn-dl-sysml")) $("btn-dl-sysml").href = `/api/sessions/${session.id}/sysml`;
   if ($("btn-dl-md")) $("btn-dl-md").href = `/api/sessions/${session.id}/model.md`;
   if ($("btn-report")) $("btn-report").href = `/api/sessions/${session.id}/report`;
+  if ($("btn-dl-validation")) {
+    $("btn-dl-validation").href = `/api/sessions/${session.id}/validation-status`;
+  }
+  if ($("btn-dl-catia-update")) {
+    const hasUp = !!session.has_catia_update || !!session.catia_update;
+    $("btn-dl-catia-update").classList.toggle("hidden", !hasUp);
+    if (hasUp) $("btn-dl-catia-update").href = `/api/sessions/${session.id}/catia/update`;
+  }
+  if ($("btn-catia-update")) {
+    $("btn-catia-update").disabled = !session.measurement_ended;
+  }
+  if ($("catia-update-preview") && session.catia_update) {
+    $("catia-update-preview").classList.remove("hidden");
+    const enr = session.catia_update.llm_enrichment;
+    const summary = enr?.engineer_summary_pt
+      ? `\n\nResumo LLM:\n${enr.engineer_summary_pt}`
+      : "";
+    $("catia-update-preview").textContent =
+      `UPDATE CATIA pronto (${session.catia_update.overall_tag}).` +
+      summary +
+      "\n\n" +
+      JSON.stringify(session.catia_update, null, 2);
+  }
+  const gateOk = session.criteria_gate?.global_status === "ACCEPT";
+  const gseMounted = !!session.gse_mounted || !!session.gse_config;
+  if ($("btn-mount-gse")) $("btn-mount-gse").disabled = !gateOk;
+  if ($("btn-goto-mqtt")) $("btn-goto-mqtt").disabled = !(gateOk && gseMounted);
+  if ($("btn-dl-gse")) {
+    $("btn-dl-gse").classList.toggle("hidden", !gseMounted);
+    if (gseMounted) $("btn-dl-gse").href = `/api/sessions/${session.id}/gse`;
+  }
+  if ($("gse-preview")) {
+    if (session.gse_config) {
+      $("gse-preview").classList.remove("hidden");
+      $("gse-preview").textContent =
+        "GSE montado.\n" + JSON.stringify(session.gse_config, null, 2);
+    } else {
+      $("gse-preview").classList.add("hidden");
+      $("gse-preview").textContent = "";
+    }
+  }
+  if ($("gse-mqtt-hint")) {
+    $("gse-mqtt-hint").classList.toggle("hidden", !gseMounted);
+  }
   updateMonitor(session);
   renderGatePreview(session, "gate-preview");
   renderGatePreview(session, "gate-panel-2");
+}
+
+async function mountGse() {
+  if (!state.sessionId) {
+    if ($("gse-preview")) {
+      $("gse-preview").classList.remove("hidden");
+      $("gse-preview").textContent = "Valide o export CATIA antes de montar o GSE.";
+    }
+    return;
+  }
+  const res = await fetch(`/api/sessions/${state.sessionId}/gse/mount`, { method: "POST" });
+  const raw = await res.text();
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    if ($("gse-preview")) {
+      $("gse-preview").classList.remove("hidden");
+      $("gse-preview").textContent = raw.slice(0, 400);
+    }
+    return;
+  }
+  if (!res.ok) {
+    const detail = data.detail || data;
+    if ($("gse-preview")) {
+      $("gse-preview").classList.remove("hidden");
+      $("gse-preview").textContent =
+        typeof detail === "string" ? detail : JSON.stringify(detail, null, 2);
+    }
+    return;
+  }
+  renderSession(data);
 }
 
 function statusLabel(s) {
@@ -527,32 +603,106 @@ async function interpretMd() {
       if ($("out-1")) $("out-1").textContent = typeof detail === "string" ? detail : JSON.stringify(detail, null, 2);
       return;
     }
-    if ($("out-1")) {
-      const metrics = (data.tracked_metrics || []).join(", ");
-      const gate = data.criteria_gate?.global_status || "?";
-      const warns = data.criteria_gate?.warning_count || 0;
-      $("out-1").textContent =
-        `OK — ${data.requirements?.length || 0} requisito(s). Gate: ${gate}` +
-        (warns ? ` (${warns} avisos)` : "") +
-        `. Métricas: ${metrics || "—"}.`;
-      if (warns > 0) {
-        $("out-1").textContent +=
-          "\nCritério aprovado para medir, mas ainda incompleto face à checklist MSFC — veja os avisos abaixo.";
-      }
+    applyEntryResult(data, "Markdown + LLM");
+  } catch (e) {
+    if ($("out-1")) $("out-1").textContent = String(e);
+  }
+}
+
+function applyEntryResult(data, sourceLabel) {
+  if ($("out-1")) {
+    const metrics = (data.tracked_metrics || []).join(", ");
+    const gate = data.criteria_gate?.global_status || "?";
+    const warns = data.criteria_gate?.warning_count || 0;
+    const tagged = data.parse_summary?.tagged_for_verification;
+    $("out-1").textContent =
+      `${sourceLabel} — ${data.requirements?.length || 0} requisito(s). Gate: ${gate}` +
+      (warns ? ` (${warns} avisos)` : "") +
+      (tagged != null ? `. Tagged: ${tagged}` : "") +
+      `. Métricas: ${metrics || "—"}.`;
+    if (warns > 0 && gate === "ACCEPT") {
+      $("out-1").textContent +=
+        "\nCritério aprovado para medir, mas ainda incompleto face à checklist MSFC — veja os avisos abaixo.";
     }
-    renderSession(data);
-    if (data.criteria_gate?.global_status === "REJECT") {
-      gotoStep(1);
-      document.querySelector('.step[data-step="3"]').disabled = true;
-      document.querySelector('.step[data-step="4"]').disabled = true;
-    } else {
-      gotoStep(2);
-      document.querySelector('.step[data-step="3"]').disabled = false;
-      document.querySelector('.step[data-step="4"]').disabled = false;
+  }
+  renderSession(data);
+  if (data.criteria_gate?.global_status === "REJECT") {
+    gotoStep(1);
+    document.querySelector('.step[data-step="3"]').disabled = true;
+    document.querySelector('.step[data-step="4"]').disabled = true;
+  } else {
+    gotoStep(2);
+    document.querySelector('.step[data-step="3"]').disabled = false;
+    document.querySelector('.step[data-step="4"]').disabled = false;
+  }
+}
+
+async function validateCatiaExport() {
+  const text = $("sysml-input")?.value || "";
+  if (!text.trim()) {
+    if ($("out-1")) $("out-1").textContent = "Cole ou carregue um export .sysml antes de validar.";
+    return;
+  }
+  if ($("out-1")) $("out-1").textContent = "Lendo export CATIA e aplicando gate OK/NOK…";
+  try {
+    const res = await fetch("/api/requirements/from-sysml", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sysml_text: text, create_session: true, ...mqttBody() }),
+    });
+    const raw = await res.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      if ($("out-1")) {
+        $("out-1").textContent =
+          `Erro HTTP ${res.status}: resposta não-JSON.\n${raw.slice(0, 500)}`;
+      }
+      return;
+    }
+    if (!res.ok) {
+      const detail = data.detail || data;
+      if ($("out-1")) $("out-1").textContent = typeof detail === "string" ? detail : JSON.stringify(detail, null, 2);
+      renderGatePreview(
+        { criteria_gate: typeof detail === "object" ? detail.parse_summary && null : null },
+        "gate-preview",
+      );
+      return;
+    }
+    applyEntryResult(data, "Export CATIA");
+  } catch (e) {
+    if ($("out-1")) $("out-1").textContent = String(e);
+  }
+}
+
+async function loadCatiaExample() {
+  if ($("out-1")) $("out-1").textContent = "Carregando exemplo CATIA…";
+  try {
+    const res = await fetch("/api/examples/catia-sysml");
+    const text = await res.text();
+    if (!res.ok) {
+      if ($("out-1")) $("out-1").textContent = text.slice(0, 400);
+      return;
+    }
+    if ($("sysml-input")) $("sysml-input").value = text;
+    if ($("out-1")) {
+      $("out-1").textContent =
+        "Exemplo carregado. Clique em «Validar export (OK/NOK)» para o passo 1.";
     }
   } catch (e) {
     if ($("out-1")) $("out-1").textContent = String(e);
   }
+}
+
+function setSourceTab(source) {
+  document.querySelectorAll(".source-tab").forEach((btn) => {
+    const on = btn.dataset.source === source;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  $("source-catia")?.classList.toggle("hidden", source !== "catia");
+  $("source-markdown")?.classList.toggle("hidden", source !== "markdown");
 }
 
 async function applyMqttAndConnect() {
@@ -612,10 +762,11 @@ async function stopMonitor() {
   const data = await res.json();
   state.frozen = true;
   updateMonitor(data);
+  renderSession(data);
   if ($("out-4")) {
     const findings = data.findings || [];
     const head = data.measurement_ended
-      ? "Medição encerrada — resultados congelados.\n\n"
+      ? "Medição encerrada — resultados congelados. Pacote UPDATE CATIA (base) gerado.\n\n"
       : "";
     $("out-4").textContent =
       head +
@@ -625,6 +776,43 @@ async function stopMonitor() {
           return `[${st}] ${f.req_id}: ${f.why}`;
         })
         .join("\n");
+  }
+}
+
+async function generateCatiaUpdate() {
+  if (!state.sessionId) return;
+  if ($("catia-update-preview")) {
+    $("catia-update-preview").classList.remove("hidden");
+    $("catia-update-preview").textContent =
+      "Chamando Ollama para interpretar o laudo e montar UPDATE CATIA…";
+  }
+  const res = await fetch(
+    `/api/sessions/${state.sessionId}/catia/update?use_llm=true`,
+    { method: "POST" },
+  );
+  const raw = await res.text();
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    if ($("catia-update-preview")) {
+      $("catia-update-preview").textContent = raw.slice(0, 500);
+    }
+    return;
+  }
+  if (!res.ok) {
+    const detail = data.detail || data;
+    if ($("catia-update-preview")) {
+      $("catia-update-preview").textContent =
+        typeof detail === "string" ? detail : JSON.stringify(detail, null, 2);
+    }
+    return;
+  }
+  renderSession(data);
+  if (data.llm_error && $("catia-update-preview")) {
+    $("catia-update-preview").textContent =
+      `LLM falhou (${data.llm_error}). Mantido UPDATE determinístico.\n\n` +
+      ($("catia-update-preview").textContent || "");
   }
 }
 
@@ -657,19 +845,35 @@ function bindUi() {
   document.querySelectorAll("[data-close-modal]").forEach((el) => {
     el.addEventListener("click", () => closeScModal());
   });
+  document.querySelectorAll(".source-tab").forEach((btn) => {
+    btn.addEventListener("click", () => setSourceTab(btn.dataset.source));
+  });
   on("md-file", "change", async (ev) => {
     const file = ev.target.files?.[0];
     if (!file || !$("md-input")) return;
     $("md-input").value = await file.text();
   });
+  on("sysml-file", "change", async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file || !$("sysml-input")) return;
+    $("sysml-input").value = await file.text();
+    if ($("out-1")) $("out-1").textContent = `Arquivo carregado: ${file.name}`;
+  });
+  on("btn-load-catia-example", "click", () => loadCatiaExample().catch((e) => {
+    if ($("out-1")) $("out-1").textContent = String(e);
+  }));
+  on("btn-validate-catia", "click", () => validateCatiaExport().catch((e) => {
+    if ($("out-1")) $("out-1").textContent = String(e);
+  }));
   on("btn-interpret", "click", () => interpretMd().catch((e) => {
     if ($("out-1")) $("out-1").textContent = String(e);
   }));
   on("btn-probe-llm", "click", () => probeLlm());
+  on("btn-mount-gse", "click", () => mountGse().catch(console.error));
   on("btn-goto-mqtt", "click", () => {
-    // só avança se gate ACCEPT
     gotoStep(3);
   });
+  setSourceTab("catia");
   on("btn-connect", "click", () => applyMqttAndConnect().catch(console.error));
   on("btn-disconnect", "click", async () => {
     if (!state.sessionId) return;
@@ -678,6 +882,7 @@ function bindUi() {
   });
   on("btn-start-monitor", "click", () => startMonitor().catch(console.error));
   on("btn-stop-monitor", "click", () => stopMonitor().catch(console.error));
+  on("btn-catia-update", "click", () => generateCatiaUpdate().catch(console.error));
 
   // Editor vazio por defeito — placeholder guia o utilizador
   loadDefaults();

@@ -317,3 +317,104 @@ async def interpret_requirements_markdown(markdown: str) -> dict[str, Any]:
     content = _message_text(message if isinstance(message, dict) else {})
     parsed = _extract_json(content)
     return normalize_llm_payload(parsed)
+
+
+CATIA_UPDATE_PROMPT = """Você é um engenheiro de sistemas MBSE.
+Recebe o resultado de uma medição live MQTT (Success Criteria + evidência PASS/FAIL).
+Produza um UPDATE para o engenheiro colar no CATIA Magic (campo Documentation / doc).
+
+Responda APENAS JSON válido:
+{
+  "engineer_summary_pt": "2-5 frases em português do Brasil sobre o resultado da missão",
+  "catia_actions": [
+    {
+      "req_id": "RQ_...",
+      "action": "update_doc",
+      "doc_text": "texto completo sugerido para o campo doc (inclua _verification_PASS ou _verification_FAIL e _go_to_verification)",
+      "notes": "nota curta"
+    }
+  ],
+  "risks_or_followups_pt": ["opcional"]
+}
+
+Regras:
+- Não invente requisitos que não estejam no pacote.
+- Preserve a verdade do veredicto (PASS/FAIL) da evidência.
+- doc_text deve ser útil para colar no Magic.
+- Português do Brasil.
+"""
+
+
+async def enrich_verification_update_with_llm(update: dict[str, Any]) -> dict[str, Any]:
+    """Enriquece o artefato determinístico com narrativa LLM (Ollama)."""
+    if not settings.llm_base_url:
+        raise RuntimeError("LLM_BASE_URL não configurado")
+
+    url = settings.llm_base_url.rstrip("/") + "/chat/completions"
+    headers = {"Content-Type": "application/json"}
+    if settings.llm_api_key:
+        headers["Authorization"] = f"Bearer {settings.llm_api_key}"
+
+    compact = {
+        "overall_ok": update.get("overall_ok"),
+        "overall_tag": update.get("overall_tag"),
+        "measurement": update.get("measurement"),
+        "requirements": [
+            {
+                "req_id": r.get("req_id"),
+                "verification_tag": r.get("verification_tag"),
+                "ok": r.get("ok"),
+                "metric": r.get("metric"),
+                "expected": r.get("expected"),
+                "why": r.get("why"),
+                "catia_doc_append": r.get("catia_doc_append"),
+            }
+            for r in update.get("requirements") or []
+        ],
+    }
+
+    payload: dict[str, Any] = {
+        "model": settings.llm_model,
+        "temperature": 0.2,
+        "stream": False,
+        "messages": [
+            {"role": "system", "content": CATIA_UPDATE_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    "Pacote de verificação (JSON):\n\n"
+                    f"{json.dumps(compact, ensure_ascii=False, indent=2)}\n\n"
+                    "Devolva SOMENTE o JSON pedido."
+                ),
+            },
+        ],
+        "response_format": {"type": "json_object"},
+    }
+
+    timeout = httpx.Timeout(settings.llm_timeout_seconds, connect=30.0)
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.post(url, headers=headers, json=payload)
+        if response.status_code >= 400:
+            raise RuntimeError(
+                f"Ollama HTTP {response.status_code}: {response.text[:400]}"
+            )
+        data = response.json()
+
+    try:
+        message = data["choices"][0]["message"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise RuntimeError(f"Resposta Ollama inesperada: {str(data)[:400]}") from exc
+
+    content = _message_text(message if isinstance(message, dict) else {})
+    parsed = _extract_json(content)
+    update = dict(update)
+    update["llm_enrichment"] = parsed
+    # Se o LLM trouxe doc_text por req, anexa como sugestão preferencial
+    actions = parsed.get("catia_actions") if isinstance(parsed, dict) else None
+    if isinstance(actions, list):
+        by_id = {a.get("req_id"): a for a in actions if isinstance(a, dict)}
+        for req in update.get("requirements") or []:
+            act = by_id.get(req.get("req_id"))
+            if act and act.get("doc_text"):
+                req["catia_doc_llm"] = str(act["doc_text"])
+    return update

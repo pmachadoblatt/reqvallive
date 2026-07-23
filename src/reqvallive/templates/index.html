@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ReqValLive — Validador de requisitos</title>
-  <link rel="stylesheet" href="/static/styles.css?v=9" />
+  <link rel="stylesheet" href="/static/styles.css?v=12" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script type="module">
     import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
@@ -29,12 +29,12 @@
     <p class="brand">ReqValLive</p>
     <h1>Validador de requisitos durante a missão</h1>
     <p class="lede">
-      Inclua o documento da missão ou descreva os requisitos com critério de validação.
-      Receba o modelo SysML V2 e meça em tempo real via MQTT.
+      Assistente de verificação: importa requisitos do CATIA (SysML) ou Markdown,
+      valida o critério de sucesso (OK/NOK) e mede via MQTT.
     </p>
   </header>
 
-  <nav class="steps">
+  <nav class="steps" aria-label="Passos do assistente">
     <button type="button" class="step active" data-step="1">1. Entrada</button>
     <button type="button" class="step" data-step="2" disabled>2. Modelo</button>
     <button type="button" class="step" data-step="3" disabled>3. MQTT</button>
@@ -42,36 +42,78 @@
   </nav>
 
   <main>
-    <section id="panel-1" class="panel active">
-      <div class="hero-actions row">
-        <label class="file-btn button">
-          Carregar documento
-          <input type="file" id="md-file" accept=".md,text/markdown,text/plain" hidden />
-        </label>
-        <button type="button" id="btn-interpret" class="primary">Interpretar e gerar modelo</button>
-        <button type="button" id="btn-open-sc-help">Como deve ser o critério?</button>
-        <a id="btn-dl-sc-example" class="button" href="/api/criteria/example.md" download="success_criteria_modelo.md">Baixar exemplo</a>
+    <section id="panel-1" class="panel active" aria-labelledby="entrada-title">
+      <h2 id="entrada-title" class="panel-title">1. Entrada do requisito</h2>
+      <div class="source-tabs" role="tablist" aria-label="Fonte dos requisitos">
+        <button type="button" class="source-tab active" data-source="catia" role="tab" aria-selected="true">Export CATIA (.sysml)</button>
+        <button type="button" class="source-tab" data-source="markdown" role="tab" aria-selected="false">Markdown + LLM</button>
       </div>
-      <textarea
-        id="md-input"
-        rows="12"
-        spellcheck="false"
-        placeholder="Cole aqui os requisitos da missão&#10;&#10;Ex.: Cada drone não deve ficar com a bateria abaixo de 20%."
-      ></textarea>
+
+      <div id="source-catia" class="source-panel">
+        <p class="muted small">
+          Use o campo <code>doc</code> com <code>_go_to_verification</code> (dica do orientador).
+          O app só valida o que estiver marcado.
+        </p>
+        <div class="hero-actions row">
+          <label class="file-btn button">
+            Carregar .sysml
+            <input type="file" id="sysml-file" accept=".sysml,.txt,text/plain" hidden />
+          </label>
+          <button type="button" id="btn-load-catia-example" class="button">Carregar exemplo CATIA</button>
+          <button type="button" id="btn-validate-catia" class="primary">Validar export (OK/NOK)</button>
+          <a class="button" href="/api/examples/catia-sysml" download="catia_export_go_to_verification.sysml">Baixar exemplo .sysml</a>
+          <button type="button" id="btn-open-sc-help">Como deve ser o critério?</button>
+        </div>
+        <textarea
+          id="sysml-input"
+          rows="14"
+          spellcheck="false"
+          placeholder="Cole aqui o export textual SysML v2 do CATIA Magic&#10;&#10;requirement RQ_… {&#10;  doc /* _go_to_verification … */&#10;}"
+        ></textarea>
+      </div>
+
+      <div id="source-markdown" class="source-panel hidden">
+        <div class="hero-actions row">
+          <label class="file-btn button">
+            Carregar documento
+            <input type="file" id="md-file" accept=".md,text/markdown,text/plain" hidden />
+          </label>
+          <button type="button" id="btn-interpret" class="primary">Interpretar com LLM</button>
+          <a id="btn-dl-sc-example" class="button" href="/api/criteria/example.md" download="success_criteria_modelo.md">Baixar exemplo MD</a>
+        </div>
+        <textarea
+          id="md-input"
+          rows="12"
+          spellcheck="false"
+          placeholder="Cole aqui os requisitos da missão&#10;&#10;Ex.: Cada drone não deve ficar com a bateria abaixo de 20%."
+        ></textarea>
+        <details class="advanced">
+          <summary>Opções avançadas</summary>
+          <div class="row">
+            <button type="button" id="btn-load-sample-md">Preencher com exemplo completo</button>
+            <button type="button" id="btn-probe-llm">Testar ligação LLM</button>
+          </div>
+        </details>
+      </div>
+
       <div id="gate-preview" class="gate-preview muted hidden">Gate: —</div>
       <pre id="out-1" class="out muted small-out"></pre>
-      <details class="advanced">
-        <summary>Opções avançadas</summary>
-        <div class="row">
-          <button type="button" id="btn-load-sample-md">Preencher com exemplo completo</button>
-          <button type="button" id="btn-probe-llm">Testar ligação LLM</button>
-        </div>
-      </details>
     </section>
 
     <section id="panel-2" class="panel">
-      <h2>Modelo SysML</h2>
+      <h2>2. Validação OK/NOK e GSE</h2>
       <div id="gate-panel-2" class="gate-preview muted hidden"></div>
+      <p class="muted small">
+        Se o gate estiver <strong>ACCEPT (OK)</strong>, monte o GSE (config de medição) e avance para o MQTT.
+        Se estiver <strong>REJECT (NOK)</strong>, corrija o SC no CATIA/export e valide de novo.
+      </p>
+      <div class="row">
+        <a id="btn-dl-validation" class="button" href="#" download="validation_status.json">Baixar validation_status.json</a>
+        <button type="button" id="btn-mount-gse" class="primary" disabled>Montar GSE</button>
+        <a id="btn-dl-gse" class="button hidden" href="#" download="gse_config.json">Baixar gse_config.json</a>
+        <button type="button" id="btn-goto-mqtt" class="primary" disabled>Continuar para MQTT</button>
+      </div>
+      <pre id="gse-preview" class="out muted small-out hidden"></pre>
       <div class="grid-2">
         <div>
           <h3>Diagrama</h3>
@@ -86,11 +128,13 @@
           <pre id="sysml-preview" class="code"></pre>
         </div>
       </div>
-      <button type="button" id="btn-goto-mqtt" class="primary">Continuar para MQTT</button>
     </section>
 
     <section id="panel-3" class="panel">
-      <h2>Ligação MQTT</h2>
+      <h2>3. Ligação MQTT (GSE em campo)</h2>
+      <p id="gse-mqtt-hint" class="muted small hidden">
+        GSE montado — confirme broker/tópico e conecte para medir.
+      </p>
       <div class="mqtt-form">
         <label>Broker IP <input id="mqtt-broker" /></label>
         <label>Porta <input id="mqtt-port" type="number" /></label>
@@ -114,7 +158,10 @@
         <span id="verdict-pill" class="pill">—</span>
         <button type="button" id="btn-stop-monitor">Encerrar medição</button>
         <a id="btn-report" class="button primary" href="#" target="_blank">Relatório HTML</a>
+        <button type="button" id="btn-catia-update" class="primary" disabled>UPDATE CATIA (LLM)</button>
+        <a id="btn-dl-catia-update" class="button hidden" href="#" download="verification_update.json">Baixar UPDATE CATIA</a>
       </div>
+      <pre id="catia-update-preview" class="out muted small-out hidden"></pre>
       <div id="live-verdict" class="live-verdict muted">Aguardando início da medição…</div>
       <div class="grid-2">
         <div>
@@ -164,6 +211,6 @@
   </div>
 
   <script src="/static/diagram.js?v=9"></script>
-  <script src="/static/app.js?v=9"></script>
+  <script src="/static/app.js?v=12"></script>
 </body>
 </html>

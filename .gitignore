@@ -10,5 +10,7 @@ dist/
 .mypy_cache/
 htmlcov/
 .coverage
+.cursor/
 *.sysml
-!examples/**
+!examples/*.sysml
+!examples/**/*.sysml

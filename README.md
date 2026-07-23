@@ -1,16 +1,18 @@
 # ReqValLive
 
-Validação de requisitos em tempo real via **MQTT multi-drone**, geração de **SysML V2** (diagrama visual + textual) e relatório HTML. Entrada preferencial: **Markdown** interpretado por **LLM local** (Qwen no lab).
+Validação de requisitos em tempo real via **MQTT multi-drone**, geração de **SysML V2** (diagrama visual + textual) e relatório HTML.
+
+Entrada preferencial (tese / Christopher): **export CATIA SysML** com `_go_to_verification` → gate OK/NOK → Montar GSE → medir MQTT → **UPDATE CATIA** (LLM opcional). Markdown+LLM continua disponível como caminho secundário.
 
 > **⚠️ Dependência externa obrigatória:** o pacote **`Sim_Req_Validator`** (`simreqvalidator`) **não está neste repositório**. Sem a pasta irmã `../Sim_Req_Validator` e `pip install -e ../Sim_Req_Validator`, a app **não funciona**.  
-> Ver: [`DEPENDENCIA_SIM_REQ_VALIDATOR.md`](DEPENDENCIA_SIM_REQ_VALIDATOR.md)
+> Ver: [`DEPENDENCIA_SIM_REQ_VALIDATOR.md`](DEPENDENCIA_SIM_REQ_VALIDATOR.md) · setup em casa: [`docs/RODAR_EM_CASA.md`](docs/RODAR_EM_CASA.md)
 
 ## Fluxo
 
-1. Colar / carregar `.md` de requisitos → **Interpretar com LLM**
-2. Ver diagrama estilo Magic + baixar `.sysml` e modelo `.md`
-3. Configurar MQTT (IP do lab por defeito) → **Conectar**
-4. **Iniciar monitoramento** → modelo ao vivo + status MQTT + mensagens + medição multi-drone
+1. **Export CATIA** (`.sysml`) → Validar OK/NOK → **Montar GSE**
+2. MQTT → Iniciar medição → Encerrar → **UPDATE CATIA (LLM)** / baixar JSON
+3. Alternativa: Markdown → Interpretar com LLM → diagrama + `.sysml`
+4. Relatório HTML de procedimento V&V
 
 ## Instalação
 
@@ -57,6 +59,8 @@ Cada mensagem identifica um drone (`droneName`). Exemplos de campos usados:
 
 ## Testar em casa (MQTT simulado)
 
+Guia completo: [`docs/RODAR_EM_CASA.md`](docs/RODAR_EM_CASA.md).
+
 Para não depender dos drones reais, publica 3 drones simulados:
 
 ```powershell
@@ -67,19 +71,20 @@ reqvallive
 python scripts/publish_three_drones.py
 ```
 
-Credenciais MQTT vêm do `.env` (`MQTT_PASSWORD`, etc.).  
-Guia completo: [`scripts/README.md`](scripts/README.md).
+Credenciais MQTT e LLM vêm do `.env` (`MQTT_PASSWORD`, `LLM_API_KEY`, etc.).
 
-Modos úteis:
+Fluxo CATIA (sem Magic aberto): exemplo `.sysml` → Validar OK/NOK → Montar GSE → MQTT → Encerrar → **UPDATE CATIA (LLM)**.
+
+Modos úteis do publisher:
 
 ```powershell
 python scripts/publish_three_drones.py --mode battery
 python scripts/publish_three_drones.py --mode altitude --altitude-span 2.5
 ```
 
-Na UI usa o mesmo broker/tópico do `.env` (ex.: `conceptio/reqval`). O app escuta também `tópico/#`.
+Na UI use o mesmo broker/tópico do `.env` (ex.: `conceptio/reqval`). O app escuta também `tópico/#`.
 
 ## Segurança
 
-Não partilhe tokens de LLM nem senhas MQTT em chats públicos; rode a rotação da chave se foi exposta.
+Não compartilhe tokens de LLM nem senhas MQTT em chats públicos; rode a rotação da chave se foi exposta.
 Credenciais ficam só no `.env` (gitignored).
