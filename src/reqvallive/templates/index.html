@@ -159,8 +159,14 @@
         <button type="button" id="btn-stop-monitor">Encerrar medição</button>
         <a id="btn-report" class="button primary" href="#" target="_blank">Relatório HTML</a>
         <button type="button" id="btn-catia-update" class="primary" disabled>UPDATE CATIA (LLM)</button>
-        <a id="btn-dl-catia-update" class="button hidden" href="#" download="verification_update.json">Baixar UPDATE CATIA</a>
+        <a id="btn-dl-catia-update" class="button hidden" href="#" download="verification_update.json">Baixar JSON</a>
+        <a id="btn-dl-catia-csv" class="button hidden" href="#" download="verification_sync.csv" title="Atualiza Documentation no projeto Magic aberto via Excel/CSV Sync">Baixar CSV Sync (modelo aberto)</a>
+        <a id="btn-dl-catia-sysml" class="button hidden" href="#" download="verification_update.sysml" title="Arquivo/diff — import cria namespace NOVO, não edita o aberto">Baixar .sysml (arquivo)</a>
       </div>
+      <p id="catia-update-hint" class="muted small hidden">
+        Para atualizar o modelo <strong>já aberto</strong> no CATIA: use o <strong>CSV Sync</strong>
+        (não o .sysml). Ver <code>docs/CATIA_UPDATE_FORMATOS.md</code>.
+      </p>
       <pre id="catia-update-preview" class="out muted small-out hidden"></pre>
       <div id="live-verdict" class="live-verdict muted">Aguardando início da medição…</div>
       <div class="grid-2">

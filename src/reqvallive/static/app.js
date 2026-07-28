@@ -229,6 +229,22 @@ function renderSession(session) {
     $("btn-dl-catia-update").classList.toggle("hidden", !hasUp);
     if (hasUp) $("btn-dl-catia-update").href = `/api/sessions/${session.id}/catia/update`;
   }
+  if ($("btn-dl-catia-csv")) {
+    const hasUp = !!session.has_catia_update || !!session.catia_update;
+    $("btn-dl-catia-csv").classList.toggle("hidden", !hasUp);
+    if (hasUp) $("btn-dl-catia-csv").href = `/api/sessions/${session.id}/catia/update.csv`;
+  }
+  if ($("btn-dl-catia-sysml")) {
+    const hasUp = !!session.has_catia_update || !!session.catia_update;
+    $("btn-dl-catia-sysml").classList.toggle("hidden", !hasUp);
+    if (hasUp) $("btn-dl-catia-sysml").href = `/api/sessions/${session.id}/catia/update.sysml`;
+  }
+  if ($("catia-update-hint")) {
+    $("catia-update-hint").classList.toggle(
+      "hidden",
+      !(session.has_catia_update || session.catia_update),
+    );
+  }
   if ($("btn-catia-update")) {
     $("btn-catia-update").disabled = !session.measurement_ended;
   }
@@ -238,9 +254,11 @@ function renderSession(session) {
     const summary = enr?.engineer_summary_pt
       ? `\n\nResumo LLM:\n${enr.engineer_summary_pt}`
       : "";
+    const ch = session.catia_update.catia_channels?.open_model_update?.how_pt || "";
     $("catia-update-preview").textContent =
       `UPDATE CATIA pronto (${session.catia_update.overall_tag}).` +
       summary +
+      (ch ? `\n\nModelo aberto:\n${ch}` : "") +
       "\n\n" +
       JSON.stringify(session.catia_update, null, 2);
   }

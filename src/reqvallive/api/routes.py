@@ -23,6 +23,11 @@ from reqvallive.llm.client import (
 from reqvallive.models.session import store
 from reqvallive.mqtt.subscriber import mqtt_manager
 from reqvallive.reports.catia_update import build_verification_update
+from reqvallive.reports.catia_export import (
+    attach_export_artifacts,
+    build_csv_sync,
+    patch_sysml_docs,
+)
 from reqvallive.reports.html_report import build_html_report
 from reqvallive.sysml.import_catia import (
     parse_sysml_export,
@@ -468,6 +473,9 @@ async def generate_catia_update(session_id: str, use_llm: bool = True) -> dict[s
                 "error": llm_error,
                 "note": "Artefato determinístico mantido; LLM indisponível ou falhou.",
             }
+    # Regenerar CSV/.sysml após LLM (usa catia_doc_llm se existir)
+    source = (session.source_markdown or "").strip() or (session.sysml_text or "")
+    update = attach_export_artifacts(update, source_sysml=source)
     session.catia_update = update
     public = session.to_public_dict()
     public["catia_update"] = update
@@ -486,6 +494,45 @@ def get_catia_update(session_id: str) -> dict[str, Any]:
             detail="UPDATE ainda não gerado — encerre a medição ou POST .../catia/update.",
         )
     return copy.deepcopy(session.catia_update)
+
+
+@router.get("/sessions/{session_id}/catia/update.csv")
+def download_catia_update_csv(session_id: str) -> StreamingResponse:
+    """CSV para Excel/CSV Sync — atualiza Documentation no projeto Magic aberto."""
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    update = session.catia_update or build_verification_update(session)
+    if not session.measurement_ended and not session.catia_update:
+        raise HTTPException(409, detail="Encerre a medição antes de exportar o UPDATE.")
+    csv_text = build_csv_sync(update)
+    return StreamingResponse(
+        iter([csv_text.encode("utf-8")]),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="verification_sync.csv"',
+        },
+    )
+
+
+@router.get("/sessions/{session_id}/catia/update.sysml")
+def download_catia_update_sysml(session_id: str) -> StreamingResponse:
+    """SysML textual com docs atualizados — arquivo/diff (NÃO sync do modelo aberto)."""
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    update = session.catia_update or build_verification_update(session)
+    if not session.measurement_ended and not session.catia_update:
+        raise HTTPException(409, detail="Encerre a medição antes de exportar o UPDATE.")
+    source = (session.source_markdown or "").strip() or (session.sysml_text or "")
+    sysml = patch_sysml_docs(source, update)
+    return StreamingResponse(
+        iter([sysml.encode("utf-8")]),
+        media_type="text/plain; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="verification_update.sysml"',
+        },
+    )
 
 
 @router.get("/sessions/{session_id}/sysml")

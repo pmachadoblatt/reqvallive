@@ -249,13 +249,16 @@ P1 antigo (UI rica do gate, timeline, export pack) continua válido: encaixa em 
 - Parser + exemplo + API/UI CATIA
 - Montar GSE + validation_status
 - UPDATE pós-medição (determinístico + LLM Ollama)
-- Guia `docs/RODAR_EM_CASA.md`
+- Export **CSV Sync** (atualiza Documentation no modelo aberto) + `.sysml` arquivo
+- Guia `docs/CATIA_UPDATE_FORMATOS.md` (o que o Magic realmente faz)
 
 ### Ainda a fazer
 
-1. Plugin nativo Magic (opcional)  
-2. UI polish / metadados de missão  
-3. Melhorar paste automático do UPDATE no export SysML  
+1. Plugin nativo Magic Open API (usa `plugin_bridge` no JSON) — UPDATE automático  
+2. UI polish / metadados de missão (P0 1.3/1.4)  
+3. (Opcional) cliente SysML v2 REST via Teamwork Cloud  
+
+**Importante:** import `.sysml` **não** edita o projeto aberto — ver `docs/CATIA_UPDATE_FORMATOS.md`.
 
 Teste rápido:
 

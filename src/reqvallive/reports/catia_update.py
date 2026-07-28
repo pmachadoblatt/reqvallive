@@ -7,6 +7,7 @@ from typing import Any
 
 from reqvallive.eval.live import metric_name
 from reqvallive.models.session import MeasurementSession
+from reqvallive.reports.catia_export import attach_export_artifacts
 
 
 def build_verification_update(session: MeasurementSession) -> dict[str, Any]:
@@ -75,7 +76,7 @@ def build_verification_update(session: MeasurementSession) -> dict[str, Any]:
             }
         )
 
-    return {
+    update: dict[str, Any] = {
         "generated_at": time.time(),
         "session_id": session.id,
         "overall_ok": overall,
@@ -92,12 +93,7 @@ def build_verification_update(session: MeasurementSession) -> dict[str, Any]:
         "approved_sc_snapshot": session.approved_sc_snapshot,
         "gse_config": session.gse_config,
         "requirements": req_updates,
-        "instructions_pt": (
-            "1) Abra o requisito correspondente no CATIA Magic.\n"
-            "2) No campo Documentation / doc, acrescente o bloco catia_doc_append "
-            "(ou substitua o trecho de verificação anterior).\n"
-            "3) Mantenha a tag _go_to_verification se quiser re-medir depois.\n"
-            "4) Opcional: use sysml_doc_snippet no export textual."
-        ),
         "llm_enrichment": None,
     }
+    source = (session.source_markdown or "").strip() or (session.sysml_text or "")
+    return attach_export_artifacts(update, source_sysml=source)

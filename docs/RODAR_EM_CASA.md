@@ -62,7 +62,9 @@ Abra http://127.0.0.1:8080 (hard refresh `Ctrl+F5` se a UI parecer antiga).
 2. **Montar GSE** → Continuar MQTT
 3. Terminal 2: `python scripts/publish_three_drones.py`
 4. Conectar → Iniciar medição → Encerrar
-5. **UPDATE CATIA (LLM)** → Baixar `verification_update.json`
+5. **UPDATE CATIA (LLM)** → baixar:
+   - **CSV Sync** (`verification_sync.csv`) — atualiza Documentation no projeto **aberto**
+   - JSON + `.sysml` arquivo (import `.sysml` ≠ sync do aberto; ver `docs/CATIA_UPDATE_FORMATOS.md`)
    - Sem Ollama: o `stop` já gera o UPDATE determinístico; o botão tenta enriquecer com LLM
 
 ## Testes rápidos

@@ -11,6 +11,9 @@ Datas no formato `AAAA-MM-DD`.
 
 ### Added (2026-07-28)
 
+- Pesquisa + `docs/CATIA_UPDATE_FORMATOS.md`: Excel/CSV Sync atualiza modelo aberto; import `.sysml` cria namespace separado
+- Export `verification_sync.csv` + `verification_update.sysml` + contrato `plugin_bridge`
+- Endpoints `GET .../catia/update.csv` e `.../catia/update.sysml`
 - `vendor/Sim_Req_Validator` embutido no git — um único `clone`/`pull` basta para rodar em casa
 - `scripts/bootstrap.ps1` para setup Windows (venv + vendor + app)
 

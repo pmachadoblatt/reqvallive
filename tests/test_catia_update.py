@@ -46,3 +46,19 @@ def test_stop_builds_catia_update_and_llm_optional():
     got = client.get(f"/api/sessions/{sid}/catia/update")
     assert got.status_code == 200
     assert got.json()["session_id"] == sid
+    assert got.json()["catia_channels"]["open_model_update"]["updates_open_project"] is True
+    assert got.json()["catia_channels"]["sysml_textual"]["updates_open_project"] is False
+
+    csv_resp = client.get(f"/api/sessions/{sid}/catia/update.csv")
+    assert csv_resp.status_code == 200
+    csv_body = csv_resp.text.lstrip("\ufeff")
+    assert "Id,Name,Documentation,VerificationTag" in csv_body
+    assert "RQ_BAT_001" in csv_body
+    assert "_verification_FAIL" in csv_body
+
+    sysml_resp = client.get(f"/api/sessions/{sid}/catia/update.sysml")
+    assert sysml_resp.status_code == 200
+    assert "NAMESPACE RAIZ SEPARADO" in sysml_resp.text or "namespace" in sysml_resp.text.lower()
+    assert "_verification_FAIL" in sysml_resp.text
+    assert "RQ_BAT_001" in sysml_resp.text
+    assert "requirement RQ_IGNORED_UI" in sysml_resp.text  # preservado do export original
