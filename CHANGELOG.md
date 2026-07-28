@@ -9,6 +9,11 @@ Datas no formato `AAAA-MM-DD`.
 
 ## [Unreleased]
 
+### Added (2026-07-28)
+
+- `vendor/Sim_Req_Validator` embutido no git — um único `clone`/`pull` basta para rodar em casa
+- `scripts/bootstrap.ps1` para setup Windows (venv + vendor + app)
+
 ### Added (2026-07-23)
 
 - Entrada **Export CATIA (.sysml)** na UI web (assistente): carregar exemplo, upload, validar OK/NOK

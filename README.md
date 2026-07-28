@@ -4,8 +4,8 @@ Validação de requisitos em tempo real via **MQTT multi-drone**, geração de *
 
 Entrada preferencial (tese / Christopher): **export CATIA SysML** com `_go_to_verification` → gate OK/NOK → Montar GSE → medir MQTT → **UPDATE CATIA** (LLM opcional). Markdown+LLM continua disponível como caminho secundário.
 
-> **⚠️ Dependência externa obrigatória:** o pacote **`Sim_Req_Validator`** (`simreqvalidator`) **não está neste repositório**. Sem a pasta irmã `../Sim_Req_Validator` e `pip install -e ../Sim_Req_Validator`, a app **não funciona**.  
-> Ver: [`DEPENDENCIA_SIM_REQ_VALIDATOR.md`](DEPENDENCIA_SIM_REQ_VALIDATOR.md) · setup em casa: [`docs/RODAR_EM_CASA.md`](docs/RODAR_EM_CASA.md)
+> Schema Vampire (`simreqvalidator`) vem em **`vendor/Sim_Req_Validator`**.  
+> Setup em casa: [`docs/RODAR_EM_CASA.md`](docs/RODAR_EM_CASA.md) · detalhes: [`DEPENDENCIA_SIM_REQ_VALIDATOR.md`](DEPENDENCIA_SIM_REQ_VALIDATOR.md)
 
 ## Fluxo
 
@@ -16,16 +16,21 @@ Entrada preferencial (tese / Christopher): **export CATIA SysML** com `_go_to_ve
 
 ## Instalação
 
-**Antes de tudo:** garanta `Dissertacao/Sim_Req_Validator` ao lado de `Dissertacao/reqvallive` (ver aviso acima).
+```powershell
+git clone https://github.com/pmachadoblatt/reqvallive.git
+cd reqvallive
+.\scripts\bootstrap.ps1
+# Editar .env: MQTT_PASSWORD, LLM_API_KEY
+```
+
+Manual:
 
 ```powershell
-cd ReqValLive
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -e ..\Sim_Req_Validator   # OBRIGATÓRIO — schema Vampire
+pip install -e .\vendor\Sim_Req_Validator
 pip install -e ".[dev]"
 copy .env.example .env
-# Editar .env: MQTT_PASSWORD, LLM_API_KEY, LLM_BASE_URL se necessário
 ```
 
 ## Executar

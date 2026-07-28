@@ -1,0 +1,212 @@
+{
+  "description": "Banco de requisitos exemplo — demonstra os 6 tipos de Success Criteria suportados pelo SimReqValidator",
+  "version": "1.0.0",
+  "project": "Virtual Demonstrator (VD) — CONCEPTIO Lab",
+  "requirements": [
+    {
+      "req_id": "VD-SYS-001",
+      "title": "Separação mínima entre aeronaves",
+      "text": "O sistema deve manter separação mínima de 20 metros entre quaisquer duas aeronaves em operação simultânea no espaço aéreo gerenciado",
+      "rationale": "CONOPS §3.2 - Segurança operacional em espaço aéreo compartilhado. Separação mínima é o requisito fundamental de safety para operações UTM.",
+      "level": "system",
+      "conops_ref": "CONOPS-VD §3.2",
+      "source": "SRS-VD-2026 §4.1",
+      "priority": "high",
+      "vv_method": "analysis",
+      "success_criteria": {
+        "type": "threshold",
+        "metric": "min_separation_m",
+        "operator": ">=",
+        "value": 20.0,
+        "unit": "meters",
+        "scope": "all_timesteps",
+        "tolerance": 0.0
+      },
+      "tags": ["safety", "separation"]
+    },
+    {
+      "req_id": "VD-SYS-002",
+      "title": "Altitude operacional dentro do envelope de voo",
+      "text": "O sistema deve garantir que todas as aeronaves operem dentro do envelope de altitude aprovado, entre 30 metros e 400 metros AGL",
+      "rationale": "CONOPS §2.4 - Envelope de voo operacional definido pela autoridade aeronáutica (DECEA).",
+      "level": "system",
+      "conops_ref": "CONOPS-VD §2.4",
+      "source": "SRS-VD-2026 §4.2",
+      "priority": "high",
+      "vv_method": "analysis",
+      "success_criteria": {
+        "type": "range",
+        "metric": "altitude_agl_m",
+        "min_value": 30.0,
+        "max_value": 400.0,
+        "unit": "meters",
+        "scope": "all_timesteps",
+        "inclusive_min": true,
+        "inclusive_max": true
+      },
+      "tags": ["safety", "altitude"]
+    },
+    {
+      "req_id": "VD-SYS-003",
+      "title": "Geofence permanentemente ativa",
+      "text": "O sistema deve manter o módulo de geofencing ativo durante toda a operação, sem interrupções",
+      "rationale": "CONOPS §3.5 - Proteção de zonas restritas e exclusão de espaço aéreo não autorizado.",
+      "level": "system",
+      "conops_ref": "CONOPS-VD §3.5",
+      "priority": "high",
+      "vv_method": "analysis",
+      "success_criteria": {
+        "type": "boolean",
+        "metric": "geofence_active",
+        "expected": true,
+        "scope": "all_timesteps"
+      },
+      "tags": ["safety", "geofence"]
+    },
+    {
+      "req_id": "VD-SYS-004",
+      "title": "Tempo médio de atraso ATFM",
+      "text": "O sistema deve garantir que o atraso médio imposto pelo módulo ATFM não exceda 30 segundos por voo",
+      "rationale": "CONOPS §4.1 - Eficiência do gerenciamento de fluxo de tráfego aéreo. Atrasos excessivos comprometem a viabilidade operacional.",
+      "level": "system",
+      "conops_ref": "CONOPS-VD §4.1",
+      "source": "SRS-VD-2026 §5.1",
+      "priority": "medium",
+      "vv_method": "analysis",
+      "success_criteria": {
+        "type": "statistical",
+        "metric": "atfm_delay_s",
+        "aggregation": "mean",
+        "operator": "<",
+        "value": 30.0,
+        "unit": "seconds"
+      },
+      "tags": ["performance", "atfm"]
+    },
+    {
+      "req_id": "VD-SYS-005",
+      "title": "Separação mantida em todos os timesteps (invariante temporal)",
+      "text": "O sistema deve garantir que a separação mínima de 20 metros seja mantida invariantemente durante toda a simulação, sem violação em nenhum timestep",
+      "rationale": "CONOPS §3.2 - Requisito de safety temporal: não basta a separação média ser >= 20m, deve ser em TODOS os instantes.",
+      "level": "system",
+      "conops_ref": "CONOPS-VD §3.2",
+      "priority": "high",
+      "vv_method": "analysis",
+      "success_criteria": {
+        "type": "temporal",
+        "metric": "pairwise_separation_m",
+        "temporal_operator": "always",
+        "condition": {
+          "type": "threshold",
+          "metric": "pairwise_separation_m",
+          "operator": ">=",
+          "value": 20.0,
+          "unit": "meters",
+          "scope": "all_timesteps"
+        }
+      },
+      "tags": ["safety", "temporal", "separation"]
+    },
+    {
+      "req_id": "VD-SYS-006",
+      "title": "Número máximo de violações de separação",
+      "text": "O sistema deve garantir que o número de violações de separação mínima (< 20m) não exceda zero ocorrências durante toda a operação",
+      "rationale": "CONOPS §3.2 - Complemento quantitativo ao requisito de separação. Zero violações é o critério de segurança absoluto.",
+      "level": "system",
+      "conops_ref": "CONOPS-VD §3.2",
+      "priority": "high",
+      "vv_method": "analysis",
+      "success_criteria": {
+        "type": "count",
+        "metric": "separation_violations",
+        "event_condition": {
+          "type": "threshold",
+          "metric": "pairwise_separation_m",
+          "operator": "<",
+          "value": 20.0,
+          "unit": "meters",
+          "scope": "all_timesteps"
+        },
+        "operator": "==",
+        "value": 0
+      },
+      "tags": ["safety", "count", "separation"]
+    },
+    {
+      "req_id": "VD-SUB-001",
+      "title": "Precisão do módulo de posicionamento GPS",
+      "text": "O subsistema de posicionamento deve manter erro de posição inferior a 3 metros em 95% das medições",
+      "rationale": "CONOPS §5.2 - Precisão necessária para manter separação mínima e geofencing confiável.",
+      "level": "subsystem",
+      "conops_ref": "CONOPS-VD §5.2",
+      "priority": "high",
+      "vv_method": "test",
+      "success_criteria": {
+        "type": "statistical",
+        "metric": "gps_position_error_m",
+        "aggregation": "percentile",
+        "percentile_value": 95.0,
+        "operator": "<=",
+        "value": 3.0,
+        "unit": "meters"
+      },
+      "parent_requirements": ["VD-SYS-001"],
+      "tags": ["accuracy", "gps", "navigation"]
+    },
+    {
+      "req_id": "VD-SUB-002",
+      "title": "Latência máxima de comunicação",
+      "text": "O subsistema de comunicação deve garantir que a latência de transmissão de dados de telemetria não exceda 500 milissegundos",
+      "rationale": "CONOPS §5.3 - Comunicação em tempo real é essencial para o awareness situacional e comandos de contingência.",
+      "level": "subsystem",
+      "conops_ref": "CONOPS-VD §5.3",
+      "priority": "medium",
+      "vv_method": "test",
+      "success_criteria": {
+        "type": "threshold",
+        "metric": "comm_latency_ms",
+        "operator": "<=",
+        "value": 500.0,
+        "unit": "milliseconds",
+        "scope": "all_timesteps",
+        "tolerance": 10.0
+      },
+      "parent_requirements": ["VD-SYS-003"],
+      "tags": ["performance", "communication", "latency"]
+    },
+    {
+      "req_id": "VD-MIS-001",
+      "title": "Capacidade mínima de operações simultâneas",
+      "text": "O sistema deve suportar no mínimo 10 operações de voo simultâneas dentro do espaço aéreo gerenciado",
+      "rationale": "CONOPS §1.3 - Cenário operacional do Virtual Demonstrator prevê 10 voos simultâneos para validação.",
+      "level": "mission",
+      "conops_ref": "CONOPS-VD §1.3",
+      "priority": "high",
+      "vv_method": "demonstration",
+      "success_criteria": {
+        "type": "threshold",
+        "metric": "concurrent_flights",
+        "operator": ">=",
+        "value": 10.0,
+        "unit": "flights",
+        "scope": "any_timestep"
+      },
+      "tags": ["capacity", "mission"]
+    },
+    {
+      "req_id": "VD-VAMPIRE-001",
+      "title": "Interface amigável ao operador",
+      "text": "A interface do sistema será intuitiva e amigável para o operador, com tempos de resposta adequados",
+      "rationale": "Requisito genérico de usabilidade.",
+      "level": "system",
+      "vv_method": "inspection",
+      "success_criteria": {
+        "type": "boolean",
+        "metric": "user_friendly",
+        "expected": true,
+        "scope": "final_state"
+      },
+      "tags": ["vampire-example", "usability"]
+    }
+  ]
+}

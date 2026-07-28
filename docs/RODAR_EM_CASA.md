@@ -1,30 +1,25 @@
 # Rodar o ReqValLive em casa (pull + setup)
 
-Repositório único: **https://github.com/pmachadoblatt/reqvallive**  
-(Não criar outro repo — o agente em casa faz `git pull` neste.)
+Repositório único: **https://github.com/pmachadoblatt/reqvallive**
 
-## Layout obrigatório
+O app completo (código + schema `simreqvalidator`) vai **neste** repositório:
+`vendor/Sim_Req_Validator/`. Um `git clone` / `git pull` basta — não precisa de pasta irmã.
 
-```text
-alguma-pasta/
-├── reqvallive/              ← este repo (git clone / pull)
-└── Sim_Req_Validator/       ← pasta IRMÃ (schema Vampire) — NÃO vem no git do reqvallive
+## Primeira vez (ou máquina nova)
+
+```powershell
+git clone https://github.com/pmachadoblatt/reqvallive.git
+cd reqvallive
+.\scripts\bootstrap.ps1
 ```
 
-Ver também: `DEPENDENCIA_SIM_REQ_VALIDATOR.md`.
-
-O `Sim_Req_Validator` **não vai no git do reqvallive** — copie a pasta irmã do lab
-(USB/OneDrive/outro). Depois rode `python scripts/ensure_simreq_range.py` para garantir
-`Aggregation.RANGE` (necessário para SC de variação temporal).
-
-## Setup (primeira vez)
+Ou manualmente:
 
 ```powershell
 cd reqvallive
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python scripts/ensure_simreq_range.py
-pip install -e ..\Sim_Req_Validator
+pip install -e .\vendor\Sim_Req_Validator
 pip install -e ".[dev]"
 copy .env.example .env
 ```
@@ -49,8 +44,7 @@ LLM_MODEL=qwen3.6:35b
 cd reqvallive
 git pull origin master
 .\.venv\Scripts\Activate.ps1
-python scripts/ensure_simreq_range.py
-pip install -e ..\Sim_Req_Validator
+pip install -e .\vendor\Sim_Req_Validator
 pip install -e ".[dev]"
 ```
 
@@ -85,3 +79,4 @@ python -m pytest tests/test_import_catia.py tests/test_step1_catia_flow.py tests
 - Laudo = relatório HTML
 - UPDATE CATIA = JSON com tags `_verification_PASS` / `_FAIL` + texto para o `doc` no Magic
 - LLM (Ollama) = Markdown opcional + enriquecimento do UPDATE pós-medição
+- Schema Vampire: `vendor/Sim_Req_Validator` (já no git)

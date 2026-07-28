@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simreqvalidator"
+version = "0.1.0"
+description = "Simulation-based requirements validation tool for the CONCEPTIO SE Framework"
+readme = "README.md"
+license = {text = "Proprietary"}
+requires-python = ">=3.11"
+authors = [
+    {name = "Pedro", email = "pedro@conceptio.ita.br"},
+]
+keywords = ["requirements", "validation", "simulation", "systems-engineering", "V&V"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "pydantic>=2.0,<3.0",
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "typer>=0.9",
+    "rich>=13.0",
+    "pyyaml>=6.0",
+    "matplotlib>=3.7",
+    "jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1",
+    "mypy>=1.5",
+    "pre-commit>=3.0",
+]
+plotly = [
+    "plotly>=5.15",
+    "kaleido>=0.2",
+]
+arena = [
+    "django>=5.0",
+    "django-ninja>=1.0",
+]
+
+[project.scripts]
+simreqvalidator = "simreqvalidator.cli.main:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
