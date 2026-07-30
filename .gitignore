@@ -10,7 +10,7 @@ dist/
 .mypy_cache/
 htmlcov/
 .coverage
-.cursor/
+.cursor/*
 !.cursor/rules/
 !.cursor/rules/**
 *.sysml
