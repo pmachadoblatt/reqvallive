@@ -50,6 +50,39 @@ Ver também: `docs/CATIA_UPDATE_FORMATOS.md`.
 
 ---
 
+## Lab CONCEPTIO — descoberta 2026-07-30
+
+| Item | Valor |
+|------|--------|
+| Collaborate server (Magic) | `161.24.23.18` (porta nativa **3579** aberta) |
+| Web / API HTTPS | `https://161.24.23.18:8443` |
+| Admin UI | `https://161.24.23.18:8443/admin` |
+| Webapp | `https://161.24.23.18:8443/webapp` |
+| **SysML v2 API** | `https://161.24.23.18:8443/sysmlv2-api/api` (responde **401** sem token) |
+| Swagger UI | `https://161.24.23.18:8443/sysmlv2-api/swagger-ui/index.html` |
+| Login API (candidato) | `POST /authentication/api/login` |
+| User lab | `pedroblatt` (admin users OK) |
+| Porta 8111 | timeout a partir do PC de trabalho — usar **8443** |
+
+### Spike local
+
+```powershell
+# .env
+TWC_BASE_URL=https://161.24.23.18:8443
+TWC_USERNAME=pedroblatt
+TWC_PASSWORD=<sua senha Collaborate>
+# ou TWC_TOKEN=<token>
+
+python scripts/probe_twc.py --discover
+python scripts/probe_twc.py --req RQ_BAT
+```
+
+API: `GET /api/twc/probe`
+
+**Pré-requisito:** o projeto SysML v2 com `RQ_BAT_001` tem de estar **publicado no Collaborate**, não só local no disco.
+
+---
+
 ## Checklist rápido no trabalho (5 min)
 
 1. No Magic: **Collaborate → Login** — anotar **host/URL** do servidor TWC.  

@@ -33,6 +33,7 @@ from reqvallive.sysml.import_catia import (
     parse_sysml_export,
     summary_dict,
 )
+from reqvallive.twc import TwcClient, TwcError, probe_summary, settings_from_env
 
 router = APIRouter(prefix="/api")
 
@@ -533,6 +534,28 @@ def download_catia_update_sysml(session_id: str) -> StreamingResponse:
             "Content-Disposition": 'attachment; filename="verification_update.sysml"',
         },
     )
+
+
+@router.get("/twc/probe")
+def twc_probe(req: str = "RQ_") -> dict[str, Any]:
+    """Spike TWC: lista projetos + requisitos cujo nome contém ``req`` (default RQ_)."""
+    twc = settings_from_env(settings)
+    try:
+        with TwcClient(twc) as client:
+            return probe_summary(client, req_filter=req)
+    except TwcError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "message": str(exc),
+                "status_code": exc.status_code,
+                "body": exc.body,
+                "hint": (
+                    "Configure TWC_USERNAME/TWC_PASSWORD ou TWC_TOKEN no .env. "
+                    "Swagger: https://161.24.23.18:8443/sysmlv2-api/swagger-ui/index.html"
+                ),
+            },
+        ) from exc
 
 
 @router.get("/sessions/{session_id}/sysml")

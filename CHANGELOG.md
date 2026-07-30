@@ -9,6 +9,13 @@ Datas no formato `AAAA-MM-DD`.
 
 ## [Unreleased]
 
+### Added (2026-07-30)
+
+- Cliente TWC SysML v2 REST (`src/reqvallive/twc/`): auth, projects, commits, requirements filtrados
+- `scripts/probe_twc.py` + `GET /api/twc/probe`
+- Descoberta lab: API em `https://161.24.23.18:8443/sysmlv2-api/api` (Swagger UI no mesmo host)
+- Variáveis `TWC_*` em `.env.example` / config
+
 ### Fixed (2026-07-30)
 
 - Parser CATIA aceita o export **real** do Magic: `requirement <RQ_ID> Nome {`, `doc` em linha própria,

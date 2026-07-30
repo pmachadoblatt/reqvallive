@@ -26,6 +26,16 @@ class Settings(BaseSettings):
     llm_model: str = "qwen3.6:35b"
     llm_timeout_seconds: float = 180.0
 
+    # Teamwork Cloud / SysML v2 REST (lab CONCEPTIO)
+    twc_base_url: str = "https://161.24.23.18:8443"
+    twc_sysml_api_prefix: str = "/sysmlv2-api/api"
+    twc_auth_login_path: str = "/authentication/api/login"
+    twc_username: str = ""
+    twc_password: str = ""
+    twc_token: str = ""
+    twc_verify_ssl: bool = False
+    twc_timeout_seconds: float = 30.0
+
     host: str = "127.0.0.1"
     port: int = 8080
 
