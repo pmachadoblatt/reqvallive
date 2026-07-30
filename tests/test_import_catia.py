@@ -34,6 +34,23 @@ def test_parse_example_sysml_tags_and_sc():
     assert summary["ready_with_sc"] == 1
 
 
+def test_parse_real_magic_export_short_name_and_gutter():
+    """Export real do CATIA Magic: <shortName>, doc em linha própria e coluna de '*'."""
+    text = (EXAMPLES / "catia_magic_real_export.sysml").read_text(encoding="utf-8")
+    tagged = requirements_for_verification(text)
+    assert len(tagged) == 1
+    req = tagged[0]
+    assert req.name == "RQ_BAT_001"
+    assert req.short_name == "RQ_BAT_001"
+    assert req.success_criteria is not None
+    assert req.success_criteria["metric"] == "batteryLevel"
+    assert req.success_criteria["value"] == 20.0
+    # o gutter '*' não deve sobrar no texto nem o JSON do critério
+    assert "*" not in req.text
+    assert '"type"' not in req.text
+    assert "batteryLevel >= 20" in req.text
+
+
 def test_ignore_untagged():
     text = """
     package P {

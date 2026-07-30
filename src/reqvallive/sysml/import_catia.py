@@ -17,10 +17,10 @@ from typing import Any
 
 GO_TO_VERIFICATION = "_go_to_verification"
 
-_REQ_START = re.compile(
-    r"requirement\s*(?:\[[^\]]*\])?\s+(?P<name>[A-Za-z_][\w-]*)\s*\{",
-    re.IGNORECASE,
-)
+# O Magic escreve `requirement <RQ_BAT_001> RQ_BAT_001 {` (short name + declared name).
+# Cabeçalho fica na mesma linha, sem `{`/`}`/`;`.
+_REQ_START = re.compile(r"\brequirement\b(?P<head>[^{};\n]*)\{", re.IGNORECASE)
+_SHORT_NAME = re.compile(r"<\s*(?P<short>'[^']*'|[^>]+?)\s*>")
 
 _DOC_COMMENT = re.compile(
     r"doc\s*(?:\[[^\]]*\])?\s*/\*(?P<body>.*?)\*/",
@@ -31,7 +31,8 @@ _DOC_STRING = re.compile(
     re.DOTALL | re.IGNORECASE,
 )
 
-_JSON_FENCE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL | re.IGNORECASE)
+# O Magic pode truncar a fence de fecho ao exportar → fecho opcional.
+_JSON_FENCE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*(?:```)?", re.DOTALL | re.IGNORECASE)
 
 
 @dataclass
@@ -39,6 +40,7 @@ class ParsedCatiaRequirement:
     name: str
     doc_raw: str
     tagged_for_verification: bool
+    short_name: str = ""
     text: str = ""
     success_criteria: dict[str, Any] | None = None
     vv_method: str = "test"
@@ -121,10 +123,39 @@ def _extract_balanced_body(text: str, open_brace_index: int) -> str | None:
     return None
 
 
+def _names_from_head(head: str) -> tuple[str, str]:
+    """Devolve (declared_name, short_name) de ``<short> Declared : Tipo``."""
+    short_m = _SHORT_NAME.search(head)
+    short = short_m.group("short").strip().strip("'") if short_m else ""
+
+    rest = _SHORT_NAME.sub(" ", head)
+    rest = re.sub(r"\[[^\]]*\]", " ", rest)
+    rest = re.sub(r"\bdef\b", " ", rest, flags=re.IGNORECASE)
+    rest = re.split(r":|:>", rest, maxsplit=1)[0]
+    name_m = re.search(r"('[^']+'|[A-Za-z_][\w.\-]*)", rest)
+    declared = name_m.group(1).strip("'") if name_m else ""
+
+    if not declared:
+        declared = short
+    return declared, short
+
+
+def _strip_comment_gutter(body: str) -> str:
+    """Remove a coluna de ``*`` que o Magic escreve dentro de ``/* ... */``."""
+    lines = body.splitlines()
+    meaningful = [ln for ln in lines if ln.strip()]
+    if not meaningful:
+        return body
+    gutter = sum(1 for ln in meaningful if re.match(r"^\s*\*", ln))
+    if gutter * 2 <= len(meaningful):
+        return body
+    return "\n".join(re.sub(r"^\s*\*[ \t]?", "", ln) for ln in lines)
+
+
 def _extract_doc(body: str) -> str:
     m = _DOC_COMMENT.search(body)
     if m:
-        return m.group("body").strip()
+        return _strip_comment_gutter(m.group("body")).strip()
     m = _DOC_STRING.search(body)
     if m:
         return m.group("body").strip()
@@ -227,7 +258,12 @@ def _infer_text(doc: str, kv: dict[str, str]) -> str:
         s = line.strip()
         if not s:
             continue
-        if s.startswith("_") or s.startswith("```") or s.startswith("{"):
+        if s.startswith("_") or s.startswith("```"):
+            continue
+        # Descartar o bloco JSON do Success Criteria (chaves e pares "k": v)
+        if s in ("{", "}", "},", "{}"):
+            continue
+        if re.match(r'^"[^"]+"\s*:', s):
             continue
         if re.match(
             r"^(type|metric|operator|value|unit|scope|aggregation|min_value|max_value|tolerance|vv_method|level|priority)\s*:",
@@ -246,7 +282,9 @@ def parse_sysml_export(text: str) -> list[ParsedCatiaRequirement]:
     found: list[ParsedCatiaRequirement] = []
     src = text or ""
     for m in _REQ_START.finditer(src):
-        name = m.group("name")
+        name, short = _names_from_head(m.group("head"))
+        if not name:
+            continue
         brace_at = m.end() - 1
         body = _extract_balanced_body(src, brace_at)
         if body is None:
@@ -266,6 +304,7 @@ def parse_sysml_export(text: str) -> list[ParsedCatiaRequirement]:
                 name=name,
                 doc_raw=doc,
                 tagged_for_verification=tagged,
+                short_name=short,
                 text=_infer_text(doc, kv),
                 success_criteria=sc,
                 vv_method=(kv.get("vv_method") or "test").lower(),
@@ -292,6 +331,7 @@ def summary_dict(parsed: list[ParsedCatiaRequirement]) -> dict[str, Any]:
         "requirements": [
             {
                 "name": r.name,
+                "short_name": r.short_name,
                 "tagged": r.tagged_for_verification,
                 "has_success_criteria": r.success_criteria is not None,
                 "text_preview": (r.text[:120] + "…") if len(r.text) > 120 else r.text,

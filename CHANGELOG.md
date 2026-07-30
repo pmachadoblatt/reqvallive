@@ -9,6 +9,13 @@ Datas no formato `AAAA-MM-DD`.
 
 ## [Unreleased]
 
+### Fixed (2026-07-30)
+
+- Parser CATIA aceita o export **real** do Magic: `requirement <RQ_ID> Nome {`, `doc` em linha própria,
+  coluna de `*` dentro de `/* … */` e fence ```` ```json ```` sem fecho (o Magic trunca)
+- Texto do requisito deixa de arrastar o JSON do Success Criteria
+- Exemplo `examples/catia_magic_real_export.sysml` + teste de regressão
+
 ### Added (2026-07-29)
 
 - `docs/LEMBRETE_TWC_REST_EVOLUCAO.md`: Collaborate/TWC do lab como evolução REST SysML v2
