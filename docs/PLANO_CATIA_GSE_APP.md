@@ -256,7 +256,9 @@ P1 antigo (UI rica do gate, timeline, export pack) continua válido: encaixa em 
 
 1. Plugin nativo Magic Open API (usa `plugin_bridge` no JSON) — UPDATE automático  
 2. UI polish / metadados de missão (P0 1.3/1.4)  
-3. (Opcional) cliente SysML v2 REST via Teamwork Cloud  
+3. **Evolução (lab tem TWC/Collaborate):** cliente SysML v2 REST no ReqValLive —
+   ler SC / escrever OK/NOK no modelo no servidor. Detalhe e checklist:
+   `docs/LEMBRETE_TWC_REST_EVOLUCAO.md`
 
 **Importante:** import `.sysml` **não** edita o projeto aberto — ver `docs/CATIA_UPDATE_FORMATOS.md`.
 

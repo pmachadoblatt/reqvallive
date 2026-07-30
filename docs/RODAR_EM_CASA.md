@@ -82,3 +82,5 @@ python -m pytest tests/test_import_catia.py tests/test_step1_catia_flow.py tests
 - UPDATE CATIA = JSON com tags `_verification_PASS` / `_FAIL` + texto para o `doc` no Magic
 - LLM (Ollama) = Markdown opcional + enriquecimento do UPDATE pós-medição
 - Schema Vampire: `vendor/Sim_Req_Validator` (já no git)
+- **Amanhã no trabalho:** lembrete TWC/REST — `docs/LEMBRETE_TWC_REST_EVOLUCAO.md`
+  (Collaborate do lab = caminho para evoluir UPDATE via REST; não pivote o MVP)

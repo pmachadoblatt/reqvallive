@@ -33,7 +33,9 @@ Para o ciclo **dinâmico** (objetivo final: CATIA atualiza sozinho):
    dos `RQ_*` existentes é atualizada **no projeto aberto**.
 2. **Médio prazo:** plugin Magic (Open API) que lê `verification_update.json` /
    CSV da pasta watch e chama `setDocumentation` em sessão.
-3. **Com TWC:** cliente REST SysML v2 no ReqValLive (fora do MVP de lab local).
+3. **Com TWC:** cliente REST SysML v2 no ReqValLive — **evolução recomendada** no CONCEPTIO
+   (há Collaborate/servidor + admin). Não substitui o MVP ficheiro/CSV; ver
+   `docs/LEMBRETE_TWC_REST_EVOLUCAO.md`.
 
 O `.sysml` atualizado continua a ser gerado como **arquivo / diff / reimport em
 sandbox** — útil para auditoria e para quem não usa Sync — com disclaimer explícito.

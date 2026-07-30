@@ -9,6 +9,11 @@ Datas no formato `AAAA-MM-DD`.
 
 ## [Unreleased]
 
+### Added (2026-07-29)
+
+- `docs/LEMBRETE_TWC_REST_EVOLUCAO.md`: Collaborate/TWC do lab como evolução REST SysML v2
+  (MVP continua CSV/ficheiro/plugin; REST não pivota a PoC)
+
 ### Added (2026-07-28)
 
 - Pesquisa + `docs/CATIA_UPDATE_FORMATOS.md`: Excel/CSV Sync atualiza modelo aberto; import `.sysml` cria namespace separado
