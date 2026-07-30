@@ -11,6 +11,8 @@ dist/
 htmlcov/
 .coverage
 .cursor/
+!.cursor/rules/
+!.cursor/rules/**
 *.sysml
 !examples/*.sysml
 !examples/**/*.sysml

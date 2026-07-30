@@ -15,6 +15,8 @@ Datas no formato `AAAA-MM-DD`.
   coluna de `*` dentro de `/* … */` e fence ```` ```json ```` sem fecho (o Magic trunca)
 - Texto do requisito deixa de arrastar o JSON do Success Criteria
 - Exemplo `examples/catia_magic_real_export.sysml` + teste de regressão
+- **Correção de plano:** CSV Sync não é default em SysML v2 tabular views; contexto obrigatório em
+  `docs/CONTEXT_OBRIGATORIO_CATIA.md`, `AGENTS.md` e regra Cursor `.cursor/rules/catia-sysml-v2.mdc`
 
 ### Added (2026-07-29)
 

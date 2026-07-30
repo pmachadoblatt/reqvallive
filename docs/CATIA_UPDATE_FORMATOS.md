@@ -1,24 +1,30 @@
 # Formatos de UPDATE CATIA — o que atualiza o modelo aberto
 
+> **Ler primeiro:** [`CONTEXT_OBRIGATORIO_CATIA.md`](CONTEXT_OBRIGATORIO_CATIA.md).  
+> Ambiente real do mestrado: **Magic 2026x + SysML v2**.  
+> **Correção 2026-07-30:** Excel/CSV Sync **não** é o caminho principal na view tabular SysML v2
+> (o botão pode não existir). Docs oficiais de Sync ainda falam em tabelas estilo **SysML v1**.
+
 **Pergunta crítica:** gerar um ficheiro no ReqValLive e “mandar de volta” atualiza o
 projeto **já aberto** no CATIA Magic / Cameo?
 
-## Conclusão (docs oficiais Dassault / No Magic)
+## Conclusão (docs oficiais + teste real no lab)
 
 | Canal | Lê no Magic? | Atualiza o modelo **já aberto**? | Notas |
 |-------|--------------|----------------------------------|-------|
-| **Excel/CSV Sync** (tabela de requisitos) | Sim | **Sim** — identifica por **Id**/Name e atualiza propriedades existentes | Mecanismo nativo bidirecional |
-| **Plugin Java Open API** (`SessionManager` + `setDocumentation`) | N/A (in-process) | **Sim** — edição dinâmica real | Caminho do objetivo final “sozinho” |
-| **SysML v2 REST API** (Teamwork Cloud / Magic Collaboration Studio) | Via servidor | **Sim** no projeto no servidor; MagicLab reflecte mudanças | Requer TWC; não é ficheiro local solto |
-| **Import SysML v2 Textual Notation (`.sysml`)** | Sim | **Não** — cria um **namespace raiz separado** | Não substitui elementos do modelo aberto |
-| Colar texto no campo Documentation | Sim | Sim (manual) | MVP atual sem sync |
+| Colar / escrever **Documentation** | Sim | **Sim** (manual) | MVP atual; é texto/marcadores, **não** UI PASS/FAIL |
+| **Excel/CSV Sync** | Em tabelas clássicas | Em v1: sim; **em view tabular SysML v2: não contar** | Não apareceu na ModelTable v2 do lab |
+| **Plugin Java Open API** | N/A (in-process) | **Sim** | Caminho desktop “sozinho” |
+| **SysML v2 REST API** (TWC) | Via servidor | **Sim** no projeto no servidor | Evolução recomendada (lab tem Collaborate) |
+| **Import SysML v2 Textual Notation (`.sysml`)** | Sim | **Não** — namespace raiz separado | Não substitui o aberto |
 
 Fontes:
 
 - [Textual notation import/export](https://docs.nomagic.com/SYSML2P/2026x/textual-notation-import-export-254422195.html) — *“imported into a separate root namespace”*
-- [Excel/CSV Sync](https://docs.nomagic.com/MT/2026x/magic-cyber-systems-engineer---cameo-systems-modeler/sync-with-excel-or-csv-files-272733849.html) — sync atualiza elementos existentes por Identification Property (Id em requirements)
-- [Modeling Tools Developer Guide / Open API](https://docs.nomagic.com/DEVG/latest/modeling-tools-developer-guide-303988912.html) — único caminho in-process sem TWC
-- [SysML v2 REST API no TWC 2026x](https://docs.nomagic.com/SYSML2P/2026x/catia-sysml-v2-solution-272740940.html) — create/edit/query via API standard
+- [Excel/CSV Sync](https://docs.nomagic.com/MT/2026x/magic-cyber-systems-engineer---cameo-systems-modeler/sync-with-excel-or-csv-files-272733849.html) — sync em tabelas; conclusão no lab: **não usar como default v2**
+- [Modeling Tools Developer Guide / Open API](https://docs.nomagic.com/DEVG/latest/modeling-tools-developer-guide-303988912.html)
+- [SysML v2 REST API no TWC 2026x](https://docs.nomagic.com/SYSML2P/2026x/catia-magic-cameo-sysml-v2-solution-272740940.html)
+- Lab: `docs/LEMBRETE_TWC_REST_EVOLUCAO.md`, `docs/CONTEXT_OBRIGATORIO_CATIA.md`
 
 ## Implicação para o mestrado
 
@@ -26,19 +32,18 @@ Fontes:
 O Magic **importa** textual SysML v2 para um namespace **novo**, não faz merge in-place
 nos requisitos que o engenheiro já tem abertos.
 
-Para o ciclo **dinâmico** (objetivo final: CATIA atualiza sozinho):
+**Também não adianta** prometer que colar no Documentation Body “mostra FAIL como produto”
+no Magic: o contrato do `doc` é **marcador textual**; o laudo visual é o **HTML do ReqValLive**.
 
-1. **Curto prazo (agora):** export **CSV** no formato Excel/CSV Sync → o engenheiro
-   faz *Read From File* na tabela de requisitos ligada ao ficheiro → Documentation
-   dos `RQ_*` existentes é atualizada **no projeto aberto**.
-2. **Médio prazo:** plugin Magic (Open API) que lê `verification_update.json` /
-   CSV da pasta watch e chama `setDocumentation` em sessão.
-3. **Com TWC:** cliente REST SysML v2 no ReqValLive — **evolução recomendada** no CONCEPTIO
-   (há Collaborate/servidor + admin). Não substitui o MVP ficheiro/CSV; ver
-   `docs/LEMBRETE_TWC_REST_EVOLUCAO.md`.
+Para o ciclo **dinâmico** (objetivo final: CATIA atualiza sozinho) em **SysML v2**:
 
-O `.sysml` atualizado continua a ser gerado como **arquivo / diff / reimport em
-sandbox** — útil para auditoria e para quem não usa Sync — com disclaimer explícito.
+1. **Agora (MVP):** ReqValLive mede + laudo HTML; tags `_verification_*` no `doc` (colar ou gerar pacote).  
+2. **Evolução recomendada no CONCEPTIO:** cliente **REST SysML v2** no Teamwork Cloud.  
+3. **Alternativa desktop:** plugin Open API (`plugin_bridge` no JSON).  
+4. **CSV Sync:** só se validado numa tabela clássica; **não** é o plano default v2.
+
+O `.sysml` atualizado continua como **arquivo / diff** — com disclaimer explícito.  
+O CSV continua gerado como pacote auxiliar, sem overclaim de Sync no v2.
 
 ## Formato CSV (ReqValLive → Magic Sync)
 
