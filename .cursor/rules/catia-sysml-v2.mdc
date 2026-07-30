@@ -1,0 +1,18 @@
+---
+description: Ambiente CATIA Magic 2026x SysML v2 — ler contexto antes de planear UPDATE/CSV/REST
+alwaysApply: true
+---
+
+# ReqValLive — CATIA / SysML v2
+
+Antes de qualquer resposta sobre CATIA, Magic, SysML, CSV Sync, UPDATE ou REST:
+
+1. Ler `docs/CONTEXT_OBRIGATORIO_CATIA.md`
+2. Confirmar: ambiente = **Magic 2026x + SysML v2** (não tabela de requisitos SysML v1)
+3. Não apresentar Excel/CSV Sync como caminho garantido no v2
+4. Documentation/`doc` = marcadores de texto (`_go_to_verification`, `_verification_*`), não UI PASS/FAIL
+5. Laudo visual = relatório HTML ReqValLive
+6. Fecho automático futuro = REST TWC ou plugin Open API (ver `docs/LEMBRETE_TWC_REST_EVOLUCAO.md`)
+7. Pesquisar docs **2026x / SYSML2P**, não só MD2021x / Requirement Table v1
+
+Se a proposta contradisser o contexto obrigatório, corrigir o plano em vez de insistir.
