@@ -1,0 +1,2939 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>APIs cookbook :: SysON Docs</title>
+    <meta name="generator" content="Antora 3.1.15">
+    <link rel="stylesheet" href="../../../../_/css/site.css">
+<link rel="icon" href="../../../../_/img/favicon.ico" type="image/x-icon">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="navbar-item">
+        <img class="icon" src="../../../../_/img/favicon.svg" alt="SysON"/>
+      </div>
+      <a class="navbar-item" href="../../../..">SysON Docs</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        
+        <a class="navbar-item" target="_blank" href="https://github.com/eclipse-syson/syson">
+          <img class="icon" src="../../../../_/img/github-mark-white.svg" alt="GitHub"/>
+        </a>
+        <a class="navbar-item" target="_blank" href="https://github.com/eclipse-syson/syson/discussions">
+          <img class="icon" src="../../../../_/img/chat.svg" alt="Chat"/>
+        </a>
+
+        <div class="navbar-item search hide-for-print">
+          <div id="search-field" class="field">
+            <input id="search-input" type="text" placeholder="Search the docs">
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="syson" data-version="main">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../../index.html">SysON</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../user-manual/index.html">Introduction</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/what-is.html">SysON Overview</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/key-features.html">Key features in SysON</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../installation-guide/index.html">Getting started with SysON</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../installation-guide/requirements.html">Prerequisites</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../installation-guide/how-tos/install.html">How to install SysON?</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../installation-guide/how-tos/install/local_test.html">Basic Local Test Setup</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../installation-guide/how-tos/install/multi_user_test.html">Multi-User Local Test Setup</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../installation-guide/how-tos/install/production_deploy.html">Production-Grade Deployment</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../installation-guide/how-tos/install/ecosystem_only.html">Ecosystem-Only Deployment</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../installation-guide/how-tos/https.html">HTTPS</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../installation-guide/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../installation-guide/migration-process.html">Migration process</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../user-manual/user-interface-overview.html">User interface overview</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/tour.html">Tour the interface</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../user-manual/hands-on/hands-on.html">How-Tos and Tutorials</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">How-Tos</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/hands-on/how-tos/project-management.html">Project management</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/hands-on/how-tos/model-management.html">Model management</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/hands-on/how-tos/representation-operations.html">Representation operations</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/hands-on/how-tos/user-interface-navigation.html">User Interface Navigation</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/hands-on/how-tos/explorer.html">Project Explorer</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/hands-on/how-tos/representations-view.html">Representations</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/features/query-view.html">Query</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/features/import-export-textual.html">SysML v2 textual format</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/features/expressions.html">Expressions</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../user-manual/hands-on/tutorials/tutorials.html">Hands-On Starter Guides</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/hands-on/tutorials/batmobile.html">Create Your First Model</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/hands-on/tutorials/flashlight.html">Model Your First System</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../user-manual/features/features.html">Features and capabilities</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/key-features.html">Key features in SysON</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/features/sysmlv2-overview.html">Overview of SysML v2</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/concepts.html">Key concepts and terminology</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Diagramming Tools</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Projects Management</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/features/homepage.html">Projects Browser</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/features/cross-project-search.html">Cross project search</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Editor</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/features/editor.html">Project Editor</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/features/details.html">Details</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/features/related-elements.html">Related Elements</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/features/representations-view.html">Representations</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/features/query-view.html">Query</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/features/validation.html">Validation</a>
+  </li>
+  <li class="nav-item" data-depth="4">
+    <a class="nav-link" href="../../user-manual/features/keyboard-shortcuts.html">Keyboard shortcuts</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../user-manual/features/general-view.html">General view</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../user-manual/features/interconnection-view.html">Interconnection view</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../user-manual/features/action-flow-view.html">Action Flow View</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../user-manual/features/state-transition-view.html">State transition view</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../user-manual/features/other-views.html">Other views</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/features/import-export-textual.html">SysML v2 textual format</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/features/expressions.html">Expressions</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/features/publication.html">Publication</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/features/library-import.html">Importing published libraries</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/features/mbse-capability.html">MBSE capabilities</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/features/requirement-management.html">Requirements management and traceability</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/features/parametric-modeling.html">Parametric modeling and constraints</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/features/simulation.html">Simulation and validation tools</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/features/cm.html">Version control and change management</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <span class="nav-text">Advanced</span>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../user-manual/features/scaling-limits.html">Scaling limits</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../extend.html">Customization and extensions</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../../user-manual/features/security.html">Security and compliance</a>
+  </li>
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../elasticsearch-integration.html">Elasticsearch integration</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../user-manual/integration.html">Integration with other tools</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../index.html">Developer guide</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../extend.html">Customization and extensions</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/integration/interoperability.html">Interoperability</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/integration/capella.html">Integrating with Capella</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="api.html">APIs</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="api-details.html">API details</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="3">
+    <a class="nav-link" href="api-cookbook.html">APIs cookbook</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../user-manual/help.html">Support and resources</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/forum.html">Forum</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/contribute.html">Contribute</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/best-practices.html">SysON best practices</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/support.html">Professional support</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/resources.html">Resources</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../../user-manual/updates.html">Release notes and updates</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/release-notes/release-notes.html">Release notes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../../user-manual/cycle.html">SysON development cycle</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../../user-manual/faq/faq.html">Frequently Asked Questions</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../../product-legal/index.html">Legal Information</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">SysON</span>
+    <span class="version">main</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../../index.html">SysON</a></div>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../../index.html">main</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2026.7.0/index.html">v2026.7.0</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2026.5.0/index.html">v2026.5.0</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2026.3.0/index.html">v2026.3.0</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2026.1.0/index.html">v2026.1.0</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2025.12.0/index.html">v2025.12.0</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2025.10.0/index.html">v2025.10.0</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2025.8.0/index.html">v2025.8.0</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2025.6.0/index.html">v2025.6.0</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2025.4.0/index.html">v2025.4.0</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2025.2.0/index.html">v2025.2.0</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2025.1.0/index.html">v2025.1.0</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2024.11.0/index.html">v2024.11.0</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2024.9.0/index.html">v2024.9.0</a>
+        </li>
+        <li class="version">
+          <a href="../../../v2024.7.0/index.html">v2024.7.0</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../../../v2026.7.0/index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../../index.html">SysON</a></li>
+    <li><a href="../../user-manual/integration.html">Integration with other tools</a></li>
+    <li><a href="api.html">APIs</a></li>
+    <li><a href="api-cookbook.html">APIs cookbook</a></li>
+  </ul>
+</nav>
+<div class="page-versions">
+  <button class="version-menu-toggle" title="Show other versions of page">main</button>
+  <div class="version-menu">
+    <a class="version is-current" href="api-cookbook.html">main</a>
+    <a class="version" href="../../../v2026.7.0/developer-guide/api/api-cookbook.html">v2026.7.0</a>
+    <a class="version" href="../../../v2026.5.0/developer-guide/api/api-cookbook.html">v2026.5.0</a>
+    <a class="version" href="../../../v2026.3.0/developer-guide/api/api-cookbook.html">v2026.3.0</a>
+    <a class="version" href="../../../v2026.1.0/developer-guide/api/api-cookbook.html">v2026.1.0</a>
+    <a class="version" href="../../../v2025.12.0/developer-guide/api/api-cookbook.html">v2025.12.0</a>
+    <a class="version" href="../../../v2025.10.0/developer-guide/api/api-cookbook.html">v2025.10.0</a>
+    <a class="version" href="../../../v2025.8.0/developer-guide/api/api-cookbook.html">v2025.8.0</a>
+    <a class="version is-missing" href="../../../v2025.6.0/index.html">v2025.6.0</a>
+    <a class="version is-missing" href="../../../v2025.4.0/index.html">v2025.4.0</a>
+    <a class="version is-missing" href="../../../v2025.2.0/index.html">v2025.2.0</a>
+    <a class="version is-missing" href="../../../v2025.1.0/index.html">v2025.1.0</a>
+    <a class="version is-missing" href="../../../v2024.11.0/index.html">v2024.11.0</a>
+    <a class="version is-missing" href="../../../v2024.9.0/index.html">v2024.9.0</a>
+    <a class="version is-missing" href="../../../v2024.7.0/index.html">v2024.7.0</a>
+  </div>
+</div>
+
+<div class="edit-this-page"><a href="https://github.com/eclipse-syson/syson/edit/main/doc/content/modules/developer-guide/pages/api/api-cookbook.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<div class="spacer"></div>
+<article class="doc">
+<h1 class="page">APIs cookbook</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Each recipe aims for clarity, ease of use, and customizability for different use cases.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_setup_instructions">1. Setup instructions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To get started with the examples, Python is used to interact with SysON’s features and data.
+Python offers a powerful way to automate tasks, handle API calls, and process data, making it an ideal choice for this purpose.
+Follow the steps after to set up your environment and get everything ready to run the provided code snippets.</p>
+</div>
+<div class="sect2">
+<h3 id="_step_1_install_required_python_libraries">1.1. Step 1: Install required Python libraries</h3>
+<div class="paragraph">
+<p>Confirm you have the following Python libraries installed before running the code snippets:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>requests</code>: For making HTTP requests to the SysML v2 API.</p>
+</li>
+<li>
+<p><code>pandas</code>: For organizing and manipulating data.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>To install these libraries, run:</p>
+</div>
+<div class="paragraph">
+<p><code>pip install requests pandas</code></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_step_2_configure_sysml_v2_api_access">1.2. Step 2: Configure SysML v2 API access</h3>
+<div class="listingblock">
+<div class="title">init_api.py</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python"># These examples are adapted from the SysML v2 API Cookbook, available at
+# https://github.com/Systems-Modeling/SysML-v2-API-Cookbook, maintained by the
+# Object Management Group (OMG).
+# The original cookbook is designed for use with Jupyter Lab.
+# These examples have been adapted to run as standalone Python scripts, making
+# them suitable for use in various environments, including SysON.
+# They showcase practical usage scenarios and may include additional functionality
+# or modifications tailored to specific needs.
+import argparse
+
+def init_sysmlv2_api():
+    host =  "http://localhost:8080/api/rest" # Replace with your actual API host URL <i class="conum" data-value="1"></i><b>(1)</b>
+    return host
+
+def parse_arguments():
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "project_id",
+        type=str,
+        help="The project ID.",
+    )
+    parser.add_argument(
+        "element_id",
+        type=str,
+        nargs="?",  # This makes element_id optional
+        help="The element ID (optional).",
+    )
+    return parser.parse_args()</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Replace <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code> with the actual URL of your API server if hosted elsewhere.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>What this code does</strong>:</p>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Define the base host: Assigns the variable <code>host</code> with the base URL of the SysML v2 API server.</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>In the examples, the SysON server uses a randomization function to generate unique IDs, so outputs can differ when you run the examples on your project.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Other code snippets use this function.
+To run it, see the following section about recipes.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_step_3_test_code_snippets">1.3. Step 3: Test code snippets</h3>
+<div class="paragraph">
+<p>Once you have configured the SysML v2 API access, you can start testing the <a href="#recipes">recipes</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_troubleshooting">1.4. Troubleshooting</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Error Handling</strong>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Check endpoint URLs, <code>project_id</code>, <code>commit_id</code>, and <code>authentication</code> tokens if the API returns errors: for example, 400 or 500 status codes.</p>
+</li>
+<li>
+<p>Confirm the API is running.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Empty Responses</strong>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Verify that queried elements exist within the specified project and commit.</p>
+</li>
+<li>
+<p>Use the SysON web interface for visual inspection.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Recursive Function Depth</strong>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>For large models, manage recursion depth appropriately.</p>
+</li>
+<li>
+<p>Change the logic to handle large datasets by limiting recursion depth.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="recipes">2. Recipes</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_project_and_commit_recipe_python_script">2.1. Project and commit recipe (python script)</h3>
+<div class="paragraph">
+<p>Learn how to manage projects and retrieve related commits programmatically.
+Each recipe includes a detailed explanation, step-by-step instructions, and code snippets.</p>
+</div>
+<div class="paragraph">
+<p>Recipes covered:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#get_projects">Get projects</a>: Fetch and display all projects currently available on the server.</p>
+</li>
+<li>
+<p><a href="#create_a_new_project">Create a new project</a>: Create a new project with a unique name.</p>
+</li>
+<li>
+<p><a href="#get_commits">Get commits</a>: Retrieve a list of commits for a specific project.</p>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="get_projects">2.1.1. Get projects</h4>
+<div class="paragraph">
+<p>This code example demonstrates how to use Python&#8217;s requests library to interact with the SysON API and retrieve a list of projects.
+It sends a <code>GET</code> request to the API endpoint for projects, processes the response, and prints the name and ID of each project.</p>
+</div>
+<div class="paragraph">
+<p>Example script to fetch projects:</p>
+</div>
+<div class="listingblock">
+<div class="title">fetch_projects.py</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python"># These examples are adapted from the SysML v2 API Cookbook, available at
+# https://github.com/Systems-Modeling/SysML-v2-API-Cookbook, maintained by the
+# Object Management Group (OMG).
+# The original cookbook is designed for use with Jupyter Lab.
+# These examples have been adapted to run as standalone Python scripts, making
+# them suitable for use in various environments, including SysON.
+# They showcase practical usage scenarios and may include additional functionality
+# or modifications tailored to specific needs.
+
+import requests <i class="conum" data-value="1"></i><b>(1)</b>
+from init_api import init_sysmlv2_api
+
+def fetch_projects(host): <i class="conum" data-value="2"></i><b>(2)</b>
+    projects_url = f"{host}/projects" <i class="conum" data-value="3"></i><b>(3)</b>
+    response = requests.get(projects_url) <i class="conum" data-value="4"></i><b>(4)</b>
+    if response.status_code == 200: <i class="conum" data-value="5"></i><b>(5)</b>
+        projects = response.json()
+        for project in projects:
+            print(f"Project Name: {project['name']}, ID: {project['@id']}")
+    else:
+        print(f"Error fetching projects: {response.status_code} - {response.text}")
+
+if __name__ == "__main__":
+    host = init_sysmlv2_api()
+    # Get the projects
+    fetch_projects(host)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>What this code does</strong>:</p>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><strong>Import required libraries</strong>:
+<div class="ulist">
+<ul>
+<li>
+<p><code>requests</code>: Used for sending HTTP requests.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><strong>Define the <code>fetch_projects</code> function</strong> with one parameter:
+<div class="ulist">
+<ul>
+<li>
+<p><code>host</code>: The base API address.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Constructs the <strong>API endpoint</strong> address for fetching projects.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><strong>Sends a <code>GET</code> request</strong> to the API, passing the SysON address as a query parameter.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td><strong>Handles the API response</strong>:
+<div class="ulist">
+<ul>
+<li>
+<p>If the projects are successfully fetched - HTTP status <code>200</code>, the function prints all the projects ID and name.</p>
+</li>
+<li>
+<p>If an error occurs, the status code and error message are displayed.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Run the script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ python fetch_projects.py</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">Project Name: Batmobile, ID: 63a03bd8-a81a-4818-801a-01790ce8a086</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="create_a_new_project">2.1.2. Create a new project</h4>
+<div class="paragraph">
+<p>This recipe demonstrates how to create a new project in SysON using Python.
+It sends a <code>POST</code> request to the <code>/projects</code> endpoint to create a new project with a unique name and description.</p>
+</div>
+<div class="paragraph">
+<p>Example script to create a new project:</p>
+</div>
+<div class="listingblock">
+<div class="title">create_project.py</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python"># These examples are adapted from the SysML v2 API Cookbook, available at
+# https://github.com/Systems-Modeling/SysML-v2-API-Cookbook, maintained by the
+# Object Management Group (OMG).
+# The original cookbook is designed for use with Jupyter Lab.
+# These examples have been adapted to run as standalone Python scripts, making
+# them suitable for use in various environments, including SysON.
+# They showcase practical usage scenarios and may include additional functionality
+# or modifications tailored to specific needs.
+
+import requests <i class="conum" data-value="1"></i><b>(1)</b>
+from init_api import init_sysmlv2_api
+from fetch_projects import fetch_projects
+from datetime import datetime
+
+def create_project(host, project_name): <i class="conum" data-value="2"></i><b>(2)</b>
+    # Define project data as query parameters
+    project_params = {
+        "name": project_name
+    }
+
+    # API endpoint to create a project
+    url = f"{host}/projects"  <i class="conum" data-value="3"></i><b>(3)</b>
+
+    # Send POST request with query parameters
+    response = requests.post(url, params=project_params)  <i class="conum" data-value="4"></i><b>(4)</b>
+
+    # Check if the project creation was successful
+    if response.status_code == 201:  <i class="conum" data-value="5"></i><b>(5)</b>
+        response_json = response.json()
+        print("Project created successfully:")
+        print(f"Project ID: {response_json.get("@id", "Unknown ID")}")
+        print(f"Project Name: {response_json.get('name', 'Unknown Name')}")
+    else:
+        print(f"Error creating project: {response.status_code} - {response.text}")
+
+if __name__ == "__main__":
+    host = init_sysmlv2_api()
+
+    # Fetch and display the list of projects currently available on the server
+    print("Fetching the list of projects currently available on the server:")
+    fetch_projects(host)
+
+    # Create a new project with a unique name by appending a timestamp
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    project_name = f"New Project - {timestamp}"
+    create_project(host, project_name)
+
+    # Fetch and display the updated list of projects after creating the new project
+    print("Fetching the updated list of projects after creating a new project:")
+    fetch_projects(host)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>What this code does</strong>:</p>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><strong>Import required libraries</strong>:
+<div class="ulist">
+<ul>
+<li>
+<p><code>requests</code>: Used for sending HTTP requests.</p>
+</li>
+<li>
+<p><code>datetime</code>: Used to generate a timestamp for unique project naming.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><strong>Define the <code>create_project</code> function</strong> with two parameters:
+<div class="ulist">
+<ul>
+<li>
+<p><code>host</code>: The base API URL.</p>
+</li>
+<li>
+<p><code>project_name</code>: The name of the project to be created.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Constructs the <strong>API endpoint</strong> URL of project creation.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><strong>Sends a <code>POST</code> request</strong> to the API, passing the project name as a query parameter.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td><strong>Handles the API response</strong>:
+<div class="ulist">
+<ul>
+<li>
+<p>If the project is successfully created - HTTP status <code>201</code>, the function extracts and prints the project ID and name.</p>
+</li>
+<li>
+<p>If an error occurs, the status code and error message are displayed.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Run the script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ python create_project.py</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">Fetching the list of projects currently available on the server:
+Project Name: Batmobile, ID: 63a03bd8-a81a-4818-801a-01790ce8a086
+Project created successfully:
+Project ID: d967b937-304f-43a9-8af6-b1f3a9d6adbe
+Project Name: New Project - 2024-12-31 10:52:56
+Fetching the updated list of projects after creating a new project:
+Project Name: Batmobile, ID: 63a03bd8-a81a-4818-801a-01790ce8a086
+Project Name: New Project - 2024-12-31 10:52:56, ID: d967b937-304f-43a9-8af6-b1f3a9d6adbe</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="get_commits">2.1.3. Get commits</h4>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>SysON always returns a <strong>single branch</strong> with a <strong>single commit</strong>.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>This example extends the functionality by fetching the commit associated with a specific project ID.
+It constructs an address based on the host and project ID, sends a <code>GET</code> request, and prints the ID of the retrieved commit.</p>
+</div>
+<div class="paragraph">
+<p>Example script to fetch commits:</p>
+</div>
+<div class="listingblock">
+<div class="title">fetch_commits.py</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python"># These examples are adapted from the SysML v2 API Cookbook, available at
+# https://github.com/Systems-Modeling/SysML-v2-API-Cookbook, maintained by the
+# Object Management Group (OMG).
+# The original cookbook is designed for use with Jupyter Lab.
+# These examples have been adapted to run as standalone Python scripts, making
+# them suitable for use in various environments, including SysON.
+# They showcase practical usage scenarios and may include additional functionality
+# or modifications tailored to specific needs.
+
+import requests <i class="conum" data-value="1"></i><b>(1)</b>
+from init_api import parse_arguments
+from init_api import init_sysmlv2_api
+
+def fetch_commits(host, project_id):  <i class="conum" data-value="2"></i><b>(2)</b>
+    commits_url = f"{host}/projects/{project_id}/commits"  <i class="conum" data-value="3"></i><b>(3)</b>
+    response = requests.get(commits_url)  <i class="conum" data-value="4"></i><b>(4)</b>
+    if response.status_code == 200:  <i class="conum" data-value="5"></i><b>(5)</b>
+        commits = response.json()
+        for commit in commits:
+            print(f"Commit ID: {commit['@id']}")
+        return commits
+    else:
+        print(f"Error fetching commits: {response.status_code} - {response.text}")
+        return None
+
+#  Retrieves the latest commit for a given project.
+def get_last_commit_id(host, project_id):
+    commits = fetch_commits(host, project_id)
+    if commits:
+        last_commit = commits[-1] if commits else None
+        if last_commit:
+            last_commit_id = last_commit['@id']
+            print(f"Last Commit ID: {last_commit_id}")
+        return last_commit_id
+    else:
+        print("No commits available.")
+        return None
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    host = init_sysmlv2_api()
+    project_id = args.project_id
+    fetch_commits(host, project_id)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>What this code does</strong>:</p>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><strong>Import required libraries</strong>:
+<div class="ulist">
+<ul>
+<li>
+<p><code>requests</code>: Used for sending HTTP requests.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><strong>Define the <code>fetch_commits</code> Function</strong> with two parameters:
+<div class="ulist">
+<ul>
+<li>
+<p><code>host</code>: The base API URL.</p>
+</li>
+<li>
+<p><code>project_id</code>: The project ID.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Constructs the <strong>API endpoint</strong> URL for fetching commits.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><strong>Sends a <code>GET</code> request</strong> to the API, passing the SysON address and the project ID as a query parameter.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td><strong>Handles the API response</strong>:
+<div class="ulist">
+<ul>
+<li>
+<p>If the projects are successfully fetched - HTTP status <code>200</code>, the function prints all the projects ID and name.</p>
+</li>
+<li>
+<p>If an error occurs, the status code and error message are displayed.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Run the script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ python fetch_commits.py your-project-id</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">Commit ID: 63a03bd8-a81a-4818-801a-01790ce8a086</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_element_owned_elements_recipe_python_script">2.2. Element owned elements recipe (python script)</h3>
+<div class="paragraph">
+<p>Learn how to retrieve owned elements programmatically.
+Each recipe includes a detailed explanation, step-by-step instructions, and sample code.</p>
+</div>
+<div class="paragraph">
+<p>Recipes covered:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#get_owned_elements">Get owned elements</a>: Retrieve owned elements.</p>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="get_owned_elements">2.2.1. Get owned elements</h4>
+<div class="paragraph">
+<p>This example demonstrates how to recursively navigate through the hierarchical structure of elements by using the SysON API.
+The script starts from a specific element identified by its ID and retrieves its details along with any "owned elements."
+The function calls itself recursively to explore all child elements in the hierarchy, printing their names, IDs, and types in an indented format to show the hierarchy visually.</p>
+</div>
+<div class="paragraph">
+<p>Example script to get owned elements:</p>
+</div>
+<div class="listingblock">
+<div class="title">get_owned_element.py</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python"># These examples are adapted from the SysML v2 API Cookbook, available at
+# https://github.com/Systems-Modeling/SysML-v2-API-Cookbook, maintained by the
+# Object Management Group (OMG).
+# The original cookbook is designed for use with Jupyter Lab.
+# These examples have been adapted to run as standalone Python scripts, making
+# them suitable for use in various environments, including SysON.
+# They showcase practical usage scenarios and may include additional functionality
+# or modifications tailored to specific needs.
+
+import requests
+from init_api import parse_arguments
+from init_api import init_sysmlv2_api
+from fetch_commits import get_last_commit_id
+
+# Function to fetch an element and print its name and type
+def get_element(host, project_id, commit_id, element_id, indent):
+     # Fetch the element in the given commit of the given project
+    element_url = f"{host}/projects/{project_id}/commits/{commit_id}/elements/{element_id}"  <i class="conum" data-value="3"></i><b>(3)</b>
+    response = requests.get(element_url)  <i class="conum" data-value="1"></i><b>(1)</b>
+
+    if response.status_code == 200:
+        element_data = response.json()
+        element_name_to_print = element_data['name'] if element_data['name'] else 'N/A'
+        element_id = element_data ['@id']
+        element_type = element_data ['@type']
+        print(f"{indent} - {element_name_to_print} (id = {element_id} , type = {element_type})") <i class="conum" data-value="2"></i><b>(2)</b>
+        return element_data
+    else:
+        return None
+
+# Fetches immediate owned elements for a given element
+def get_owned_elements_immediate(host, project_id, commit_id, element_id, indent):
+    element_data = get_element(host, project_id, commit_id, element_id, indent)
+    if element_data:
+        owned_elements = element_data['ownedElement']
+        if len(owned_elements) &gt; 0:
+            for owned_element in owned_elements:
+                get_element(host, project_id, commit_id, owned_element['@id'], indent + '  ')
+    else:
+        print(f"Unable to fetch element with id '{element_id}' in commit '{commit_id}' of project '{project_id}'")
+
+# Fetches owned elements recursively for a given element
+def get_owned_elements(host, project_id, commit_id, element_id, indent):
+    element_data = get_element(host, project_id, commit_id, element_id, indent)
+    if element_data: <i class="conum" data-value="3"></i><b>(3)</b>
+        owned_elements = element_data['ownedElement']
+        if len(owned_elements) &gt; 0:
+            for owned_element in owned_elements:
+                get_owned_elements(host, project_id, commit_id, owned_element['@id'], indent+' ')
+    else:
+        print(f"Unable to fetch element with id '{element_id}' in commit '{commit_id}' of project '{project_id}'")  <i class="conum" data-value="4"></i><b>(4)</b>
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    host = init_sysmlv2_api()
+    project_id = args.project_id
+    commit_id = get_last_commit_id(host, project_id)
+    element_id = args.element_id
+
+    #Get owned elements (immediate) for the given element in the given commit of the given project
+    print("Immediate Owned Elements:")
+    get_owned_elements_immediate(host, project_id, commit_id, element_id, '')
+
+    # Get owned elements (recursive) for the given element in the given commit of the given project
+    print("\nRecursive Owned Elements:")
+    get_owned_elements(host, project_id, commit_id, element_id, '')</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>What this code does</strong>:</p>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><strong>Fetches an Element</strong>: Sends a <code>GET</code> request to the SysON API to retrieve details about an element specified by its ID.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><strong>Prints Element Details</strong>: Displays the element&#8217;s name, ID, and type in a formatted, indented way.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td><strong>Processes Owned Elements</strong>: Checks for owned elements and calls itself recursively for each one.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><strong>Recursive Traversal</strong>: Continues recursing through hierarchical levels until it explores and prints all owned elements.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>This approach helps visualize the structure of complex models or systems, where elements are organized hierarchically.
+It highlights how to navigate relationships between elements efficiently by using the SysON API.</p>
+</div>
+<div class="paragraph">
+<p>Run the script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ python get_owned_elements.py your-project-id your-element-id</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Output example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">Commit ID: 63a03bd8-a81a-4818-801a-01790ce8a086
+Last Commit ID: 63a03bd8-a81a-4818-801a-01790ce8a086
+Immediate Owned Elements:
+ - Batmobile (Definition)
+   - problemStatement (ReferenceUsage)
+   - systemIdea (ReferenceUsage)
+   - seat (PartUsage)
+   - body (PartUsage)
+   - wheels (PartUsage)
+   - frontLeftWheel (PartUsage)
+   - frontRightWheel (PartUsage)
+   - rearLeftWheel (PartUsage)
+   - rearRightWheel (PartUsage)
+   - battery (PartUsage)
+   - batmobileEngine (PartUsage)
+
+Recursive Owned Elements:
+ - Batmobile (Definition)
+  - problemStatement (ReferenceUsage)
+   - N/A (LiteralString)
+  - systemIdea (ReferenceUsage)
+   - N/A (LiteralString)
+  - seat (PartUsage)
+  - body (PartUsage)
+  - wheels (PartUsage)
+  - frontLeftWheel (PartUsage)
+  - frontRightWheel (PartUsage)
+  - rearLeftWheel (PartUsage)
+  - rearRightWheel (PartUsage)
+  - battery (PartUsage)
+   - powerPort (PortUsage)
+   - capacity (AttributeUsage)
+  - batmobileEngine (PartUsage)
+   - enginePort (PortUsage)</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_create_element_recipe_swagger_ui_rest_client">2.3. Create element recipe (swagger UI / REST client)</h3>
+<div class="paragraph">
+<p>Learn how to create and element through REST API.
+Each recipe includes a detailed explanation, step-by-step instructions, and sample code.</p>
+</div>
+<div class="paragraph">
+<p>Test on simple SysMLv2 project (with <code>id</code> = <code>44ba0783-8476-442a-9ab3-b6c26e251734</code>) with only one element: a <em>Package</em> named "Package1" with <code>elementId</code> = <code>b2426313-e795-47e8-a2b2-7e29adb12a56</code></p>
+</div>
+<div class="paragraph">
+<p>1) Let&#8217;s retrieve the elements with <strong>/elements</strong> GET request</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">http://localhost:8080/api/rest/projects/44ba0783-8476-442a-9ab3-b6c26e251734/commits/44ba0783-8476-442a-9ab3-b6c26e251734/elements</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Replace <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code> with the actual URL of your API server if hosted elsewhere.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Use the swagger UI to execute the request (or your favorite REST client):</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../_images/create_element_recipe_1_get_elements.png" alt="Swagger UI GET elements request">
+</div>
+</div>
+<div class="paragraph">
+<p>The JSON response is:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">[
+  {
+    "@id": "b2426313-e795-47e8-a2b2-7e29adb12a56",
+    "@type": "Package",
+    "declaredName": "Package1",
+    "elementId": "b2426313-e795-47e8-a2b2-7e29adb12a56",
+    ...
+  }
+]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>2) Let&#8217;s add a new <em>PartDefinition</em> under our <em>Package</em> "Package1".</p>
+</div>
+<div class="paragraph">
+<p>As you may know, with SysML v2, an <em>Element</em> is contained in an another <em>Element</em> through an intermediate <em>Element</em> called a <em>Membership</em>.
+In our case, an <em>OwningMembership</em> is the appropriate intermediate <em>Element</em>.
+So we have to add two new <em>Elements</em>.
+The containment relation between an <em>Element</em> and a <em>Membership</em> is named "ownedRelationship".
+The containment relation between a <em>Membership</em> and an <em>Element</em> is named "ownedRelatedElement".</p>
+</div>
+<div class="paragraph">
+<p>2.1) Execute the <strong>/commits</strong> POST request, allowing to create the <em>OwningMembership</em>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">http://localhost:8080/api/rest/projects/44ba0783-8476-442a-9ab3-b6c26e251734/commits</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>with the following raw JSON body:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+	"@type": "Commit",
+	"change": [
+		{
+			"@type": "DataVersion",
+			"identity": null,
+			"payload": {
+				"@id": "8e57348e-338f-4272-9e01-bb896784d849", // a random ID
+				"@type": "OwningMembership",
+				"elementId": "8e57348e-338f-4272-9e01-bb896784d849" // the same random ID. This will be the final @id/elementId of the OwningMembership. We will use it in the next step to create the PartDefinition inside this OwningMembership.
+			}
+		},
+		{
+			"@type": "DataVersion",
+			"identity": {
+				"@id":"b2426313-e795-47e8-a2b2-7e29adb12a56", // Package1 elementId
+				"@type" : "DataIdentity"
+			},
+			"payload": {
+				"@id": "f3d97864-09f0-4af7-95bd-44b1a3243fdb", // a random ID
+				"@type": "OwningMembership",
+				"ownedRelationship": [{
+					"@id": "8e57348e-338f-4272-9e01-bb896784d849" // the random ID used for the creation of the OwningMembership.
+				}]
+			}
+		}
+	]
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Use the swagger UI to execute the request (or your favorite REST client):</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../_images/create_element_recipe_2_1_post_owning_membership.png" alt="Swagger UI POST commit request">
+</div>
+</div>
+<div class="paragraph">
+<p>The JSON response:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+	"@id": "44ba0783-8476-442a-9ab3-b6c26e251734",
+	"@type": "Commit",
+	"created": "1970-01-01T00:00:00Z",
+	"description": "The one and only commit for this project",
+	"owningProject": {
+		"@id": "44ba0783-8476-442a-9ab3-b6c26e251734"
+	},
+	"previousCommits": []
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>2.2) Now we have created a new <em>OwningMembership</em>, we can create a new <em>PartDefinition</em> inside it.</p>
+</div>
+<div class="paragraph">
+<p>Execute the <strong>/commits</strong> POST request, allowing to create the <em>PartDefinition</em>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">http://localhost:8080/api/rest/projects/44ba0783-8476-442a-9ab3-b6c26e251734/commits</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>with the following raw JSON body:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+	"@type": "Commit",
+	"change": [
+		{
+			"@type": "DataVersion",
+			"identity": null,
+			"payload": {
+				"@id": "4d4596e7-27a3-493a-8c6a-de63dddfca2b", // a random ID
+				"@type": "PartDefinition",
+				"declaredName": "MyRESTNewPartDef",
+				"elementId": "4d4596e7-27a3-493a-8c6a-de63dddfca2b" // the same random ID. This will be the final @id/elementId of the PartDefinition.
+			}
+		},
+		{
+			"@type": "DataVersion",
+			"identity": {
+				"@id":"8e57348e-338f-4272-9e01-bb896784d849", //OwningMembership @id/elementId we created in the previous step
+				"@type" : "DataIdentity"
+			},
+			"payload": {
+				"@id": "aff1e118-af4b-465d-b9a9-8a407017d4d2", // a random ID
+				"@type": "PartDefinition",
+				"ownedRelatedElement": [{
+					"@id": "4d4596e7-27a3-493a-8c6a-de63dddfca2b" // the random ID used for the creation of the PartDefinition.
+				}]
+			}
+		}
+	]
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Use the swagger UI to execute the request (or your favorite REST client):</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../_images/create_element_recipe_2_3_post_part_definition.png" alt="Swagger UI POST commit request">
+</div>
+</div>
+<div class="paragraph">
+<p>The JSON response:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+	"@id": "44ba0783-8476-442a-9ab3-b6c26e251734",
+	"@type": "Commit",
+	"created": "1970-01-01T00:00:00Z",
+	"description": "The one and only commit for this project",
+	"owningProject": {
+		"@id": "44ba0783-8476-442a-9ab3-b6c26e251734"
+	},
+	"previousCommits": []
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>3) Finally and optionally, retrieve the elements one last with <strong>/elements</strong> GET request to confirm the new <em>OwningMembership</em> &amp; <em>PartDefinition</em> have been created by the POST requests.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">http://localhost:8080/api/rest/projects/44ba0783-8476-442a-9ab3-b6c26e251734/commits/44ba0783-8476-442a-9ab3-b6c26e251734/elements</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Use the swagger UI to execute the request (or your favorite REST client):</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../_images/create_element_recipe_3_get_elements.png" alt="Swagger UI GET elements request">
+</div>
+</div>
+<div class="paragraph">
+<p>The JSON response is:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">[
+  {
+    "@id": "b2426313-e795-47e8-a2b2-7e29adb12a56",
+    "@type": "Package",
+    "declaredName": "Package1",
+    "elementId": "b2426313-e795-47e8-a2b2-7e29adb12a56",
+    ...
+  },
+  {
+    "@id": "8e57348e-338f-4272-9e01-bb896784d849",
+    "@type": "OwningMembership",
+    "elementId": "8e57348e-338f-4272-9e01-bb896784d849",
+    ...
+  },
+  {
+    "@id": "4d4596e7-27a3-493a-8c6a-de63dddfca2b",
+    "@type": "PartDefinition",
+    "declaredName": "MyRESTNewPartDef",
+    "elementId": "4d4596e7-27a3-493a-8c6a-de63dddfca2b",
+    ...
+  }
+]</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_create_new_objects_from_text_recipe_python_script">2.4. Create new objects from text recipe (python script)</h3>
+<div class="paragraph">
+<p>Learn how to create and element through GraphQL API.</p>
+</div>
+<div class="paragraph">
+<p>Each recipe includes a detailed explanation, step-by-step instructions, and sample code.</p>
+</div>
+<div class="paragraph">
+<p>Recipes covered:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#new_objects_from_text">New objects from text</a>: creates new objects in SysON from a textual SysMLv2 file.</p>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="new_objects_from_text">2.4.1. New objects from text</h4>
+<div class="paragraph">
+<p>This example demonstrates how to create new objects from a textual SysMLv2 file by using the SysON GraphQL API.</p>
+</div>
+<div class="paragraph">
+<p>The script reads a SysMLv2 file, extracts its content, and creates new elements in a specified project and namespace.</p>
+</div>
+<div class="paragraph">
+<p>Example script to create new objects from text:</p>
+</div>
+<div class="listingblock">
+<div class="title">get_owned_element.py</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">###############################################################################
+# Copyright (c) 2025 Obeo.
+# This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v2.0
+# which accompanies this distribution, and is available at
+# https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#     Obeo - initial API and implementation
+###############################################################################
+
+import requests <i class="conum" data-value="1"></i><b>(1)</b>
+import uuid
+import argparse
+from pathlib import Path
+
+headers = {
+    "Content-Type": "application/json"
+}
+
+GRAPHQL_ENDPOINT =  "/api/graphql"
+
+# GraphQL query to fetch editing context and stereotypes
+fetch_editing_context_query = """
+query FetchEditingContext($projectId: ID!) {
+  viewer {
+    project(projectId: $projectId) {
+      currentEditingContext {
+        id
+        stereotypes {
+          edges {
+            node {
+              id
+              label
+            }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+# GraphQL mutation for importing SysML v2 content
+import_sysml_mutation = """
+mutation InsertTextualSysMLv2($input: InsertTextualSysMLv2Input!) {
+  insertTextualSysMLv2(input: $input) {
+    __typename
+    ... on SuccessPayload {
+      id
+    }
+    ... on ErrorPayload {
+      message
+    }
+  }
+}
+"""
+
+# Function to fetch the editing context
+def fetch_editing_context(url, project_id): <i class="conum" data-value="2"></i><b>(2)</b>
+    graphql_url = f"{url}{GRAPHQL_ENDPOINT}"
+    variables = {"projectId": project_id}
+    response = requests.post(
+        graphql_url,
+        json={"query": fetch_editing_context_query, "variables": variables},
+        headers=headers
+    )
+
+    if response.status_code != 200:
+        print(f"Error fetching editing context: {response.status_code} - {response.text}")
+        return None
+
+    data = response.json()
+    viewer = data.get("data", {}).get("viewer", {})
+    project = viewer.get("project", {})
+    editing_context = project.get("currentEditingContext", {})
+    return editing_context
+
+# Function to import SysML v2 content into a project
+def import_sysml_to_project(url, file_path, editing_context_id, object_id): <i class="conum" data-value="3"></i><b>(3)</b>
+    graphql_url = f"{url}{GRAPHQL_ENDPOINT}"
+    try:
+        # Read the SysML v2 file
+        with open(file_path, "r") as file:
+            textual_content = file.read()
+
+        # Generate a unique operation ID
+        operation_id = str(uuid.uuid4())
+
+        # Prepare mutation variables
+        variables = {
+            "input": {
+                "id": operation_id,
+                "editingContextId": editing_context_id,
+                "objectId": object_id,
+                "textualContent": textual_content
+            }
+        }
+
+        # Send the mutation request <i class="conum" data-value="4"></i><b>(4)</b>
+        response = requests.post(
+            graphql_url,
+            json={"query": import_sysml_mutation, "variables": variables},
+            headers= headers
+        )
+
+        if response.status_code != 200:
+            print(f"Error importing SysML v2: {response.status_code} - {response.text}")
+            return False
+
+        data = response.json()
+        result = data.get("data", {}).get("insertTextualSysMLv2", {})
+
+        if result.get("__typename") == "SuccessPayload":
+            return True
+        elif result.get("__typename") == "ErrorPayload":
+            print(f"Error: {result.get('message')}")
+            return False
+        else:
+            print("Unexpected response:", data)
+            return False
+
+    except Exception as e:
+        print(f"An error occurred while importing SysML v2: {e}")
+        return False
+
+if __name__ == "__main__":
+    # Set up argument parsing
+    parser = argparse.ArgumentParser(description="SysON new objects from text script")
+
+    parser.add_argument(
+        "url",
+        nargs="?",  # Makes the argument optional
+        default="http://localhost:8080",  # Default value
+        help="The API base URL (e.g., http://yourSysonServerURL). Defaults to http://localhost:8080"
+    )
+
+    parser.add_argument(
+        "file_path",
+        type=Path,  # Ensure it's a valid path
+        help="File path containing the SysML textual file to import (absolute path required)"
+    )
+
+    parser.add_argument(
+        "project_id",
+        type=str,
+        help="The UUID of the project to import the SysML file into"
+    )
+
+    parser.add_argument(
+        "namespace_elementId",
+        type=str,
+        help="The elementId of the SysMLv2 element under which the content of the SysMLv2 file will be imported"
+    )
+
+    args = parser.parse_args()
+
+    # Get all function parameters <i class="conum" data-value="5"></i><b>(5)</b>
+    url = args.url
+    file_path = args.file_path
+    # Fetch editing context
+    editing_context = fetch_editing_context(url, args.project_id)
+    if editing_context:
+        editing_context_id = editing_context["id"]
+    else:
+        print("Editing context not found.")
+        exit()
+    namespace_id = args.namespace_elementId
+
+    # Import SysML file into the project, under the specified Namespace element
+    if import_sysml_to_project(url, file_path, editing_context_id, namespace_id): <i class="conum" data-value="6"></i><b>(6)</b>
+        print(f"SysML v2 file imported successfully: {file_path}") <i class="conum" data-value="7"></i><b>(7)</b>
+    else:
+        print(f"Failed to import SysML v2 file: {file_path}") <i class="conum" data-value="7"></i><b>(7)</b></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>What this code does</strong>:</p>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><strong>Import required libraries</strong>:
+<div class="ulist">
+<ul>
+<li>
+<p><code>requests</code>: Used for sending HTTP requests.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><strong>Define the <code>fetch_editing_context</code> function</strong> with two parameters:
+<div class="ulist">
+<ul>
+<li>
+<p><code>host</code>: The base API address.</p>
+</li>
+<li>
+<p><code>projectId</code>: The UUID of the SysON project in which you want to create you new objects from text.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td><strong>Define the <code>import_sysml_to_project</code> function</strong> with four parameters:
+<div class="ulist">
+<ul>
+<li>
+<p><code>host</code>: The base API address.</p>
+</li>
+<li>
+<p><code>file_path</code>: The absolute file path of the textual SysMLv2 file containing the new objects.</p>
+</li>
+<li>
+<p><code>editing_context_id</code>: The UUID of the SysON editing context in which you want to create your new objects.</p>
+</li>
+<li>
+<p><code>object_id</code>: The UUID of the SysMLv2 Element in which you want to create your new objects.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><strong>Sends a <code>POST</code> request</strong> to the API, passing all script parameters as a query parameters.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>Constructs the <strong>API endpoint</strong> address for fetching projects.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td><strong>Call the <code>import_sysml_to_project</code> function</strong> passing all script parameters as a function parameters.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="7"></i><b>7</b></td>
+<td><strong>Handles the API response</strong>:
+<div class="ulist">
+<ul>
+<li>
+<p>If the mutation is successful, a message is displayed.</p>
+</li>
+<li>
+<p>If an error occurs, an error message is displayed.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Run the script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ python new_objects_from_text.py url-of-syson-server file-path-of-sysmlv2-file your-project-id your-namespace-elementId</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For example, to run the script, you would use the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ python new_objects_from_text.py http://localhost:8080 /Users/myUserFolder/myFolder/mySysMLv2File.sysml 76bb3f29-17d1-465a-a2ca-a331978c36f3 2c0ddeb4-b9fe-478e-951e-0ca312013a5b</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Output example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">SysML v2 file imported successfully: /Users/myUserFolder/myFolder/mySysMLv2File.sysml</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then you can check the project in the SysON web application to see the newly created objects, or you can use the <code>get_owned_element.py</code> script to retrieve the owned elements of the project.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_import_sysml_file_recipe_python_script">2.5. Import SysML file recipe (python script)</h3>
+<div class="paragraph">
+<p>Learn how to import a textual SysML file into an existing SysON project through the Sirius Web GraphQL API.
+Each recipe includes a detailed explanation, step-by-step instructions, and sample code.</p>
+</div>
+<div class="paragraph">
+<p>Recipes covered:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#import_sysml_file">Import a SysML file</a>: imports a <code>.sysml</code> file as a document in a SysON project.</p>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="import_sysml_file">2.5.1. Import a SysML file</h4>
+<div class="paragraph">
+<p>This example demonstrates how to upload a <code>.sysml</code> file by using the Sirius Web <code>uploadDocument</code> GraphQL mutation.</p>
+</div>
+<div class="paragraph">
+<p>The script fetches the editing context of the selected project, uploads the file with a multipart GraphQL request, and lets SysON convert the textual SysML content into a model document.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>If the file depends on other SysML or KerML files, import those dependencies first.
+Otherwise, some relationships may remain unresolved.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Example script to import a SysML file:</p>
+</div>
+<div class="listingblock">
+<div class="title">import_sysml_file.py</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">###############################################################################
+# Copyright (c) 2026 Obeo.
+# This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v2.0
+# which accompanies this distribution, and is available at
+# https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#     Obeo - initial API and implementation
+###############################################################################
+
+import argparse
+import json
+import uuid
+from pathlib import Path
+
+import requests  <i class="conum" data-value="1"></i><b>(1)</b>
+
+
+GRAPHQL_ENDPOINT = "/api/graphql"
+GRAPHQL_UPLOAD_ENDPOINT = "/api/graphql/upload"
+
+
+fetch_editing_context_query = """
+query FetchEditingContext($projectId: ID!) {
+  viewer {
+    project(projectId: $projectId) {
+      currentEditingContext {
+        id
+      }
+    }
+  }
+}
+"""
+
+
+upload_document_mutation = """
+mutation UploadDocument($input: UploadDocumentInput!) {
+  uploadDocument(input: $input) {
+    __typename
+    ... on UploadDocumentSuccessPayload {
+      id
+      report
+    }
+    ... on ErrorPayload {
+      messages {
+        body
+        level
+      }
+    }
+  }
+}
+"""
+
+
+def get_graphql_url(url):
+    return f"{url.rstrip('/')}{GRAPHQL_ENDPOINT}"
+
+
+def get_graphql_upload_url(url):
+    return f"{url.rstrip('/')}{GRAPHQL_UPLOAD_ENDPOINT}"
+
+
+def print_graphql_errors(data):
+    errors = data.get("errors", [])
+    for error in errors:
+        print(f"GraphQL error: {error.get('message', error)}")
+
+
+def fetch_editing_context_id(url, project_id):  <i class="conum" data-value="2"></i><b>(2)</b>
+    response = requests.post(
+        get_graphql_url(url),
+        json={
+            "query": fetch_editing_context_query,
+            "variables": {"projectId": project_id},
+        },
+    )
+
+    if response.status_code != 200:
+        print(f"Error fetching editing context: {response.status_code} - {response.text}")
+        return None
+
+    data = response.json()
+    if data.get("errors"):
+        print_graphql_errors(data)
+        return None
+
+    project = data.get("data", {}).get("viewer", {}).get("project")
+    if not project:
+        print(f"Project not found: {project_id}")
+        return None
+
+    editing_context = project.get("currentEditingContext")
+    if not editing_context:
+        print(f"Editing context not found for project: {project_id}")
+        return None
+
+    return editing_context.get("id")
+
+
+def print_messages(messages):
+    for message in messages:
+        print(f"{message.get('level', 'INFO')}: {message.get('body', '')}")
+
+
+def import_sysml_file(url, file_path, editing_context_id, read_only):  <i class="conum" data-value="3"></i><b>(3)</b>
+    operation_id = str(uuid.uuid4())
+    operations = {
+        "query": upload_document_mutation,
+        "variables": {
+            "input": {
+                "id": operation_id,
+                "editingContextId": editing_context_id,
+                "file": None,
+                "readOnly": read_only,
+            }
+        },
+    }
+    file_map = {
+        "0": "variables.file"
+    }
+
+    with open(file_path, "rb") as file:
+        response = requests.post(  <i class="conum" data-value="4"></i><b>(4)</b>
+            get_graphql_upload_url(url),
+            data={
+                "operations": json.dumps(operations),
+                "map": json.dumps(file_map),
+            },
+            files={
+                "0": (file_path.name, file, "text/plain"),
+            },
+        )
+
+    if response.status_code not in (200, 201):
+        print(f"Error importing SysML file: {response.status_code} - {response.text}")
+        return False
+
+    data = response.json()
+    if data.get("errors"):
+        print_graphql_errors(data)
+        return False
+
+    payload = data.get("data", {}).get("uploadDocument", {})
+    if payload.get("__typename") == "UploadDocumentSuccessPayload":
+        print(f"SysML file imported successfully: {file_path}")
+        report = payload.get("report")
+        if report:
+            print("Import report:")
+            print(report)
+        return True
+
+    if payload.get("__typename") == "ErrorPayload":
+        print_messages(payload.get("messages", []))
+        return False
+
+    print(f"Unexpected response: {data}")
+    return False
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Import a SysML textual file into a SysON project")
+    parser.add_argument(
+        "arguments",
+        nargs="+",
+        help="Either: file-path project-id, or: url file-path project-id",
+    )
+    parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Import the uploaded document as read-only",
+    )
+    args = parser.parse_args()
+
+    if len(args.arguments) == 2:
+        args.url = "http://localhost:8080"
+        args.file_path = Path(args.arguments[0])
+        args.project_id = args.arguments[1]
+    elif len(args.arguments) == 3:
+        args.url = args.arguments[0]
+        args.file_path = Path(args.arguments[1])
+        args.project_id = args.arguments[2]
+    else:
+        parser.error("expected either: file-path project-id, or: url file-path project-id")
+
+    return args
+
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    file_path = args.file_path.expanduser().resolve()
+
+    if not file_path.is_file():
+        print(f"File not found: {file_path}")
+        exit(1)
+
+    editing_context_id = fetch_editing_context_id(args.url, args.project_id)  <i class="conum" data-value="5"></i><b>(5)</b>
+    if not editing_context_id:
+        exit(1)
+
+    if not import_sysml_file(args.url, file_path, editing_context_id, args.read_only):  <i class="conum" data-value="6"></i><b>(6)</b>
+        exit(1)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>What this code does</strong>:</p>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><strong>Import required libraries</strong>:
+<div class="ulist">
+<ul>
+<li>
+<p><code>requests</code>: Used for sending HTTP requests.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><strong>Define the <code>fetch_editing_context_id</code> function</strong> with two parameters:
+<div class="ulist">
+<ul>
+<li>
+<p><code>url</code>: The SysON server URL.</p>
+</li>
+<li>
+<p><code>project_id</code>: The UUID of the project in which the SysML file will be imported.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td><strong>Define the <code>import_sysml_file</code> function</strong> with four parameters:
+<div class="ulist">
+<ul>
+<li>
+<p><code>url</code>: The SysON server URL.</p>
+</li>
+<li>
+<p><code>file_path</code>: The path of the <code>.sysml</code> file to import.</p>
+</li>
+<li>
+<p><code>editing_context_id</code>: The UUID of the Sirius Web editing context in which the file will be imported.</p>
+</li>
+<li>
+<p><code>read_only</code>: Whether the imported document should be read-only.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><strong>Sends a <code>POST</code> request</strong> to <code>/api/graphql/upload</code> with the GraphQL multipart request format used by Sirius Web.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td><strong>Fetches the editing context ID</strong> from the project ID.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td><strong>Calls the import function</strong> and exits with an error code if the import fails.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Run the script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ python import_sysml_file.py file-path-of-sysml-file your-project-id
+$ python import_sysml_file.py url-of-syson-server file-path-of-sysml-file your-project-id</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For example, to import a file into a local SysON server:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ python import_sysml_file.py /Users/myUserFolder/myFolder/mySysMLv2File.sysml 76bb3f29-17d1-465a-a2ca-a331978c36f3</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Output example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">SysML file imported successfully: /Users/myUserFolder/myFolder/mySysMLv2File.sysml</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If the server returns an import report, the script prints it after the success message.
+Then you can check the project in the SysON web application to see the imported document.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_retrieve_project_documents_recipe_python_script">2.6. Retrieve project documents recipe (python script)</h3>
+<div class="paragraph">
+<p>Learn how to retrieve the list of documents from a SysON project through the Sirius Web HTTP API.
+Each recipe includes a detailed explanation, step-by-step instructions, and sample code.</p>
+</div>
+<div class="paragraph">
+<p>Recipes covered:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#retrieve_project_documents">Retrieve project documents</a>: downloads a project archive and prints the document names and ids found in its manifest.</p>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="retrieve_project_documents">2.6.1. Retrieve project documents</h4>
+<div class="paragraph">
+<p>This example demonstrates how to download a project archive and inspect its <code>manifest.json</code> file to retrieve the documents associated with the project.</p>
+</div>
+<div class="paragraph">
+<p>The manifest contains a <code>documentIdsToName</code> entry that maps each document UUID to its corresponding document name.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>The <code>document_id</code> values are returned by the project archive manifest, not by the Explorer tree itself.
+If you need a document id for a given document name, download the project archive and read the <code>documentIdsToName</code> section of the manifest.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Example script to retrieve the documents of a project:</p>
+</div>
+<div class="listingblock">
+<div class="title">retrieve_project_documents.py</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">###############################################################################
+# Copyright (c) 2026 Obeo.
+# This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v2.0
+# which accompanies this distribution, and is available at
+# https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#     Obeo - initial API and implementation
+###############################################################################
+
+import argparse
+import io
+import json
+import zipfile
+
+import requests  <i class="conum" data-value="1"></i><b>(1)</b>
+
+
+PROJECT_DOWNLOAD_ENDPOINT = "/api/projects/{project_id}"
+
+
+def get_project_download_url(url, project_id):
+    return f"{url.rstrip('/')}{PROJECT_DOWNLOAD_ENDPOINT.format(project_id=project_id)}"
+
+
+def download_project_archive(url, project_id):  <i class="conum" data-value="2"></i><b>(2)</b>
+    response = requests.get(
+        get_project_download_url(url, project_id),  <i class="conum" data-value="3"></i><b>(3)</b>
+        stream=True,
+    )
+
+    if response.status_code != 200:
+        print(f"Error downloading project archive: {response.status_code} - {response.text}")
+        return None
+
+    archive_content = io.BytesIO()
+    for chunk in response.iter_content(chunk_size=8192):
+        if chunk:
+            archive_content.write(chunk)
+
+    archive_content.seek(0)
+    with zipfile.ZipFile(archive_content) as archive:
+        manifest_name = None
+        for entry_name in archive.namelist():
+            if entry_name.endswith("/manifest.json"):
+                manifest_name = entry_name
+                break
+
+        if not manifest_name:
+            print("manifest.json not found in the project archive")
+            return None
+
+        with archive.open(manifest_name) as manifest_file:
+            manifest = json.load(io.TextIOWrapper(manifest_file, encoding="utf-8"))  <i class="conum" data-value="4"></i><b>(4)</b>
+
+    document_ids_to_name = manifest.get("documentIdsToName", {})
+    if not document_ids_to_name:
+        print("No documents found in the project manifest")
+        return []
+
+    documents = sorted(document_ids_to_name.items(), key=lambda item: item[1].lower())
+    return documents
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Retrieve the documents of a SysON project")
+    parser.add_argument(
+        "arguments",
+        nargs="+",
+        help="Either: project-id, or: url project-id",
+    )
+    args = parser.parse_args()
+
+    if len(args.arguments) == 1:
+        args.url = "http://localhost:8080"
+        args.project_id = args.arguments[0]
+    elif len(args.arguments) == 2:
+        args.url = args.arguments[0]
+        args.project_id = args.arguments[1]
+    else:
+        parser.error("expected either: project-id, or: url project-id")
+
+    return args
+
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    documents = download_project_archive(args.url, args.project_id)
+
+    if documents is None:
+        raise SystemExit(1)
+
+    for document_id, document_name in documents:  <i class="conum" data-value="5"></i><b>(5)</b>
+        print(f"Document Name: {document_name}, Document ID: {document_id}")</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>What this code does</strong>:</p>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><strong>Import required libraries</strong>:
+<div class="ulist">
+<ul>
+<li>
+<p><code>json</code>: Used to read the manifest content.</p>
+</li>
+<li>
+<p><code>zipfile</code>: Used to open the downloaded project archive.</p>
+</li>
+<li>
+<p><code>io.BytesIO</code>: Used to read the archive from memory.</p>
+</li>
+<li>
+<p><code>requests</code>: Used for sending HTTP requests.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><strong>Define the <code>download_project_archive</code> function</strong> with two parameters:
+<div class="ulist">
+<ul>
+<li>
+<p><code>url</code>: The SysON server URL.</p>
+</li>
+<li>
+<p><code>project_id</code>: The UUID of the project whose documents should be retrieved.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td><strong>Sends a <code>GET</code> request</strong> to <code>/api/projects/{projectId}</code> so the server returns the project archive as a ZIP file.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><strong>Reads the <code>manifest.json</code> file</strong> from the downloaded archive and extracts the <code>documentIdsToName</code> mapping.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td><strong>Prints the document ids and names</strong> in a stable order so the output is easy to read and reuse.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Run the script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ python retrieve_project_documents.py project-id
+$ python retrieve_project_documents.py url-of-syson-server project-id</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For example, to retrieve the documents of a local SysON project:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ python retrieve_project_documents.py 76bb3f29-17d1-465a-a2ca-a331978c36f3</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Output example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">Document Name: SysMLv2.sysml, Document ID: 3cb6f3b1-8a10-41b7-9a08-d32b66e28c6f
+Document Name: Requirements.sysml, Document ID: 7f4b9d33-0f4d-4b79-a6f8-8bc12edb9d1d</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then you can reuse the retrieved document ids in recipes such as <a href="#download_sysml_file">download a SysML file</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_download_sysml_file_recipe_python_script">2.7. Download SysML file recipe (python script)</h3>
+<div class="paragraph">
+<p>Learn how to download a textual SysML file from an existing SysON project through the Sirius Web HTTP API.
+Each recipe includes a detailed explanation, step-by-step instructions, and sample code.</p>
+</div>
+<div class="paragraph">
+<p>Recipes covered:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#download_sysml_file">Download a SysML file</a>: downloads a <code>.sysml</code> file from a SysON document and saves it locally.</p>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="download_sysml_file">2.7.1. Download a SysML file</h4>
+<div class="paragraph">
+<p>This example demonstrates how to download a <code>.sysml</code> file by calling the Sirius Web document download endpoint directly.</p>
+</div>
+<div class="paragraph">
+<p>The script fetches the editing context of the selected project, downloads the document with an HTTP <code>GET</code> request, and stores the textual SysML content in a local file.
+It uses the <code>Accept: text/html</code> header because this is the media type currently used by SysON to select the textual SysML exporter.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>The <code>document_id</code> parameter is the UUID of the document to download.
+There is no dedicated "copy document id" action in the <em>Explorer</em> view.
+If you need to look up a document id from a project, use the <a href="#retrieve_project_documents">retrieve project documents</a> recipe first.
+If you created or uploaded the document from the application UI, copy the UUID returned by that operation and reuse it here.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Example script to download a SysML file:</p>
+</div>
+<div class="listingblock">
+<div class="title">download_sysml_file.py</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">###############################################################################
+# Copyright (c) 2026 Obeo.
+# This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v2.0
+# which accompanies this distribution, and is available at
+# https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#     Obeo - initial API and implementation
+###############################################################################
+
+import argparse
+from pathlib import Path
+
+import requests  <i class="conum" data-value="1"></i><b>(1)</b>
+
+
+GRAPHQL_ENDPOINT = "/api/graphql"
+DOWNLOAD_ENDPOINT = "/api/editingcontexts/{editing_context_id}/documents/{document_id}"
+
+
+fetch_editing_context_query = """
+query FetchEditingContext($projectId: ID!) {
+  viewer {
+    project(projectId: $projectId) {
+      currentEditingContext {
+        id
+      }
+    }
+  }
+}
+"""
+
+
+def get_graphql_url(url):
+    return f"{url.rstrip('/')}{GRAPHQL_ENDPOINT}"
+
+
+def get_download_url(url, editing_context_id, document_id):
+    return f"{url.rstrip('/')}{DOWNLOAD_ENDPOINT.format(editing_context_id=editing_context_id, document_id=document_id)}"
+
+
+def print_graphql_errors(data):
+    errors = data.get("errors", [])
+    for error in errors:
+        print(f"GraphQL error: {error.get('message', error)}")
+
+
+def fetch_editing_context_id(url, project_id):  <i class="conum" data-value="2"></i><b>(2)</b>
+    response = requests.post(
+        get_graphql_url(url),
+        json={
+            "query": fetch_editing_context_query,
+            "variables": {"projectId": project_id},
+        },
+    )
+
+    if response.status_code != 200:
+        print(f"Error fetching editing context: {response.status_code} - {response.text}")
+        return None
+
+    data = response.json()
+    if data.get("errors"):
+        print_graphql_errors(data)
+        return None
+
+    project = data.get("data", {}).get("viewer", {}).get("project")
+    if not project:
+        print(f"Project not found: {project_id}")
+        return None
+
+    editing_context = project.get("currentEditingContext")
+    if not editing_context:
+        print(f"Editing context not found for project: {project_id}")
+        return None
+
+    return editing_context.get("id")
+
+
+def download_sysml_file(url, project_id, document_id, output_path):  <i class="conum" data-value="3"></i><b>(3)</b>
+    editing_context_id = fetch_editing_context_id(url, project_id)  <i class="conum" data-value="6"></i><b>(6)</b>
+    if not editing_context_id:
+        return False
+
+    response = requests.get(
+        get_download_url(url, editing_context_id, document_id),  <i class="conum" data-value="4"></i><b>(4)</b>
+        headers={"Accept": "text/html"},
+        stream=True,  <i class="conum" data-value="5"></i><b>(5)</b>
+    )
+
+    if response.status_code != 200:
+        print(f"Error downloading SysML file: {response.status_code} - {response.text}")
+        return False
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "wb") as file:
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                file.write(chunk)
+
+    print(f"SysML file downloaded successfully: {output_path}")
+    return True
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Download a SysML textual file from a SysON project")
+    parser.add_argument(
+        "arguments",
+        nargs="+",
+        help="Either: project-id document-id output-path, or: url project-id document-id output-path",
+    )
+    args = parser.parse_args()
+
+    if len(args.arguments) == 3:
+        args.url = "http://localhost:8080"
+        args.project_id = args.arguments[0]
+        args.document_id = args.arguments[1]
+        args.output_path = Path(args.arguments[2])
+    elif len(args.arguments) == 4:
+        args.url = args.arguments[0]
+        args.project_id = args.arguments[1]
+        args.document_id = args.arguments[2]
+        args.output_path = Path(args.arguments[3])
+    else:
+        parser.error("expected either: project-id document-id output-path, or: url project-id document-id output-path")
+
+    return args
+
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    output_path = args.output_path.expanduser().resolve()
+
+    if not download_sysml_file(args.url, args.project_id, args.document_id, output_path):  <i class="conum" data-value="7"></i><b>(7)</b>
+        exit(1)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>What this code does</strong>:</p>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><strong>Import required libraries</strong>:
+<div class="ulist">
+<ul>
+<li>
+<p><code>requests</code>: Used for sending HTTP requests.</p>
+</li>
+<li>
+<p><code>pathlib.Path</code>: Used to work with the local output path.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><strong>Define the <code>fetch_editing_context_id</code> function</strong> with two parameters:
+<div class="ulist">
+<ul>
+<li>
+<p><code>url</code>: The SysON server URL.</p>
+</li>
+<li>
+<p><code>project_id</code>: The UUID of the project that contains the document to download.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td><strong>Define the <code>download_sysml_file</code> function</strong> with four parameters:
+<div class="ulist">
+<ul>
+<li>
+<p><code>url</code>: The SysON server URL.</p>
+</li>
+<li>
+<p><code>project_id</code>: The UUID of the project that contains the document to download.</p>
+</li>
+<li>
+<p><code>document_id</code>: The UUID of the document to download.</p>
+</li>
+<li>
+<p><code>output_path</code>: The local path of the <code>.sysml</code> file to create.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><strong>Sends a <code>GET</code> request</strong> to <code>/api/editingcontexts/{editingContextId}/documents/{documentId}</code> with the <code>Accept: text/html</code> header so the server returns the textual SysML export.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td><strong>Streams the response body</strong> into the output file so large models do not need to be buffered entirely in memory.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td><strong>Fetches the editing context ID</strong> from the project ID.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="7"></i><b>7</b></td>
+<td><strong>Calls the download function</strong> and exits with an error code if the download fails.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Run the script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ python download_sysml_file.py project-id document-id output-file.sysml
+$ python download_sysml_file.py url-of-syson-server project-id document-id output-file.sysml</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For example, to download a file from a local SysON server:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ python download_sysml_file.py 76bb3f29-17d1-465a-a2ca-a331978c36f3 3cb6f3b1-8a10-41b7-9a08-d32b66e28c6f /Users/myUserFolder/myFolder/mySysMLv2File.sysml</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Output example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">SysML file downloaded successfully: /Users/myUserFolder/myFolder/mySysMLv2File.sysml</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then you can open the downloaded <code>.sysml</code> file in your editor or share it with other tools.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_delete_element_recipe_python_script">2.8. Delete element recipe (python script)</h3>
+<div class="paragraph">
+<p>Learn how to delete an element programmatically.
+Each recipe includes a detailed explanation, step-by-step instructions, and sample code.</p>
+</div>
+<div class="paragraph">
+<p>Recipes covered:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#delete_an_element">Delete an element</a>: Delete an element from a project by creating a commit.</p>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="delete_an_element">2.8.1. Delete an element</h4>
+<div class="paragraph">
+<p>This example demonstrates how to delete an existing element by using the SysON REST API.
+The script first fetches the latest commit of the target project, retrieves the element to confirm it exists, and then creates a new commit containing a deletion change for that element.
+After the commit is created, the script verifies that the element is no longer accessible in the latest commit.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>To delete an element through the commit API, send a <code>DataVersion</code> with its <code>identity</code> set to the target element ID and omit the <code>payload</code>.
+When an element is deleted, SysON also removes incoming relationships to maintain model integrity.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Example script to delete an element:</p>
+</div>
+<div class="listingblock">
+<div class="title">delete_element.py</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python"># These examples are adapted from the SysML v2 API Cookbook, available at
+# https://github.com/Systems-Modeling/SysML-v2-API-Cookbook, maintained by the
+# Object Management Group (OMG).
+# The original cookbook is designed for use with Jupyter Lab.
+# These examples have been adapted to run as standalone Python scripts, making
+# them suitable for use in various environments, including SysON.
+# They showcase practical usage scenarios and may include additional functionality
+# or modifications tailored to specific needs.
+
+import requests  <i class="conum" data-value="1"></i><b>(1)</b>
+from init_api import parse_arguments
+from init_api import init_sysmlv2_api
+from fetch_commits import get_last_commit_id
+
+
+def fetch_element(host, project_id, commit_id, element_id):  <i class="conum" data-value="2"></i><b>(2)</b>
+    element_url = f"{host}/projects/{project_id}/commits/{commit_id}/elements/{element_id}"  <i class="conum" data-value="3"></i><b>(3)</b>
+    response = requests.get(element_url)  <i class="conum" data-value="4"></i><b>(4)</b>
+    if response.status_code == 200:
+        return response.json()
+
+    print(f"Unable to fetch element: {response.status_code} - {response.text}")
+    return None
+
+
+def delete_element(host, project_id, element_id):  <i class="conum" data-value="5"></i><b>(5)</b>
+    commit_id = get_last_commit_id(host, project_id)
+    if not commit_id:
+        print("Deletion aborted: unable to determine the latest commit.")
+        return False
+
+    element = fetch_element(host, project_id, commit_id, element_id)
+    if not element:
+        print(f"Deletion aborted: element '{element_id}' was not found.")
+        return False
+
+    print(
+        f"Deleting element '{element.get('name') or 'N/A'}' "
+        f"(id = {element['@id']}, type = {element['@type']})"
+    )
+
+    commit_url = f"{host}/projects/{project_id}/commits"  <i class="conum" data-value="6"></i><b>(6)</b>
+    commit_body = {
+        "@type": "Commit",
+        "change": [
+            {
+                "@type": "DataVersion",
+                "identity": {
+                    "@id": element_id,
+                    "@type": "DataIdentity",
+                },
+            }
+        ],
+    }  <i class="conum" data-value="7"></i><b>(7)</b>
+
+    response = requests.post(commit_url, json=commit_body)  <i class="conum" data-value="8"></i><b>(8)</b>
+    if response.status_code != 201:
+        print(f"Error deleting element: {response.status_code} - {response.text}")
+        return False
+
+    print("Delete commit created successfully.")
+
+    new_commit_id = get_last_commit_id(host, project_id)  <i class="conum" data-value="9"></i><b>(9)</b>
+    if not new_commit_id:
+        print("Deletion verification skipped: unable to determine the latest commit.")
+        return True
+
+    verification_url = f"{host}/projects/{project_id}/commits/{new_commit_id}/elements/{element_id}"
+    verification_response = requests.get(verification_url)  <i class="conum" data-value="10"></i><b>(10)</b>
+    if verification_response.status_code == 404:
+        print(f"Element '{element_id}' deleted successfully.")
+        return True
+
+    print(
+        "Deletion verification failed: "
+        f"the element is still accessible ({verification_response.status_code})."
+    )
+    return False
+
+
+if __name__ == "__main__":
+    args = parse_arguments()
+    host = init_sysmlv2_api()
+    project_id = args.project_id
+    element_id = args.element_id
+
+    if not element_id:
+        raise SystemExit("Usage: python delete_element.py &lt;project-id&gt; &lt;element-id&gt;")
+
+    delete_element(host, project_id, element_id)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>What this code does</strong>:</p>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><strong>Import required libraries</strong>:
+<div class="ulist">
+<ul>
+<li>
+<p><code>requests</code>: Used for sending HTTP requests.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><strong>Define the <code>fetch_element</code> function</strong> with four parameters:
+<div class="ulist">
+<ul>
+<li>
+<p><code>host</code>: The base API address.</p>
+</li>
+<li>
+<p><code>project_id</code>: The UUID of the project.</p>
+</li>
+<li>
+<p><code>commit_id</code>: The UUID of the commit in which the element is read.</p>
+</li>
+<li>
+<p><code>element_id</code>: The UUID of the element to fetch.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Constructs the <strong>API endpoint</strong> URL for retrieving a single element.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><strong>Sends a <code>GET</code> request</strong> to confirm the element exists before trying to delete it.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td><strong>Define the <code>delete_element</code> function</strong> with three parameters:
+<div class="ulist">
+<ul>
+<li>
+<p><code>host</code>: The base API address.</p>
+</li>
+<li>
+<p><code>project_id</code>: The UUID of the project.</p>
+</li>
+<li>
+<p><code>element_id</code>: The UUID of the element to delete.</p>
+</li>
+</ul>
+</div></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td>Constructs the <strong>API endpoint</strong> URL for creating a commit.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="7"></i><b>7</b></td>
+<td>Builds the <strong>commit payload</strong> for deletion by setting <code>identity</code> and omitting <code>payload</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="8"></i><b>8</b></td>
+<td><strong>Sends a <code>POST</code> request</strong> to create the delete commit.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="9"></i><b>9</b></td>
+<td>Fetches the latest commit again after the delete operation.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="10"></i><b>10</b></td>
+<td><strong>Verifies the deletion</strong> by checking that the element endpoint returns <code>404</code>.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Run the script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">$ python delete_element.py your-project-id your-element-id</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Output example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">Commit ID: 63a03bd8-a81a-4818-801a-01790ce8a086
+Last Commit ID: 63a03bd8-a81a-4818-801a-01790ce8a086
+Deleting element 'battery' (id = 7d5e52f4-6fd0-4f3b-9daa-9cb7f0c3e501, type = PartUsage)
+Delete commit created successfully.
+Commit ID: 63a03bd8-a81a-4818-801a-01790ce8a086
+Commit ID: 6f70be18-0117-4e2d-b947-a6bbf2981b63
+Last Commit ID: 6f70be18-0117-4e2d-b947-a6bbf2981b63
+Element '7d5e52f4-6fd0-4f3b-9daa-9cb7f0c3e501' deleted successfully.</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</article>
+<div class="spacer"></div>
+<aside class="toc sidebar" data-title="Contents" data-levels="3">
+  <div class="toc-menu"></div>
+</aside>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <div class="footer-container">
+      <p><a href="http://www.eclipse.org/"  target="_blank"><img width="200" src="https://www.eclipse.org/eclipse.org-common/themes/solstice/public/images/logo/eclipse-foundation-white-orange.svg" alt="Eclipse Foundation logo"></a></p>
+      <p id="copyright">Copyright © Eclipse Foundation, Inc.<br>All Rights Reserved.</p>
+  </div>
+
+  <div class="footer-container">
+      <h6>Eclipse Foundation</h6>
+      <ul>
+          <li><a href="http://www.eclipse.org/legal/privacy.php" target="_blank">Privacy Policy</a></li>
+          <li><a href="http://eclipse.org/" target="_blank">Eclipse</a></li>
+          <li><a href="http://www.eclipse.org/legal/termsofuse.php" target="_blank">Terms of Use</a></li>
+          <li><a href="http://www.eclipse.org/legal/copyright.php" target="_blank">Copyright Agent</a></li>
+          <li><a href="http://www.eclipse.org/legal/" target="_blank">Legal</a></li>
+          <li><a href="http://www.eclipse.org/org/foundation/contact.php" target="_blank"> Contact Us</a></li>
+      </ul>
+  </div>
+
+  <div class="footer-container">
+      <h6>Project Links</h6>
+      <ul>
+          <li><a href="https://projects.eclipse.org/projects/modeling.syson" target="_blank">About this project</a></li>
+          <li><a href="https://github.com/eclipse-syson/syson" target="_blank">Source Code</a></li>
+          <li><a href="https://github.com/eclipse-syson/syson/discussions" target="_blank">Discussion</a></li>           
+      </ul>
+  </div>
+</footer><script id="site-script" src="../../../../_/js/site.js" data-ui-root-path="../../../../_"></script>
+<script async src="../../../../_/js/vendor/highlight.js"></script>
+<script async src="../../../../_/js/vendor/swagger-ui.js"></script>
+<script src="../../../../_/js/vendor/lunr.js"></script>
+<script src="../../../../_/js/vendor/lunr-languages.js"></script>
+<script src="../../../../_/js/search-ui.js" id="search-ui-script" data-site-root-path="../../../.." data-snippet-length="100" data-stylesheet="../../../../_/css/search.css"></script>
+<script async src="../../../../search-index.js"></script>
+  </body>
+</html>

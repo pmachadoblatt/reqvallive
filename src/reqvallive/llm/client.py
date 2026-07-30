@@ -321,7 +321,7 @@ async def interpret_requirements_markdown(markdown: str) -> dict[str, Any]:
 
 CATIA_UPDATE_PROMPT = """Você é um engenheiro de sistemas MBSE.
 Recebe o resultado de uma medição live MQTT (Success Criteria + evidência PASS/FAIL).
-Produza um UPDATE para o engenheiro colar no CATIA Magic (campo Documentation / doc).
+Produza um UPDATE para CATIA (Documentation) e para SysON (item VerificationResult).
 
 Responda APENAS JSON válido:
 {
@@ -334,13 +334,20 @@ Responda APENAS JSON válido:
       "notes": "nota curta"
     }
   ],
+  "syson_actions": [
+    {
+      "req_id": "RQ_...",
+      "reason": "1-2 frases factuais em PT-BR do motivo PASS/FAIL",
+      "evidenceSummary": "quando falhou (se FAIL), extremo observado (ex. min bateria), esperado vs medido"
+    }
+  ],
   "risks_or_followups_pt": ["opcional"]
 }
 
 Regras:
 - Não invente requisitos que não estejam no pacote.
 - Preserve a verdade do veredicto (PASS/FAIL) da evidência.
-- doc_text deve ser útil para colar no Magic.
+- doc_text = só para Magic; SysON usa syson_actions (não Documentation).
 - Português do Brasil.
 """
 
@@ -368,6 +375,7 @@ async def enrich_verification_update_with_llm(update: dict[str, Any]) -> dict[st
                 "expected": r.get("expected"),
                 "why": r.get("why"),
                 "catia_doc_append": r.get("catia_doc_append"),
+                "syson_verification_result": r.get("syson_verification_result"),
             }
             for r in update.get("requirements") or []
         ],
@@ -417,4 +425,15 @@ async def enrich_verification_update_with_llm(update: dict[str, Any]) -> dict[st
             act = by_id.get(req.get("req_id"))
             if act and act.get("doc_text"):
                 req["catia_doc_llm"] = str(act["doc_text"])
+    syson_actions = parsed.get("syson_actions") if isinstance(parsed, dict) else None
+    if isinstance(syson_actions, list):
+        by_s = {a.get("req_id"): a for a in syson_actions if isinstance(a, dict)}
+        for req in update.get("requirements") or []:
+            act = by_s.get(req.get("req_id"))
+            if not act:
+                continue
+            if act.get("reason"):
+                req["syson_reason"] = str(act["reason"])
+            if act.get("evidenceSummary"):
+                req["syson_evidence_summary"] = str(act["evidenceSummary"])
     return update

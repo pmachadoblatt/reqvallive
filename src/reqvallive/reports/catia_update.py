@@ -57,6 +57,8 @@ def build_verification_update(session: MeasurementSession) -> dict[str, Any]:
             "evidence:\n"
             + ("\n".join(evidence_lines) if evidence_lines else "- (sem amostras)")
         )
+        # SysON / padrão orientador: Documentation = só marcadores (laudo no HTML).
+        syson_doc = f"{tag}\n_go_to_verification\n"
 
         req_updates.append(
             {
@@ -68,9 +70,10 @@ def build_verification_update(session: MeasurementSession) -> dict[str, Any]:
                 "expected": finding.get("expected") if finding else None,
                 "why": finding.get("why") if finding else None,
                 "catia_doc_append": doc_block,
+                "syson_doc_append": syson_doc,
                 "sysml_doc_snippet": (
                     f"requirement {rid} {{\n"
-                    f"  doc /*\n{doc_block}\n  */\n"
+                    f"  doc /*\n{syson_doc}*/\n"
                     f"}}"
                 ),
             }

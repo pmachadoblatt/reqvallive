@@ -33,7 +33,19 @@ from reqvallive.sysml.import_catia import (
     parse_sysml_export,
     summary_dict,
 )
-from reqvallive.twc import TwcClient, TwcError, probe_summary, settings_from_env
+from reqvallive.twc import (
+    TwcClient,
+    TwcError,
+    probe_summary as twc_probe_summary,
+    settings_from_env as twc_settings_from_env,
+)
+from reqvallive.syson import (
+    SysonClient,
+    SysonError,
+    SysonPublisher,
+    probe_summary as syson_probe_summary,
+    settings_from_env as syson_settings_from_env,
+)
 
 router = APIRouter(prefix="/api")
 
@@ -95,6 +107,7 @@ def defaults() -> dict[str, Any]:
         "llm_model": settings.llm_model,
         "llm_base_url": settings.llm_base_url,
         "llm_configured": bool(settings.llm_api_key),
+        "syson_base_url": settings.syson_base_url,
     }
 
 
@@ -106,6 +119,24 @@ class SysmlImportBody(BaseModel):
     mqtt_username: str | None = None
     mqtt_password: str | None = None
     mqtt_topic: str | None = None
+
+
+class SysonImportBody(BaseModel):
+    project_id: str | None = None
+    project_name: str | None = None
+    req_filter: str = ""
+    create_session: bool = True
+    mqtt_broker: str | None = None
+    mqtt_port: int | None = None
+    mqtt_username: str | None = None
+    mqtt_password: str | None = None
+    mqtt_topic: str | None = None
+    # Opcional: sobrescrever SC sugerido por req_id
+    success_criteria_by_req: dict[str, dict[str, Any]] | None = None
+
+
+class SuccessCriteriaPatchBody(BaseModel):
+    success_criteria: dict[str, Any]
 
 
 @router.post("/requirements/from-markdown")
@@ -234,6 +265,20 @@ def example_catia_sysml() -> PlainTextResponse:
         media_type="text/plain; charset=utf-8",
         headers={
             "Content-Disposition": 'attachment; filename="catia_export_go_to_verification.sysml"'
+        },
+    )
+
+
+@router.get("/examples/syson-demo")
+def example_syson_demo() -> PlainTextResponse:
+    path = Path(__file__).resolve().parents[3] / "models" / "syson" / "reqvallive_demo.sysml"
+    if not path.is_file():
+        raise HTTPException(404, detail="Demo SysON não encontrado")
+    return PlainTextResponse(
+        path.read_text(encoding="utf-8"),
+        media_type="text/plain; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="reqvallive_demo.sysml"'
         },
     )
 
@@ -539,10 +584,10 @@ def download_catia_update_sysml(session_id: str) -> StreamingResponse:
 @router.get("/twc/probe")
 def twc_probe(req: str = "RQ_") -> dict[str, Any]:
     """Spike TWC: lista projetos + requisitos cujo nome contém ``req`` (default RQ_)."""
-    twc = settings_from_env(settings)
+    twc = twc_settings_from_env(settings)
     try:
         with TwcClient(twc) as client:
-            return probe_summary(client, req_filter=req)
+            return twc_probe_summary(client, req_filter=req)
     except TwcError as exc:
         raise HTTPException(
             status_code=502,
@@ -556,6 +601,230 @@ def twc_probe(req: str = "RQ_") -> dict[str, Any]:
                 ),
             },
         ) from exc
+
+
+@router.get("/syson/probe")
+def syson_probe(req: str = "RQ_") -> dict[str, Any]:
+    """Lista projetos SysON locais + requisitos (filtro por nome)."""
+    cfg = syson_settings_from_env(settings)
+    try:
+        with SysonClient(cfg) as client:
+            return syson_probe_summary(client, req_filter=req)
+    except SysonError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "message": str(exc),
+                "status_code": exc.status_code,
+                "body": exc.body,
+                "hint": "Confirme .\\deploy\\syson\\up.ps1 e SYSON_BASE_URL (default :8081).",
+            },
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "message": str(exc),
+                "hint": "SysON inacessível — suba o Docker em deploy/syson.",
+            },
+        ) from exc
+
+
+@router.post("/syson/import")
+def syson_import(body: SysonImportBody) -> dict[str, Any]:
+    """Importa requisitos com `_go_to_verification` e sugere Success Criteria no app."""
+    cfg = syson_settings_from_env(settings)
+    try:
+        with SysonClient(cfg) as client:
+            projects = client.list_projects()
+            project_id = body.project_id
+            project_name = body.project_name or ""
+            if not project_id:
+                if not projects:
+                    raise HTTPException(404, detail="Nenhum projeto no SysON.")
+                # Preferir ReqTest se existir
+                chosen = next(
+                    (
+                        p
+                        for p in projects
+                        if str(p.get("name") or "").lower() == "reqtest"
+                    ),
+                    projects[0],
+                )
+                from reqvallive.syson.client import _id_of
+
+                project_id = _id_of(chosen)
+                project_name = str(chosen.get("name") or "")
+                if not project_id:
+                    raise HTTPException(502, detail="Projeto SysON sem @id")
+            if not project_name:
+                for p in projects:
+                    from reqvallive.syson.client import _id_of
+
+                    if _id_of(p) == project_id:
+                        project_name = str(p.get("name") or "")
+                        break
+            raw = client.import_tagged_requirements(
+                project_id,
+                project_name=project_name,
+                req_filter=body.req_filter or "",
+            )
+    except HTTPException:
+        raise
+    except SysonError as exc:
+        raise HTTPException(502, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(502, detail=f"SysON: {exc}") from exc
+
+    imported = raw.get("imported") or []
+    if body.success_criteria_by_req:
+        for item in imported:
+            override = body.success_criteria_by_req.get(item["req_id"])
+            if override:
+                item["success_criteria"] = override
+
+    if not imported:
+        raise HTTPException(
+            400,
+            detail={
+                "message": (
+                    "Nenhum requisito com Documentation = _go_to_verification. "
+                    "No SysON, cole só essa tag no Documentation."
+                ),
+                "skipped": raw.get("skipped"),
+                "project_id": project_id,
+            },
+        )
+
+    syson_link = {
+        "project_id": project_id,
+        "project_name": project_name,
+        "commit_id": raw.get("commit_id"),
+        "requirements": [
+            {
+                "req_id": x["req_id"],
+                "element_id": (x.get("_syson") or {}).get("element_id"),
+                "documentation_id": (x.get("_syson") or {}).get("documentation_id"),
+            }
+            for x in imported
+        ],
+        "contract": "doc_markers_only",
+    }
+
+    if not body.create_session:
+        return {
+            "source": "syson",
+            "imported_count": len(imported),
+            "skipped": raw.get("skipped"),
+            "requirements_preview": imported,
+            "syson_link": syson_link,
+            "note": (
+                "Documentation = só _go_to_verification; "
+                "Success Criteria deve existir no modelo (item SuccessCriteria)."
+            ),
+        }
+
+    try:
+        session = store.create_from_requirements(
+            imported,
+            mqtt_broker=body.mqtt_broker or settings.mqtt_broker,
+            mqtt_port=body.mqtt_port if body.mqtt_port is not None else settings.mqtt_port,
+            mqtt_username=body.mqtt_username
+            if body.mqtt_username is not None
+            else settings.mqtt_username,
+            mqtt_password=body.mqtt_password
+            if body.mqtt_password is not None
+            else settings.mqtt_password,
+            mqtt_topic=body.mqtt_topic or settings.mqtt_topic,
+            source_markdown="",
+            llm_notes=(
+                "Importado do SysON (doc=marcador; SC=elementos do modelo)"
+            ),
+            syson_link=syson_link,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, detail=str(exc)) from exc
+
+    public = session.to_public_dict()
+    public["source"] = "syson"
+    public["parse_summary"] = {
+        "tagged_for_verification": len(imported),
+        "skipped": raw.get("skipped"),
+        "missing_sc": raw.get("missing_sc") or [],
+        "tag": "_go_to_verification",
+    }
+    return public
+
+
+@router.patch("/sessions/{session_id}/requirements/{req_id}/success-criteria")
+def patch_success_criteria(
+    session_id: str, req_id: str, body: SuccessCriteriaPatchBody
+) -> dict[str, Any]:
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    try:
+        session.update_success_criteria(req_id, body.success_criteria)
+    except ValueError as exc:
+        raise HTTPException(400, detail=str(exc)) from exc
+    return session.to_public_dict()
+
+
+@router.post("/sessions/{session_id}/syson/publish")
+async def publish_syson_update(session_id: str, use_llm: bool = True) -> dict[str, Any]:
+    """Após medição: cria/atualiza item VerificationResult sob cada requirement no SysON."""
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    if not session.measurement_ended:
+        raise HTTPException(409, detail="Encerre a medição antes de publicar no SysON.")
+    if not session.syson_link:
+        raise HTTPException(
+            400,
+            detail="Sessão sem ligação SysON — importe a partir do separador SysON.",
+        )
+    from reqvallive.syson.verification_result import attach_verification_results_to_update
+
+    update = session.catia_update or build_verification_update(session)
+    update = attach_verification_results_to_update(
+        update, findings=session.findings()
+    )
+    llm_error = None
+    if use_llm:
+        try:
+            update = await enrich_verification_update_with_llm(update)
+            # Reconstruir campos SysON com reason/evidence do LLM
+            update = attach_verification_results_to_update(
+                update, findings=session.findings()
+            )
+        except Exception as exc:
+            llm_error = str(exc)
+            update["llm_enrichment"] = {
+                "error": llm_error,
+                "note": "Publicação SysON segue com texto determinístico.",
+            }
+    session.catia_update = update
+    cfg = syson_settings_from_env(settings)
+    try:
+        with SysonClient(cfg) as client:
+            publisher = SysonPublisher(client)
+            result = publisher.publish_session_update(
+                project_id=session.syson_link["project_id"],
+                req_links=session.syson_link.get("requirements") or [],
+                update=update,
+                findings=session.findings(),
+            )
+    except SysonError as exc:
+        raise HTTPException(502, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(502, detail=f"Publish SysON: {exc}") from exc
+
+    session.syson_publish = result
+    public = session.to_public_dict()
+    public["syson_publish"] = result
+    public["catia_update"] = update
+    public["llm_error"] = llm_error
+    return public
 
 
 @router.get("/sessions/{session_id}/sysml")

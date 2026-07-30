@@ -16,6 +16,8 @@ htmlcov/
 *.sysml
 !examples/*.sysml
 !examples/**/*.sysml
+!models/syson/*.sysml
+!models/syson/**/*.sysml
 # Artefactos de corrida local (UPDATE gerado na UI) — não versionar
 examples/verification_update.json
 examples/verification_sync.csv

@@ -48,24 +48,38 @@ pip install -e .\vendor\Sim_Req_Validator
 pip install -e ".[dev]"
 ```
 
-## Subir o app
+## Subir SysON + app (fluxo principal em casa)
+
+O anfitrião do modelo é o **SysON local** (Docker). Não precisa de TWC/VPN para continuar.
 
 ```powershell
+# 1) SysON (primeira vez descarrega imagens — alguns minutos)
+.\deploy\syson\up.ps1
+# → http://localhost:8081
+
+# 2) App
+.\.venv\Scripts\Activate.ps1
 reqvallive
+# → http://127.0.0.1:8080  (Ctrl+F5 se a UI parecer antiga)
 ```
 
-Abra http://127.0.0.1:8080 (hard refresh `Ctrl+F5` se a UI parecer antiga).
+No SysON: criar projeto (ex. `ReqTest`) → importar/colar `models/syson/reqvallive_demo.sysml`
+(ou criar `RQ_01` + atributos SC + `_go_to_verification`). Contrato: `docs/SYSON_CONTRATO_DOC.md`.
 
-## Fluxo CATIA → GSE → MQTT → UPDATE
+No ReqValLive: separador **SysON** → Probe → Import `RQ_01` → medir → **Publicar no SysON**.
+Aparece sob o requisito um item `VerificationResult_FAIL_…` (ou PASS) com Documentation + atributos.
+
+Detalhe Docker / backup Postgres: `deploy/syson/README.md`.
+
+## Fluxo legado CATIA → GSE → MQTT → UPDATE
 
 1. Aba **Export CATIA** → Carregar exemplo → **Validar export (OK/NOK)**
 2. **Montar GSE** → Continuar MQTT
 3. Terminal 2: `python scripts/publish_three_drones.py`
 4. Conectar → Iniciar medição → Encerrar
-5. **UPDATE CATIA (LLM)** → baixar:
-   - **CSV Sync** (`verification_sync.csv`) — atualiza Documentation no projeto **aberto**
+5. **UPDATE CATIA (LLM)** → baixar artefactos Magic (secundário ao fecho SysON):
    - JSON + `.sysml` arquivo (import `.sysml` ≠ sync do aberto; ver `docs/CATIA_UPDATE_FORMATOS.md`)
-   - Sem Ollama: o `stop` já gera o UPDATE determinístico; o botão tenta enriquecer com LLM
+   - CSV Sync só se o Magic v1/tabular o permitir — **não** é o caminho garantido no SysML v2
 
 ## Testes rápidos
 

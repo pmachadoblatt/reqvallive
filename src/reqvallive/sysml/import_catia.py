@@ -295,10 +295,15 @@ def parse_sysml_export(text: str) -> list[ParsedCatiaRequirement]:
         kv = _parse_kv_lines(doc)
         sc = _parse_success_criteria(doc, notes) if tagged else None
         if tagged and sc is None:
-            notes.append(
-                "Tag de verificação presente, mas Success Criteria não encontrado no doc "
-                "(use JSON ```json ...``` ou linhas metric:/operator:/value:)."
-            )
+            # Padrão SysON: SC no modelo (item SuccessCriteria / atributos), não no doc.
+            from reqvallive.syson.model_sc import success_criteria_from_requirement_textual
+
+            sc = success_criteria_from_requirement_textual(body)
+            if sc is None:
+                notes.append(
+                    "Tag de verificação presente, mas Success Criteria não encontrado "
+                    "(no doc JSON OU item SuccessCriteria / atributos metric/operator/value no modelo)."
+                )
         found.append(
             ParsedCatiaRequirement(
                 name=name,

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ReqValLive — Validador de requisitos</title>
-  <link rel="stylesheet" href="/static/styles.css?v=12" />
+  <link rel="stylesheet" href="/static/styles.css?v=13" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script type="module">
     import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
@@ -29,8 +29,9 @@
     <p class="brand">ReqValLive</p>
     <h1>Validador de requisitos durante a missão</h1>
     <p class="lede">
-      Assistente de verificação: importa requisitos do CATIA (SysML) ou Markdown,
-      valida o critério de sucesso (OK/NOK) e mede via MQTT.
+      Importa requisitos do SysON: Documentation = marcador
+      <code>_go_to_verification</code>; Success Criteria = elementos no modelo.
+      O app interpreta o que vem do SysON, valida (OK/NOK) e mede via MQTT.
     </p>
   </header>
 
@@ -45,11 +46,31 @@
     <section id="panel-1" class="panel active" aria-labelledby="entrada-title">
       <h2 id="entrada-title" class="panel-title">1. Entrada do requisito</h2>
       <div class="source-tabs" role="tablist" aria-label="Fonte dos requisitos">
-        <button type="button" class="source-tab active" data-source="catia" role="tab" aria-selected="true">Export CATIA (.sysml)</button>
+        <button type="button" class="source-tab active" data-source="syson" role="tab" aria-selected="true">SysON</button>
+        <button type="button" class="source-tab" data-source="catia" role="tab" aria-selected="false">Export CATIA (.sysml)</button>
         <button type="button" class="source-tab" data-source="markdown" role="tab" aria-selected="false">Markdown + LLM</button>
       </div>
 
-      <div id="source-catia" class="source-panel">
+      <div id="source-syson" class="source-panel">
+        <p class="muted small">
+          No SysON: <strong>Documentation</strong> = só <code>_go_to_verification</code>.
+          O <strong>Success Criteria</strong> fica no modelo (item <code>SuccessCriteria</code> sob o requirement).
+          O app <em>não</em> inventa o critério — só lê o SysON.
+          Ver <code>docs/SYSON_CONTRATO_DOC.md</code>.
+        </p>
+        <div class="hero-actions row">
+          <button type="button" id="btn-syson-probe" class="button">Ligar / listar projetos</button>
+          <label class="syson-project-label">Projeto
+            <select id="syson-project"></select>
+          </label>
+          <button type="button" id="btn-syson-import" class="primary">Importar do SysON</button>
+          <a class="button" href="/api/examples/syson-demo" download="reqvallive_demo.sysml">Baixar demo .sysml</a>
+          <button type="button" id="btn-open-sc-help">Como deve ser o critério?</button>
+        </div>
+        <pre id="syson-probe-out" class="out muted small-out hidden"></pre>
+      </div>
+
+      <div id="source-catia" class="source-panel hidden">
         <p class="muted small">
           Use o campo <code>doc</code> com <code>_go_to_verification</code> (dica do orientador).
           O app só valida o que estiver marcado.
@@ -62,7 +83,6 @@
           <button type="button" id="btn-load-catia-example" class="button">Carregar exemplo CATIA</button>
           <button type="button" id="btn-validate-catia" class="primary">Validar export (OK/NOK)</button>
           <a class="button" href="/api/examples/catia-sysml" download="catia_export_go_to_verification.sysml">Baixar exemplo .sysml</a>
-          <button type="button" id="btn-open-sc-help">Como deve ser o critério?</button>
         </div>
         <textarea
           id="sysml-input"
@@ -158,11 +178,18 @@
         <span id="verdict-pill" class="pill">—</span>
         <button type="button" id="btn-stop-monitor">Encerrar medição</button>
         <a id="btn-report" class="button primary" href="#" target="_blank">Relatório HTML</a>
-        <button type="button" id="btn-catia-update" class="primary" disabled>UPDATE CATIA (LLM)</button>
+        <button type="button" id="btn-syson-publish" class="primary" disabled>Publicar no SysON</button>
+        <button type="button" id="btn-catia-update" class="button" disabled>UPDATE CATIA (LLM)</button>
         <a id="btn-dl-catia-update" class="button hidden" href="#" download="verification_update.json">Baixar JSON</a>
         <a id="btn-dl-catia-csv" class="button hidden" href="#" download="verification_sync.csv" title="Atualiza Documentation no projeto Magic aberto via Excel/CSV Sync">Baixar CSV Sync (modelo aberto)</a>
         <a id="btn-dl-catia-sysml" class="button hidden" href="#" download="verification_update.sysml" title="Arquivo/diff — import cria namespace NOVO, não edita o aberto">Baixar .sysml (arquivo)</a>
       </div>
+      <p id="syson-publish-hint" class="muted small hidden">
+        Publica um item <code>VerificationResult_FAIL_…</code> (ou PASS) <strong>ligado a cada requisito</strong>.
+        O nome já mostra o veredicto; seleccione o item no SysON para ler o Documentation com motivo/extremos.
+        O Documentation do requisito fica só com <code>_go_to_verification</code>. LLM enriquece reason/evidence.
+      </p>
+      <pre id="syson-publish-preview" class="out muted small-out hidden"></pre>
       <p id="catia-update-hint" class="muted small hidden">
         Para atualizar o modelo <strong>já aberto</strong> no CATIA: use o <strong>CSV Sync</strong>
         (não o .sysml). Ver <code>docs/CATIA_UPDATE_FORMATOS.md</code>.
@@ -217,6 +244,6 @@
   </div>
 
   <script src="/static/diagram.js?v=9"></script>
-  <script src="/static/app.js?v=12"></script>
+  <script src="/static/app.js?v=14"></script>
 </body>
 </html>

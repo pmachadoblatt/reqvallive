@@ -97,6 +97,8 @@ class MeasurementSession:
     gse_config: dict[str, Any] | None = None
     gse_mounted_at: float | None = None
     catia_update: dict[str, Any] | None = None
+    syson_link: dict[str, Any] | None = None
+    syson_publish: dict[str, Any] | None = None
     mqtt_status: str = "disconnected"  # disconnected|connecting|listening|no_messages|error
     last_error: str | None = None
     drones: dict[str, DroneState] = field(default_factory=dict)
@@ -165,6 +167,37 @@ class MeasurementSession:
             },
         }
         return self.approved_sc_snapshot
+
+    def update_success_criteria(
+        self, req_id: str, success_criteria: dict[str, Any]
+    ) -> RequirementRecord:
+        """Atualiza o SC de trabalho (antes do /start) e reavalia o gate."""
+        with self._lock:
+            if self.measuring or self.measurement_ended or self._approved_requirements:
+                raise ValueError(
+                    "Não é possível alterar o critério após iniciar/encerrar a medição."
+                )
+            for i, req in enumerate(self.requirements):
+                if req.req_id != req_id:
+                    continue
+                data = req.model_dump(mode="json")
+                data["success_criteria"] = success_criteria
+                new_req, issues = _validator.validate_single(data)
+                if new_req is None:
+                    raise ValueError(
+                        f"Success Criteria inválido: {[x.message for x in issues]}"
+                    )
+                self.requirements[i] = new_req
+                self.sysml_text = generate_sysml_multi(self.requirements, self.mqtt_topic)
+                self.model_markdown = build_model_markdown(
+                    requirements=self.requirements,
+                    sysml_text=self.sysml_text,
+                    mqtt_topic=self.mqtt_topic,
+                    notes=self.llm_notes,
+                )
+                self.refresh_criteria_gate()
+                return new_req
+            raise ValueError(f"Requisito não encontrado: {req_id}")
 
     def start_measurement(self) -> None:
         with self._lock:
@@ -682,6 +715,10 @@ class MeasurementSession:
                 "gse_config": copy.deepcopy(self.gse_config) if self.gse_config else None,
                 "catia_update": copy.deepcopy(self.catia_update) if self.catia_update else None,
                 "has_catia_update": self.catia_update is not None,
+                "syson_link": copy.deepcopy(self.syson_link) if self.syson_link else None,
+                "syson_publish": copy.deepcopy(self.syson_publish)
+                if self.syson_publish
+                else None,
             }
 
     def validation_status(self) -> dict[str, Any]:
@@ -772,10 +809,12 @@ class SessionStore:
         mqtt_topic: str,
         source_markdown: str = "",
         llm_notes: str = "",
+        syson_link: dict[str, Any] | None = None,
     ) -> MeasurementSession:
         parsed: list[RequirementRecord] = []
         for data in req_dicts:
-            req, issues = _validator.validate_single(data)
+            clean = {k: v for k, v in data.items() if not str(k).startswith("_")}
+            req, issues = _validator.validate_single(clean)
             if req is None:
                 raise ValueError(f"Requisito inválido: {[i.message for i in issues]}")
             parsed.append(req)
@@ -800,6 +839,7 @@ class SessionStore:
             model_markdown=md,
             source_markdown=source_markdown,
             llm_notes=llm_notes,
+            syson_link=syson_link,
         )
         session.refresh_criteria_gate()
         with self._lock:

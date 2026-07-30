@@ -36,6 +36,28 @@ h1 { margin: .3rem 0; font-size: 1.7rem; }
 .source-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 .source-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .source-panel.hidden { display: none; }
+.syson-project-label { display: flex; flex-direction: column; gap: .2rem; font-size: .85rem; }
+.syson-project-label select { min-width: 12rem; padding: .4rem .5rem; border: 1px solid #94a3b8; }
+.syson-sc-editor {
+  border: 1px solid #94a3b8;
+  background: #f8fafc;
+  padding: .85rem;
+  margin: .75rem 0;
+}
+.syson-sc-editor.hidden { display: none; }
+.sc-editor-title { margin: 0 0 .5rem; font-size: .95rem; }
+.sc-row {
+  display: grid;
+  grid-template-columns: 7rem 1fr 4.5rem 5.5rem 5.5rem;
+  gap: .4rem;
+  align-items: end;
+  margin-bottom: .5rem;
+}
+.sc-row label { display: grid; gap: .15rem; font-size: .75rem; color: var(--muted); }
+.sc-row input, .sc-row select { padding: .35rem .45rem; border: 1px solid #94a3b8; }
+@media (max-width: 800px) {
+  .sc-row { grid-template-columns: 1fr 1fr; }
+}
 button, .button, .step, .source-tab { transition: background .15s ease, border-color .15s ease, opacity .15s ease; }
 button:focus-visible, .button:focus-visible, .step:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 2px;

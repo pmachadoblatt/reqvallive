@@ -97,3 +97,13 @@ API: `GET /api/twc/probe`
 ## Frase para o orientador (se precisar)
 
 > “O MVP mede e devolve evidência fora do runtime SysML v2 Simulation. Como o lab já tem Teamwork Cloud (Collaborate), a evolução natural para fecho automático no modelo é um cliente REST SysML v2 no ReqValLive — sem abandonar o GSE/MQTT como núcleo da validação live.”
+
+---
+
+## SysON (link do orientador) — decisão revista 2026-07-30
+
+Docs: `docs/syson_v2025.6.0/` + `README_DECISAO.md`.
+
+**Critério:** Christopher apontou SysON; sem acesso Cassandra; preferir o que for mais fácil de desenvolver → **SysON local (Docker) passa a ser o alvo do fecho app↔modelo**. TWC/CATIA fica paralelo até admin corrigir Cassandra ou existir projeto estável.
+
+*Batch too large* nos dois labs = mesmo produto + Cassandra default + create project grande — servidores **independentes**, falha convergente (não partilha de config).

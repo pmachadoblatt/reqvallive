@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     twc_verify_ssl: bool = False
     twc_timeout_seconds: float = 30.0
 
+    # SysON local (Docker) — ver deploy/syson/README.md
+    syson_base_url: str = "http://127.0.0.1:8081"
+    syson_api_prefix: str = "/api/rest"
+    syson_timeout_seconds: float = 30.0
+
     host: str = "127.0.0.1"
     port: int = 8080
 

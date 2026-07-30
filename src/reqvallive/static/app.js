@@ -248,6 +248,17 @@ function renderSession(session) {
   if ($("btn-catia-update")) {
     $("btn-catia-update").disabled = !session.measurement_ended;
   }
+  if ($("btn-syson-publish")) {
+    const canPublish = !!session.measurement_ended && !!session.syson_link;
+    $("btn-syson-publish").disabled = !canPublish;
+  }
+  if ($("syson-publish-hint")) {
+    $("syson-publish-hint").classList.toggle("hidden", !session.syson_link);
+  }
+  if ($("syson-publish-preview") && session.syson_publish) {
+    $("syson-publish-preview").classList.remove("hidden");
+    $("syson-publish-preview").textContent = JSON.stringify(session.syson_publish, null, 2);
+  }
   if ($("catia-update-preview") && session.catia_update) {
     $("catia-update-preview").classList.remove("hidden");
     const enr = session.catia_update.llm_enrichment;
@@ -719,8 +730,144 @@ function setSourceTab(source) {
     btn.classList.toggle("active", on);
     btn.setAttribute("aria-selected", on ? "true" : "false");
   });
+  $("source-syson")?.classList.toggle("hidden", source !== "syson");
   $("source-catia")?.classList.toggle("hidden", source !== "catia");
   $("source-markdown")?.classList.toggle("hidden", source !== "markdown");
+}
+
+async function probeSyson() {
+  const out = $("syson-probe-out");
+  if (out) {
+    out.classList.remove("hidden");
+    out.textContent = "A contactar SysON…";
+  }
+  try {
+    const res = await fetch("/api/syson/probe?req=RQ_");
+    const data = await res.json();
+    if (!res.ok) {
+      if (out) out.textContent = JSON.stringify(data.detail || data, null, 2);
+      return;
+    }
+    const sel = $("syson-project");
+    if (sel) {
+      sel.innerHTML = "";
+      for (const p of data.health?.projects || []) {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name || p.id;
+        sel.appendChild(opt);
+      }
+    }
+    if (out) {
+      const reqs = (data.requirements || [])
+        .map((r) => `${r.name} @ ${r.project} (${r.doc_status})`)
+        .join("\n");
+      out.textContent =
+        `SysON OK — ${data.health?.project_count || 0} projeto(s).\n` +
+        (reqs || "Nenhum requisito RQ_* encontrado.") +
+        "\n\nLembrete: Documentation = só _go_to_verification; " +
+        "SC = item SuccessCriteria no modelo.";
+    }
+  } catch (e) {
+    if (out) out.textContent = String(e);
+  }
+}
+
+async function importSyson() {
+  const projectId = $("syson-project")?.value || null;
+  if ($("out-1")) $("out-1").textContent = "A importar do SysON (marcador + SC do modelo)…";
+  try {
+    const res = await fetch("/api/syson/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        project_id: projectId || undefined,
+        create_session: true,
+        ...mqttBody(),
+      }),
+    });
+    const raw = await res.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      if ($("out-1")) $("out-1").textContent = raw.slice(0, 500);
+      return;
+    }
+    if (!res.ok) {
+      const detail = data.detail || data;
+      if ($("out-1")) {
+        $("out-1").textContent =
+          typeof detail === "string" ? detail : JSON.stringify(detail, null, 2);
+      }
+      return;
+    }
+    applyEntryResult(data, "SysON");
+    if (data.parse_summary?.missing_sc?.length && $("out-1")) {
+      $("out-1").textContent +=
+        `\nSC em falta no modelo: ${data.parse_summary.missing_sc.join(", ")}. ` +
+        "Crie o item SuccessCriteria sob o requirement no SysON.";
+    }
+  } catch (e) {
+    if ($("out-1")) $("out-1").textContent = String(e);
+  }
+}
+
+async function publishSyson() {
+  if (!state.sessionId) return;
+  const prev = $("syson-publish-preview");
+  if (prev) {
+    prev.classList.remove("hidden");
+    prev.textContent = "A publicar VerificationResult no SysON…";
+  }
+  try {
+    const res = await fetch(`/api/sessions/${state.sessionId}/syson/publish`, {
+      method: "POST",
+    });
+    const raw = await res.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      if (prev) prev.textContent = raw.slice(0, 500);
+      return;
+    }
+    if (!res.ok) {
+      if (prev) {
+        prev.textContent =
+          typeof data.detail === "string"
+            ? data.detail
+            : JSON.stringify(data.detail || data, null, 2);
+      }
+      return;
+    }
+    renderSession(data);
+    if (prev) {
+      const pub = data.syson_publish || {};
+      const lines = [
+        pub.ok
+          ? "OK — VerificationResult escrito no SysON. Refresque o explorador (F5) sob o requisito."
+          : "Publish parcial/falhou — veja results abaixo.",
+        pub.note || "",
+        "",
+      ];
+      for (const r of pub.results || []) {
+        const f = r.fields || {};
+        const v = (r.verified && r.verified.attributes) || {};
+        lines.push(
+          `• ${r.req_id}: ${f.itemName || "VerificationResult"} → ` +
+            `status=${v.status || f.status || "?"} ` +
+            `extreme=${v.extremeKind || f.extremeKind || ""}=${v.extremeValue ?? f.extremeValue ?? "—"}`
+        );
+        if (f.reason || v.reason) lines.push(`  reason: ${v.reason || f.reason}`);
+        if (f.failedAt || v.failedAt) lines.push(`  failedAt: ${v.failedAt || f.failedAt}`);
+      }
+      lines.push("", JSON.stringify(pub, null, 2));
+      prev.textContent = lines.filter((x) => x !== undefined).join("\n");
+    }
+  } catch (e) {
+    if (prev) prev.textContent = String(e);
+  }
 }
 
 async function applyMqttAndConnect() {
@@ -891,7 +1038,10 @@ function bindUi() {
   on("btn-goto-mqtt", "click", () => {
     gotoStep(3);
   });
-  setSourceTab("catia");
+  setSourceTab("syson");
+  on("btn-syson-probe", "click", () => probeSyson().catch(console.error));
+  on("btn-syson-import", "click", () => importSyson().catch(console.error));
+  on("btn-syson-publish", "click", () => publishSyson().catch(console.error));
   on("btn-connect", "click", () => applyMqttAndConnect().catch(console.error));
   on("btn-disconnect", "click", async () => {
     if (!state.sessionId) return;
@@ -905,6 +1055,7 @@ function bindUi() {
   // Editor vazio por defeito — placeholder guia o utilizador
   loadDefaults();
   loadCriteriaModel();
+  probeSyson().catch(() => {});
 }
 
 if (document.readyState === "loading") {
