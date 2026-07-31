@@ -251,14 +251,14 @@ P1 antigo (UI rica do gate, timeline, export pack) continua válido: encaixa em 
 - UPDATE pós-medição (determinístico + LLM Ollama)
 - Export **CSV Sync** (atualiza Documentation no modelo aberto) + `.sysml` arquivo
 - Guia `docs/CATIA_UPDATE_FORMATOS.md` (o que o Magic realmente faz)
+- **SysON host + E2E casa (2026-07-30):** medir MQTT + publicar `VerificationResult` — ver `docs/VALIDACAO_E2E_SYSON_CASA.md`
 
 ### Ainda a fazer
 
-1. Plugin nativo Magic Open API (usa `plugin_bridge` no JSON) — UPDATE automático  
-2. UI polish / metadados de missão (P0 1.3/1.4)  
-3. **Evolução (lab tem TWC/Collaborate):** cliente SysML v2 REST no ReqValLive —
-   ler SC / escrever OK/NOK no modelo no servidor. Detalhe e checklist:
-   `docs/LEMBRETE_TWC_REST_EVOLUCAO.md`
+1. Repetir E2E no lab + export `.sysml` pós-resultado em `models/syson/`  
+2. UI polish / metadados de missão (P0 1.3/1.4) + mais tipos de SC no contrato SysON  
+3. Plugin nativo Magic Open API (secundário ao fecho SysON)  
+4. **Evolução TWC REST:** escrever OK/NOK no servidor — `docs/LEMBRETE_TWC_REST_EVOLUCAO.md`
 
 **Importante:** import `.sysml` **não** edita o projeto aberto — ver `docs/CATIA_UPDATE_FORMATOS.md`.
 

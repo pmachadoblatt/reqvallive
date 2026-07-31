@@ -69,6 +69,8 @@ No SysON: criar projeto (ex. `ReqTest`) → importar/colar `models/syson/reqvall
 No ReqValLive: separador **SysON** → Probe → Import `RQ_01` → medir → **Publicar no SysON**.
 Aparece sob o requisito um item `VerificationResult_FAIL_…` (ou PASS) com Documentation + atributos.
 
+**Validado em casa (2026-07-30):** medição MQTT lab + publicação no SysON **funcionou** — o modelo no browser atualizou com o `VerificationResult`.
+
 Detalhe Docker / backup Postgres: `deploy/syson/README.md`.
 
 ## Fluxo legado CATIA → GSE → MQTT → UPDATE

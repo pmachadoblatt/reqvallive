@@ -13,13 +13,16 @@ todos:
     status: completed
   - id: publish-update
     content: Spike publisher UPDATE (.sysml reimport primeiro; REST/GraphQL se estável)
-    status: pending
+    status: completed
   - id: api-ui
     content: Endpoints /api/syson/* + botão Publicar UPDATE no SysON
-    status: pending
+    status: completed
   - id: docs-decision
     content: Atualizar docs decisão SysON vs TWC e fluxo lab/casa
-    status: pending
+    status: completed
+  - id: e2e-home-validated
+    content: "E2E casa 2026-07-30: medir MQTT lab + publicar VerificationResult no SysON (OK)"
+    status: completed
 isProject: false
 ---
 

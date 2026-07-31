@@ -9,12 +9,19 @@ Datas no formato `AAAA-MM-DD`.
 
 ## [Unreleased]
 
+### Validated (2026-07-30) — E2E em casa
+
+- **Loop fechado com sucesso:** SysON (modelo + SC) → ReqValLive (gate/GSE) → MQTT lab → medição → **Publicar no SysON** → item `VerificationResult_*` atualizado no modelo
+- Ambiente: SysON Docker `localhost:8081` + app `8080` + broker MQTT Conceptio (`161.24.23.15`)
+- Confirma que o anfitrião do modelo no PoC pode ser **SysON local** sem depender do runtime Magic Simulation
+
 ### Added (2026-07-30)
 
 - Cliente TWC SysML v2 REST (`src/reqvallive/twc/`): auth, projects, commits, requirements filtrados
 - `scripts/probe_twc.py` + `GET /api/twc/probe`
 - Descoberta lab: API em `https://161.24.23.18:8443/sysmlv2-api/api` (Swagger UI no mesmo host)
 - Variáveis `TWC_*` em `.env.example` / config
+- SysON Docker (`deploy/syson/`), cliente `reqvallive.syson`, publicação `VerificationResult`, contrato `docs/SYSON_CONTRATO_DOC.md`
 
 ### Fixed (2026-07-30)
 
