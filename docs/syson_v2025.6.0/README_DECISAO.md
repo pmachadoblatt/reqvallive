@@ -73,8 +73,9 @@ Para ReqValLive, o caminho mais robusto no curto prazo é:
 ## Próximo passo concreto
 
 1. ~~Instalar Docker / subir SysON~~ → `.\deploy\syson\up.ps1` → http://localhost:8081
-2. ~~Modelo demo + cliente REST~~ → `models/syson/` + `python scripts/probe_syson.py` (vê ReqTest / RQ_01)
-3. **Agora (UI):** colar `models/syson/RQ_01_documentation.txt` no Documentation do RQ_01
-4. Spike UPDATE: patch `.sysml` + reimport (ou API se estável) + botão na UI
+2. ~~Modelo demo + cliente REST + VerificationResult~~ → E2E casa+lab OK
+3. **Agora:** endurecer contrato — importar `models/syson/reqvallive_demo.sysml` (multi-RQ,
+   threshold/range/statistical) e verificar PASS/FAIL no explorador
+4. Depois: metadados de missão / snapshot SC no laudo (P0 dissertação)
 
 CATIA: só voltar a insistir em REST TWC quando houver projeto existente utilizável **ou** admin Cassandra.

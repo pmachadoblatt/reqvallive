@@ -9,11 +9,19 @@ Datas no formato `AAAA-MM-DD`.
 
 ## [Unreleased]
 
+### Changed (2026-08-03) — contrato SysON endurecido (passo 2)
+
+- Demo `models/syson/reqvallive_demo.sysml`: 5 requisitos — threshold (bateria + separação),
+  range (banda AGL), statistical (variação AGL)
+- Nome do `VerificationResult_*` inclui `scType` (`…_FAIL_threshold_…` / `…_PASS_range_…`)
+- `docs/SYSON_CONTRATO_DOC.md` actualizado com tabela de expectativas PASS/FAIL
+
 ### Validated (2026-07-30) — E2E em casa
 
 - **Loop fechado com sucesso:** SysON (modelo + SC) → ReqValLive (gate/GSE) → MQTT lab → medição → **Publicar no SysON** → item `VerificationResult_*` atualizado no modelo
 - Ambiente: SysON Docker `localhost:8081` + app `8080` + broker MQTT Conceptio (`161.24.23.15`)
 - Confirma que o anfitrião do modelo no PoC pode ser **SysON local** sem depender do runtime Magic Simulation
+- **Lab (2026-08):** mesmo E2E repetido com sucesso
 
 ### Added (2026-07-30)
 

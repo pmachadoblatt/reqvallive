@@ -69,6 +69,7 @@ def build_verification_update(session: MeasurementSession) -> dict[str, Any]:
                 "metric": metric_name(req),
                 "expected": finding.get("expected") if finding else None,
                 "why": finding.get("why") if finding else None,
+                "success_criteria": req.success_criteria.model_dump(mode="json"),
                 "catia_doc_append": doc_block,
                 "syson_doc_append": syson_doc,
                 "sysml_doc_snippet": (

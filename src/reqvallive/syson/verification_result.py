@@ -41,9 +41,12 @@ def is_verification_result_name(name: str) -> bool:
 
 
 def verification_result_item_name(fields: dict[str, Any]) -> str:
-    """Nome visível no explorador SysON (o rótulo do item, não só 'VerificationResult')."""
+    """Nome visível no explorador SysON — PASS/FAIL no 2º segmento (sem abrir o item)."""
     status = re.sub(r"[^A-Za-z0-9]", "", str(fields.get("status") or "NA")) or "NA"
     parts = [VR_ITEM_NAME, status]
+    sc_type = re.sub(r"[^A-Za-z0-9]", "", str(fields.get("scType") or ""))[:12]
+    if sc_type:
+        parts.append(sc_type)
     ek = re.sub(r"[^A-Za-z0-9]", "", str(fields.get("extremeKind") or ""))
     ev = fields.get("extremeValue")
     if ek and ev is not None:
@@ -65,6 +68,7 @@ def verification_result_doc_body(fields: dict[str, Any]) -> str:
     """Texto no Documentation do item — legível ao seleccionar no SysON."""
     lines = [
         f"status: {fields.get('status') or ''}",
+        f"scType: {fields.get('scType') or ''}",
         f"metric: {fields.get('metric') or ''}",
         f"expected: {fields.get('expected') or ''}",
     ]
@@ -146,10 +150,14 @@ def build_verification_result_fields(
             extreme_value = max(maxs)
             extreme_kind = "max"
 
-    # unit a partir do expected ou SC
+    # unit / scType a partir do SC
     sc = req_update.get("success_criteria") or finding.get("success_criteria") or {}
+    sc_type = ""
     if isinstance(sc, dict):
         unit = str(sc.get("unit") or "")
+        sc_type = str(sc.get("type") or "")
+    if not sc_type:
+        sc_type = str(req_update.get("sc_type") or finding.get("sc_type") or "")
 
     if not evidence:
         bits = []
@@ -163,6 +171,7 @@ def build_verification_result_fields(
 
     return {
         "status": status,
+        "scType": sc_type,
         "metric": metric,
         "expected": expected,
         "reason": reason,
@@ -196,6 +205,7 @@ def verification_result_textual(fields: dict[str, Any]) -> str:
     ]
     order = [
         "status",
+        "scType",
         "metric",
         "expected",
         "reason",

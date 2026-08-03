@@ -66,10 +66,11 @@ reqvallive
 No SysON: criar projeto (ex. `ReqTest`) → importar/colar `models/syson/reqvallive_demo.sysml`
 (ou criar `RQ_01` + atributos SC + `_go_to_verification`). Contrato: `docs/SYSON_CONTRATO_DOC.md`.
 
-No ReqValLive: separador **SysON** → Probe → Import `RQ_01` → medir → **Publicar no SysON**.
-Aparece sob o requisito um item `VerificationResult_FAIL_…` (ou PASS) com Documentation + atributos.
+No ReqValLive: separador **SysON** → Probe → Importar (demo multi-RQ) → medir → **Publicar no SysON**.
+Aparece sob cada requisito um item `VerificationResult_PASS_…` ou `VerificationResult_FAIL_…`
+(com `scType` no nome). Contrato: `docs/SYSON_CONTRATO_DOC.md`.
 
-**Validado em casa (2026-07-30):** medição MQTT lab + publicação no SysON **funcionou** — o modelo no browser atualizou com o `VerificationResult`.
+**Validado em casa (2026-07-30) e no lab (2026-08):** medição MQTT + publicação no SysON **funcionou**.
 
 Detalhe Docker / backup Postgres: `deploy/syson/README.md`.
 

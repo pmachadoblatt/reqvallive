@@ -1,6 +1,6 @@
 # Validação E2E — SysON + ReqValLive + MQTT (casa)
 
-**Data:** 2026-07-30  
+**Data casa:** 2026-07-30 · **Data lab:** 2026-08 (repetido com sucesso)  
 **Resultado:** **SUCESSO**
 
 ## O que foi demonstrado
@@ -26,8 +26,8 @@ Isto fecha o ciclo que o orientador pediu **sem** runtime de simulação SysML v
 
 ## Próximos passos (prioridade)
 
-1. **Repetir no lab** o mesmo E2E (SysON Docker + MQTT real / drones) e guardar um export `.sysml` pós-resultado em `models/syson/`.
-2. **Endurecer o contrato** (`docs/SYSON_CONTRATO_DOC.md`): mais de um requisito, SC `statistical`/`range`, falha vs passagem claros no explorador SysON.
+1. ~~Repetir no lab~~ (**feito** 2026-08)
+2. **Endurecer o contrato** (`docs/SYSON_CONTRATO_DOC.md`): multi-RQ + SC `statistical`/`range` + PASS/FAIL no nome do item — *em curso* (`models/syson/reqvallive_demo.sysml`)
 3. **Metadados de missão / relatório** (P0 dissertação): nome da missão, janela, snapshot SC no laudo HTML.
 4. **TWC REST** (paralelo, não bloqueante): probe já existe; escrever OK/NOK no servidor quando o projeto SysML v2 no Collaborate estiver estável.
 5. **Plugin Magic / CSV** só como canal secundário para quem usa CATIA desktop — não como default SysML v2.
