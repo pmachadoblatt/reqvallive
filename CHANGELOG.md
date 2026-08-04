@@ -9,6 +9,13 @@ Datas no formato `AAAA-MM-DD`.
 
 ## [Unreleased]
 
+### Docs (2026-08-03) — reunião orientador
+
+- Ata + backlog: `docs/REUNIAO_2026-08-03_ORIENTADOR.md`
+- Transcrição: `docs/2026-08-03 16-29-31 (transcribed on 03-Aug-2026 17-34-00).txt`
+- Rascunho e-mail Jefferson (GSE): `docs/EMAIL_JEFFERSON_GSE.md`
+- Escopo §14: PoC loop aceite; fase = escrita + naturezas GSE + UI/MQTT
+
 ### Changed (2026-08-03) — contrato SysON endurecido (passo 2)
 
 - Demo `models/syson/reqvallive_demo.sysml`: 5 requisitos — threshold (bateria + separação),

@@ -1,0 +1,149 @@
+e a voz 
+
+dele está presente. 
+
+Como estão as coisas? Conseguir puxar ele na hora. Porque assim, em tese, essa API é padronizada, porque a própria OMG padronizou essa API. Então, tipo, devia ser o mesmo, né? Pois é, eu acho que isso só não funcionou do que a tia, porque estava com aquele problema do collaborator, que a API deles é por ele. Que ele usa o teamwork cloud, que precisa do collaborator ativo para poder funcionar. Ah, tá bom. Isso explica, assim, né? Isso. Por que você estava querendo usar o... É, eu queria ele só para chamar a API, não era nem para, tipo, mexer com o collaborator. Entendi, entendi. Então, provavelmente deve ser alguma configuração do collaborator que está faltando. inclusive a gente tem suporte do... do... do... do Catia, né? E como, tipo, não é só a gente, deve ter mais gente com problema, mas dá para... Cara, é, tipo, está pago, assim, né? Vocês têm que ir lá, têm que bater na porta da daçô lá e pedir ajuda, assim, né? Né? Aí, se quiser até compartilhar até aqui de mostrar como é que está, eu fiz... queria uns eclipsar mais aqui só para... 
+
+Deixa eu notar aqui, então, está funcionando com seis horas, um... é, fiz um... é, fiz um API conectado, é... 
+
+Beleza. Então, esse é meio... o esqueminha continua, assim, de... de... como é que se diz? Do fluxo ainda continua o mesmo, né? É, basicamente, tá vendo a tela? Tá. Aí, defini aqui os requisitos, tem um que está repetido, que é o... esse um aqui, o bateria é igual. Aí, tem o que... mede... Cadê? Esse aqui, mede a altura, tem que ser... ficar sempre entre 20 e 30 metros, a altura dos drones, e o altura variável aqui, mede... Só faz esse... só faz esse validador de requisito em inglês, pelo amor de Deus. Tá, sim, vai me ligar para o inglês, tá? Vai mudar o UI dele também, tá? Tá feio, tá? Que, tipo, a coisa... a coisa antiga eu não tirei ainda, que tava, tipo, do Catia, não mexi, só fui botando coisa em cima, depois eu rumo. Mas é aqui, ó, tipo, ele já lê, tipo, em tempo real, eu crio o projeto aqui, ele já aparece aqui, tipo, pra importar. Aí, que lindo. E aí, eu clico em import, ele puxa. 
+
+Aí, aqui, tem os que tem uns avisos, que não, tipo, não barra medição, mas ele dá, que isso aqui é com base naquele material que você me mandou, do... do Crisério de Sucesso. Que, tipo, ah, não tem regra de segurança, não tem margem, então, tipo, essas coisas assim não tem, aí ele dá o aviso. 
+
+Aí, ele monta o GSE aqui, aí eu vou no MQTT. Não, cadê? 
+
+Inclusive, engraçado que todo mundo perdeu o acesso no MQTT, menos o Marco. 
+
+Sabe que o... Você tá pra usar no meu servidor, né? Sim, sim, sim. Esse aqui só é a mesma versão que tava antes. Os próximos já vai ser no seu. Que esse aqui é o MQTT publicando, aí tá... Aí ele já pega onde tem violação, que eu fiz ele abaixando a bateria de propósito pra pegar. 
+
+Aí... 
+
+Aqui já tá bom, eu vou encerrar. Aí vou clicar no CISON. 
+
+Esse aqui demora um pouco. Vamos mudar, senhor. Que aí... Tá publicando. Tá publicando. É que esse aqui ele puxa o LLM pra interpretar resultados. Pra ver se tiver uma coisa mais subjetiva. 
+
+Tá. Tá bom. 
+
+Caralho, não consigo. Só tirei o zoom. Só tô... Ah. Mudou alguma coisa? Eu não vi mudando. Mudando coisa aí. É que ele muda depois que ele publica aqui. Calma. 
+
+Dá um refresh da vida, assim? 
+
+Calma que tá aí. Eu nunca testei com cinco requisitos. Primeira vez. Eu é tipo o Marf, né? Sabe que eu tô olhando. É, não. O bug é o... O vídeo funcionou, né? Que eu te mandei. Então, ali... 
+
+Talvez passar pelo LLM tá pesando muito. Porque o LLM local lá... Aí, ó. Aí, ó. Agora apareceu. Tá. Tem que dar... Tem que trazer pro... Tem que trazer pro diagrama tudo, né? É, é porque eu... Aparecer direto no diagrama eu não consegui fazer. Ele aparece no Explorer aqui e aí eu arrasto. É. 
+
+E aí ele dá, tipo, aqui na documentação o que aconteceu, Sean. 
+
+Aí, por enquanto, tá isso. Tem que mudar. Tem que melhorar bastante. Mas o... Ir de volta do Sezão tá funcionando, pelo menos. É. Eu acho que, assim, pelo menos agora, tipo, a gente provou que funciona, assim, né? Sim, sim. Tipo, que é o principal desespero da tese, assim, de dissertação. É, tipo... É possível. É possível você pegar requisitos e... Então, o SezML, no Sez1. E vai lidar, interpretar ele com a MQTT e com o Speed de Volta. Isso é possível. Inclusive, assim, se você ensinar isso pra Betina, pra Betina puxar esse... No mesmo esquema do Sez1 pro negócio dela, talvez seja melhor do que o Katia Medic, né? Sim, eu falei isso com ela. Até... Que ela tava falando comigo que ela queria... Que o mestrado dela tivesse algum uso, né? Sem ser... Ficasse parado. Aí eu propus que ela já tava usando uma ferramenta open source lá de estruturas. Não conheço. Isso. Aí eu falei, ah, você pode fazer Sez1 e a outra, que são os dois open source, e faz a metodologia de estrutura com a MBSC, tipo, que não tem ainda uma coisa assim, tipo, bem definida. Não. Aí eu... Existe... Existe a parte... É... Mecânica no... No SezML V2, assim, né? Sim. Tipo, formas geométricas, assim, né? É, mas aí, tipo... Aí eu falo que isso, tipo, aí ela usa Sez1, aquele negócio dela, como... A prova de conceito. E ela faz a metodologia de como fazer essas estruturas no SezML. Com o MBSC. 
+
+Mas aí ela fala com você depois, que eu dei ideia pra ela. Isso, beleza. Sem spoiler. É, e agora eu quero saber, tipo, aqui... O mais pesado que era ir de um lado e do outro tá funcionando. Agora tem que... O que é melhorar nisso e depois começar a escrever? O... Tá bom. Eu lembro que a gente conversou que existem algumas análises, né? Que dá pra fazer análise, tipo, se passou de um... É, zero a um, né? Se passou de um ponto, né? Tipo, ah, sobrou tantos. É um número inteiro, assim, né? Que... Você tá comparando, assim, né? As formas de comparar se o resultado foi atingido. E a outra são, assim, tipo... Situações que acontecem ao longo do tempo, assim, a... O... Sei lá. 
+
+Tipo, tipo... Consequências mais complexas, assim, mais abstratas de se encontrar, assim, né? Eu tô tentando ter um exemplo na minha cabeça, assim. Mas, por exemplo... Ah... 
+
+Coisas que não sejam só, tipo, ah, passei de um nível e eu aceito, assim, né? Sim, algo, tipo, algo no escopo... Ah... Eu sei o que você quer dizer, mas não tô pensando no exemplo agora. Mas eu... É, eu também tô com dificuldade. Tipo, ah, acontece lá, sei lá, um... Sei lá, um número de situações durante o... O... A simulação. Eu tô capturando essas, sei lá, 15 vezes que isso aconteceu. E nessas 15 vezes que isso aconteceu, esse foi o impacto A, B, C ou D, assim, né? Não sei. Tô tentando achar um... Mas era algo que era... Talvez pensar, tipo... É que eu tava falando com o pessoal do Alces, esses dias. Um negócio de busca e salvamento no mar tem 15 alvos, ele tem que identificar, tipo, pelo menos 8. Tem que ser uma coisa... É, mas esse é um threshold também. É. Tipo, passei de 8. Tipo, né? É, que... Que o que eu fiz até agora, tipo, foi... Foi range, que ele tem que ficar entre dois valores. É. O valor estatístico, ele tem que ficar menor sempre que 1, que aqui é a distância. É. A amplitude, tipo, a altura você tem que alterar sempre menos que 1, não pode variar mais que 1 metro. E o percentual. Foi isso que eu fiz até agora. Ah. Eu acho que, assim, o que... O que vale a pena... E... Peraí. E... Tá. Aí depois tem um código mágico que fica monitorando a simulação, né? Vamos chamar assim de código mágico, né? É. Que ele pega o que tá escrito aqui nos atributos, que ele coloca e ele cria o GSE a partir disso, pra medir. Tá. 
+
+Eu vou falar... Eu vou pedir pra você entrar em contato com uma pessoa, assim, né? Hum. Que é uma pessoa que vende o... LabView no Brasil, assim, né? E ele é especializado no GSE. É meu brother. 
+
+Porque é, tipo, bater um papo com ele, assim, falar que você tá fazendo essa tese pra ele te... te falar... Ele é youtuber. Só pra piorar a situação. Tá mesmo. Mas... Mas ele é um youtuber de engenharia, assim, pelo menos, né? Não. Só falei, meu Deus, que recebi 10 mensagens em seguida aqui. Da Erlaine, do Renato, do Gustavo. Que tão precisando urgente de normas e referências gerais pra elaboração de Conops. 
+
+E pra ontem? Aham. 
+
+Vamos mandar aquele... Tem um artigo que a Betinda tem, eu acho. Acho que vamos mandar. Não, tem... É o documento da ANSI, né? Que bom que é tudo urgente, né? Nada é... 
+
+É porque eu acho que eles tão tendo reunião com o Conops. Não, é... Acho que eles tão querendo fechar uma parceria com a AeroScan. Ah. Aí eu fiz o... Eu fiz o... O escopo de trabalho do Conops, que eles queriam fechar a parceria. Os caras aceitaram e agora eles tão pedindo isso. Tipo, né? Só tem que tomar, assim... Né? Mas pro UAML, né? Mas só tem que tomar cuidado pra vocês não fazerem trabalho pra empresa sem ser pagos. Não, não. Isso com certeza. Inclusive... Aqui é fofoca dos bastidores. Mas... A gente tá quase fechando o projeto com o IACIT, né? Só que é a IACIT. Aí a Erlaine tá vendo um negócio que vai colocar com... Junto com o professor Renato Machado. Aí vai conseguir receber com ele pra gente receber um valor a mais pra fazer esse projeto com o IACIT. Ótimo. Pra ir, tipo, uma vez a cada 15 dias lá pra fazer parte de eleitos sistemas. Aí o ISEA percebeu isso. E aí o ISEA agora disse, não, mas a gente faz esse trabalho também. E aí eles marcaram a reunião, vou apresentar pro Kurovski pra tentar... O ISEA fazer o que a gente ia fazer recebendo, mas pra gente fazer pra eles de graça, por causa da parceria aí com ISEA. Mas acabou a parceria com ISEA. Mas eles querem fazer amanhã essa reunião. pra, tipo, ah, olha os projetos que a gente tem. Vocês querem participar e não sei o quê. Aí... Aí eu já conversei. Olha, a gente tem que falar que não, que a gente não quer trabalhar de graça. É, é isso. Você não tem que trabalhar de graça, não. Tá. Beleza, então qual que eu... Vou voltar, assim, as suas coisas, né? De verdade, assim, sem ser a fofoca. 
+
+Pelo da fofoca ser maneiro. O... Então, assim, ó, eu mandei pro seu contato do Jefferson. O Jefferson, ele vende, é... Equipomenda National, né? Que é o LabVIEW, né? Uhum. Ah, e aí ele tem uma empresa de, enfim, chama -se Sintra Lab, que é o sobrenome dele, né? O... Que ele vende e custa essas coisas, assim, mas, tipo, mas ele... Como a gente é amigo, assim, se você cutucar ele, ele vai te ajudar. O... O... Pra perguntar a ele, assim, qual é... Porque ele já desenvolveu o GSE pro INPE, assim, né? Muitas vezes. Ele vende equipamento pra fazer GSE, né? Uhum. Aí você explica pra ele, ah, o projeto, assim, né? Ah... Tudo certinho, assim, e fala assim, ó... Tô querendo entender as naturezas de observação que a gente pode fazer em um sistema durante a execução, né? Aí você explica, assim, a gente tem... Faz um e -mail, né? Uhum. Ah, esse range, a gente tá monitorando, assim, que outras coisas você sugeriria a gente pra poder monitorar uma simulação também, assim, né? Uhum. Né? Então... E aí ele vai responder de boa, assim, né? Ele é... Ele é... Fala o que sou seu orientado? É. Pode falar, sim, né? Ele é parceiro, parceiro. Pegar o e -mail, eu te mandei o telefone dele, mas pra você não ser muito ousado, deixa... É, eu acho que é melhor, eu acho que é melhor. No máximo, você mandar um WhatsApp pra ele. Fala, ó, um aluno meu vai te mandar um e -mail, não sei o que, mas não... É. 
+
+Não, assim, um susto. 
+
+Eu tenho um e -mail do funcionário dele. Mas eu acho... O que eu acho que é? 
+
+Sintralave .com .br, eu acho. 
+
+Tá, eu vou mandar um e -mail pra ele, pedir o... mandar um WhatsApp, pedir o e -mail dele pra você, eu mandei um e -mail pra ele. 
+
+Vou fazer isso agora. Ele falou, ó, o meu vai entrar em contato, tô digitando aqui uma mensagem do WhatsApp pra ele. Vou entrar em contato para conversar sobre... sobre tipos 
+
+de leitura de jacique. Não é para você vender custo pra ele. Ele não tem dinheiro pra pagar. 
+
+Ele não tem dinheiro, eu não tenho dinheiro. 
+
+Qual é o seu e -mail pra eu não passar o seu telefone? Beleza. Pronto. Então, assim, é isso, assim, né? Eu acho que tem que... Só entender as naturezas, porque aí você vai mudar uma partezinha aí do seu script, assim, né? Sim, tipo, de como reconhecer isso, né? É. Aí, mais coisas pra medir, em vez de só, tipo, threshold ou número fechado, tipo, como avaliar. Sim, sim. Só isso. É como você vai avaliar o resultado, assim, né? Ele me mandou um cachorrinho, assim, do tipo... Como assim não vou vender custo pra ele? Mas... Tá, então... E aí, beleza, eu acho que assim, acho que você... Só fechando isso, eu acho que já dá pra você escrever. Tá. Então... Pegar com... Basicamente, pegar com ele e as outras formas de medir GSE que ele vai passar. Incluir aqui, aí melhora essa UI do aplicativo, bota inglês, coisa certinho e escreva. Isso. Mas você pode escrever antes, né? Não, não, sim. Eu vou, tipo, como eu já sei que é mais ou menos isso, tá, tipo... E acho que pra colocar novas medidas aqui, não vai ser difícil. Só as ideias que ele vai me dar. Então, aí eu já vou começar a escrever. É isso. Eu acho que aí já adianto isso. 
+
+E aí, assim, o... 
+
+Você tem que... Pra próxima reunião, assim, né? Vamos botar pra você criar a estrutura de... Dos capítulos. Pra você me apresentar a estrutura do texto que você tá planejando. A Elaine chama de boneco isso, não sei se é... É, acho ridículo. Eu acho horroroso. Eu acho ridículo. Mas é isso, né? Eu lembro do seu boneco da escola, o professor Raimundo, assim, né? Então, sempre... Sempre vejo um... Isso é a minha lembrança. Não sei se você chegou a assistir, mas... Sim, sim. 
+
+Tá, então, cria estrutura de capítulos, assim, né? Você tem aquele meu template padrão, assim? Eu tenho um... Não, eu tenho um do Barbacov, eu acho, mas... Eu acho melhor. Peraí, deixa eu pegar aqui, já. 
+
+E o Paulo conseguiu resolver o negócio dele, então? Finalmente, né? 
+
+Deu, teve quase um ataque cardíaco. 
+
+Eu chamei uma... Eu chamei uma banca de super comadre, assim, né? Eu não tinha nem comadre. 
+
+Se você atrasasse mais um pouco esse negócio dele. Que o Paulo tá com a gente também, o negócio da Iacite, né? Que vai fechar. 
+
+Se ele não conseguisse, tipo, defender isso até começar o... O valor das bolsas a receber, tipo... O valor que ele recebia ia ser metade. Por causa de não ter mestrado, né? Então... 
+
+Ele falou assim, ah, meu ovo que é caro é 290 reais. 
+
+Pra mim é caro. Quanto sobra no final do mês pra mim aqui? 
+
+Morando em São José dos Campos, sozinho de bolsa? 
+
+Beleza, eu mandei pro seu e -mail dele, sim. O que era óbvio. Que era o nome dele, arroba o nome da empresa dele. Não, aí eu falo com ele que se... Depois que eu defender o mestrado, o pessoal curtir, eu compro o custo dele. Que aí eu já vou conseguir aumentar a bolsa. Pode ser. 
+
+Inclusive, tem aí um kit que a gente comprou dele em algum lugar aí dentro, assim, né? Acho que algum dos equipamentos que eu comprei pro Renato, eu comprei dele, assim, né? 
+
+Ele vende também, né? E aí, na próxima, além disso que falar com ele, o esqueleto dos capítulos, eu vou também fazer uma simulação mais bonitinha pra rodar no seu MQTT. Porque isso aqui, tipo, são valores aleatórios de bateria e posição, né? Vou fazer uma coisa bonitinha, tipo uma missão executando, que aí ele consegue medir melhor também. 
+
+Acho que eu vou pegar aquele voo da espadrinha e da fumaça, que tem várias aeronaves pra medir e coisa. A gente tem salvo já. Vamos lá também o MQTT. 
+
+Deixar ele rodando em looper lá no seu. Tá bom? Pode deixar. Eu tenho aquele, como é que você diz? Aquele Jupiter Lab lá. Se você quiser também, pôr no Jupiter Lab. Que tá rodando na nuvem também. Só deixa rodando pra sempre lá. Tá usando... As coisas do seu MQTT, você tá usando o padrão do RPS também? A gente tá... Tô usando RPS. Então, então... Então, ficou fácil pra medir do meu também. É Heartbeat e o... O outro lá. São dois. É Heartbeat e Kinematics que ele manda. É, não. Acho que o Kinematics é no Heartbeat, não é? Não. O Heartbeat é separado. Porque quando a aeronave tá parada, ela não envia Kinematics, mas ela manda Heartbeat ainda pra não desaparecer. 
+
+Era... Pelo menos no VR em fósseis era assim que a gente fazia. Por isso que eu... 
+
+Eu te mandei a especificação do RPS. Mandou. 
+
+Que marca da vida. Eu sempre esqueci. Sempre perdi. 
+
+Eu te mando um ponto aqui. Valeu. 
+
+Isso. 
+
+Então, é... Ah, não. Tá vendo? Ele tem que mandar esse sensor info. 
+
+E o Heartbeat são dois. O Kinematics tá no Heartbeat, eu acho, não? Ou tá nesse sensor info? 
+
+Não. 
+
+Eu sei que o L1 é as mensagens passivas. É que eu acho que se não me engano, o Heartbeat era só, tipo, pra dizer que... Pra criar entidade, eu acho que ele não tinha nenhuma informação no Heartbeat. 
+
+Tá. E o outro é só a leitura. O que for. No caso, o Kinematics. Kinematics. Tá bom. Beleza. Acho que é a maneira. É os dois. É a mesma coisa. É só você mandar os dois no tópico lá, correto. Tipo, vai tanto fazer também. Porque você vai monitorar o tópico do jeito que você quiser. Sim. Tipo, mesmo que não apareça aí no seu, eu vou conseguir monitorar igual. Então, não faz diferença. Não faz diferença nenhuma. Eu... Se você quiser, eu posso criar uma estrutura nova do... 
+
+Um tópico novo só pra ir. Aí você... Eu vou fazer isso. Pode ser que aí eu fico... Eu tudo mando pra ele. Que aí é só do subscribe naquele tópico e leio tudo. Eu acho que é melhor. É. É. Você fica separado do meu. Fica tudo, mas... Deixa eu criar... Criar aqui um acesso. Uma autorização. Só lembrar que vou... Que a autorização tá baseada em username. Não é client name, né? 
+
+Só lembrar que você tá... É user, não client. Então, eu vou... Eu vou criar um raiz aqui. O que você quer chamar? Concept? Você quer que é concept, concept. Não? Não. 
+
+É. É. É. É. É. É. É. É melhor do que botar meu nome, né? Deixa o concept mesmo. Tá. Concept... É. O nome que o... Que a IA criou pro meu app eu quero mudar depois. Que eu achei horroroso. Esse... Reequival live aqui. 
+
+É um pouco ruim, né? Então, ó. É concept, concept barra... Asterisco. Que eu acho que aí dá... É. Tem que ser hashtag pra... Isso. É hashtag. Falei errado. É hashtag. Então, ó. Deixa eu até dar um print pra você aqui pra você... 
+
+Deixa eu debugar. Tá. 
+
+Isso aqui que você tá autorizado. Beleza. Então, é isso. É isso. Tá. Então, deixa eu recapitular aqui. Então, pra próxima reunião são três tarefas. Vou tá escrever no WhatsApp aqui. Resultado da conversa com o Jefferson, escrevendo os capítulos e melhorias na UI e rodar no MQTT online. 
+
+É isso. 
+
+Se eu quiser mandar a esquerda no WhatsApp aí pra eu lembrar. 
+
+Isso. Fechado. Não tem mais algum tópico? Acho que não. Vamos apagar incêndio lá do... No laboratório, mas aí é... Mas é loucura que acontece. Isso. Mas tá rolando. Tá de virtude, por menos. Ah, tá. Tá. Se conseguisse esse negócio daí assiste me dar uma folga boa. 
+
+Que aí ia ficar... Ia somar 3 mil a mais na bolsa. Aí já... Na hora de viados. Que aí em Embraer é pra contratar aqui. Coisa tá difícil. 
+
+Mas você lembra que a proposta tá válida ainda, né? Se terminar aí até outubro. Ah, sim, sim. Inclusive, eu já apliquei essa semana pra renovar o visto. Já paguei a taxa lá e coisa, então... É. Tipo... Se você decidir isso, não vai valer nada. Porque vai ser outro visto. Não? Ah, sim. Porque é... É um... J1, acho. Não sei. É um visto de estudante diferente. 
+
+J1, né? O de turista é só pra... Pra evento ou pra passear, né? Não é pra... Isso. Ou saúde, assim, né? Uhum. Eu quero ir num médico, assim, né? Eu quero ir num médico, assim, né? Eu quero ir num médico logo nos Estados Unidos. É foda. É, não é ruim, assim. É caro, né? Não, ruim não é. Beleza, 
+
+por exemplo. Vou ficar pronto aqui pro próximo. A gente vai se falando. 

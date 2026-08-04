@@ -205,4 +205,18 @@ Com as premissas acima, **não há risco estrutural** que invalide o mestrado.
 ## 13. Frase de posicionamento (para banca / resumo)
 
 > Esta dissertação desenvolve e avalia uma prova de conceito para validação live de Success Criteria em missões multiagente no laboratório CONCEPTIO (contexto CET-ADS): critérios são aprovados ou recusados antes da run; drones reais publicam telemetria em MQTT padronizado durante missões de teste; o sistema devolve laudo PASS/FAIL com momentos críticos e um esqueleto SysML v2 para reuso MBSE — sem pretender simulação funcional no CATIA Magic nem escala industrial. O evento SARITA, se realizado, é extensão natural sob o mesmo protocolo uniforme.
+
+---
+
+## 14. Estado após reunião com o orientador (2026-08-03)
+
+**PoC do loop aceite:** SysON (modelo + SC) ↔ ReqValLive ↔ MQTT ↔ write-back `VerificationResult` foi demonstrada e considerada suficiente para remover o risco “será que é possível?”.
+
+**Fase actual do mestrado** (não substitui o escopo acima; prioriza o trabalho):
+
+1. Escrever — esqueleto de capítulos + texto (pode começar já).
+2. Ampliar naturezas de observação / avaliação (contacto Jefferson / GSE) e reflectir no app.
+3. UI em inglês + missão MQTT mais realista (broker do orientador, padrão RPS).
+
+Detalhe e backlog: `docs/REUNIAO_2026-08-03_ORIENTADOR.md`.
 )
