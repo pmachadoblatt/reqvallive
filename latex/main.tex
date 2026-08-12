@@ -1,0 +1,104 @@
+%%% Dissertação ReqValLive — documento raiz (configuração ITA)
+%%%
+%%% Classe: Template Thesis ITA (ita.cls)
+%%%   https://github.com/gabriellnuness/Template_Thesis_ITA
+%%%   Overleaf: https://pt.overleaf.com/latex/templates/thesis-template-aeronautics-institute-of-technology-ita/yhfrqqydpygk
+%%% Manual PG ITA: http://www.ita.br/posgrad/tese
+%%%
+%%% Conteúdo dos capítulos: pastas capitulos/, PreTextuais/, apendices/, anexos/
+%%% Este ficheiro: apenas classe, metadados e \input.
+%%%
+%%% Overleaf: Main document = latex/main.tex
+%%% Opções úteis: [msc] | [msc, eng] | [msc, dv]
+%++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+\documentclass[msc]{ita}
+
+% Pacotes extras (hyperref e csquotes já vêm em ita.cls)
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{url}
+\usepackage{appendix}
+
+% Espaçamento (manual ITA: 1,5)
+\onehalfspacing
+
+% Bibliografia (biblatex-abnt do template ITA)
+\addbibresource{referencias.bib}
+
+%++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+% Identificações — completar com dados oficiais do programa / banca
+%++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+\course{Engenharia de Sistemas} % TODO: nome oficial do programa de PG no ITA
+\area{CONCEPTIO / CET-ADS}      % Área de concentração
+
+\authorgender{masc}
+\author{Pedro Henrique}{Blatt Machado}
+\itaauthoraddress{São José dos Campos}{12228-900}{São José dos Campos--SP}
+
+\title{Validação live de Success Criteria em missões multiagente:\\
+do requisito verificável à evidência telemetrada e ao esqueleto SysML~v2}
+
+\advisorgender{masc}
+\advisor{Prof.~Dr.}{Christopher}{ITA} % TODO: nome completo do orientador
+
+% Coorientador: descomentar se houver
+%\coadvisorgender{masc}
+%\coadvisor{Prof.~Dr.}{Nome}{ITA}
+
+% Palavras-chave CIP (biblioteca)
+\kwcip{Success Criteria}
+\kwcip{Validação live}
+\kwcip{SysML}
+\kwcip{MQTT}
+\kwcip{UAS}
+
+% Banca (preencher antes da defesa)
+\examiner{Prof. Dr.}{Christopher}{Presidente}{ITA}
+%\examiner{Prof. Dr.}{Nome}{}{Instituição}
+
+\date{12}{agosto}{2026} % TODO: data da defesa
+
+\cdu{004} % TODO: código CDU com a biblioteca
+
+\makenoidxglossaries
+\frontmatter
+
+\input{PreTextuais/listaabreviaturas.tex}
+\input{PreTextuais/listasimbolos.tex}
+
+\begin{document}
+\input{PreTextuais/main}
+
+\mainmatter
+% Capítulos (conteúdo em ficheiros próprios; estrutura DSR / Eng.ish do orientador)
+\input{capitulos/01-introducao}
+\input{capitulos/02-literatura}
+\input{capitulos/03-metodologia}
+\input{capitulos/04-resultados}
+\input{capitulos/05-conclusao}
+
+\renewcommand\bibname{\itareferencesnamebabel}
+\printbibliography
+
+\appendix
+\input{apendices/A-material-autor}
+
+\annex
+\input{anexos/A-material-apoio}
+
+% Folha de Registro do Documento (biblioteca) --- preencher na entrega
+%\FRDitadata{...}
+%\FRDitadocnro{DCTA/ITA/DM-XXX/20XX}
+%\FRDitaorgaointerno{Instituto Tecnológico de Aeronáutica -- ITA}
+%\FRDitapalavrasautor{Success Criteria; MQTT; SysML}
+%\FRDitapalavrasresult{Validação live; UAS; MBSE}
+%\FRDitapalavraapresentacao{ITA, São José dos Campos. Curso de Mestrado. ...}
+%\FRDitaresumo{\input{PreTextuais/resumo}}
+%\FRDitaOpcoes{N}{O}
+%\itaFRD
+
+\end{document}

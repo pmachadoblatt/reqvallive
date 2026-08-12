@@ -1,0 +1,73 @@
+\chapter{Revisão da literatura}
+\label{cap:literatura}
+
+% Chris Eng.ish --- II. Literature Review (Rigor Cycle)
+% + Optional: State of the art of the Problem Domain (Relevance Cycle)
+
+\section{Linha de base da pesquisa}
+\label{sec:baseline}
+
+% Research Baseline --- conceitos e obras âncora que sustentam o rigor.
+
+\subsection{Success Criteria e verificação \& validação}
+
+Success Criteria verificáveis exigem desempenho, tolerâncias, escopo e
+coerência com o método de verificação~\cite{msfc3173,sis08methods}.
+
+% TODO: aprofundar Methods × Success; gate ACCEPT/REJECT como operacionalização.
+
+\subsection{MBSE e SysML~v2}
+
+O SysML~v2 oferece notação textual e APIs para modelos de requisitos~\cite{sysmlv2}.
+Neste trabalho, o export SysML serve como \emph{esqueleto} para reuso MBSE, sem
+pretensão de runtime de simulação live no CATIA Magic.
+
+% TODO: distinguir Requirement Table v1 vs vistas SysML v2; papel do SysON no PoC.
+
+\subsection{Telemetria e missões multiagente em laboratório}
+
+O CONCEPTIO opera drones reais com publicação MQTT sob protocolo do laboratório.
+Arenas multiagente (ex.: referências motivacionais tipo WARA-PS) ilustram o
+problema de demos sem SC pré-declarados, sem serem meta de escala deste trabalho.
+
+\section{Mapeamento da literatura}
+\label{sec:slr}
+
+% Literature Mapping (SLR) --- protocolar busca, inclusão/exclusão, síntese.
+
+\subsection{Protocolo de busca (a completar)}
+
+\begin{itemize}
+  \item \textbf{Perguntas:} Como Success Criteria são formalizados para medição
+        live? Que gaps existem entre MBSE e telemetria real?
+  \item \textbf{Fontes:} IEEE Xplore, Scopus, ACM, repositórios CONCEPTIO/CET-ADS.
+  \item \textbf{Palavras-chave:} \emph{success criteria}, \emph{live verification},
+        \emph{UAS telemetry}, \emph{SysML}, \emph{ground support equipment}, MQTT.
+  \item \textbf{Critérios de inclusão/exclusão:} a definir na execução da SLR.
+\end{itemize}
+
+\subsection{Síntese esperada}
+
+Tabela de trabalhos relacionados vs.\ contribuição deste mestrado (gate + live
+MQTT + laudo + esqueleto SysML / write-back). Gap: falta de ciclo operacional
+fechado em escala de laboratório acadêmico com drones reais.
+
+\section{Estado da arte do domínio do problema}
+\label{sec:estado-arte}
+
+% Optional --- Relevance Cycle: práticas GSE, naturezas de observação, ADS-VD.
+
+\subsection{Naturezas de observação em GSE}
+
+Contacto com especialista em GSE (Jefferson / Sintra Lab) sugeriu uma taxonomia
+de naturezas de observação para além de limiares simples~\cite{jefferson2026gse}:
+valor; tempo (duração/latência); sequência de eventos; taxa de variação;
+ocorrência/ausência; frequência; consistência entre estados.
+
+A PoC actual cobre sobretudo \textbf{valor} (threshold/range), amplitude em
+janela e métricas entre entidades; as demais naturezas alimentam a discussão
+metodológica e o roadmap do artefacto.
+
+\subsection{Virtual Demonstrator e medição de métricas}
+
+% TODO: posicionar ADS-VD / CET-ADS como âncora de relevância (medição cruzada).

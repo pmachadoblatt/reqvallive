@@ -1,0 +1,35 @@
+\chapter{Conclusão}
+\label{cap:conclusao}
+
+% Chris Eng.ish --- V. Conclusion
+
+\section{Síntese}
+
+Este trabalho propôs e demonstrou, em escala de laboratório acadêmico, um método
+e uma prova de conceito (ReqValLive) para validação live de Success Criteria:
+aprovação do critério antes da run, avaliação de telemetria MQTT real, laudo
+PASS/FAIL e retorno estruturado ao modelo SysML~v2 (SysON).
+
+\section{Contribuições}
+
+\begin{enumerate}
+  \item \textbf{Metodológica:} operacionalização de gate e evidência temporal
+        para SC live; vocabulário de naturezas de observação (GSE).
+  \item \textbf{Tecnológica:} artefacto ReqValLive + fecho SysON.
+  \item \textbf{Empírica:} demonstração no CONCEPTIO com drones reais / MQTT.
+\end{enumerate}
+
+\section{Limitações}
+
+Escala lab; cobertura parcial das naturezas de observação; SysML como esqueleto /
+write-back, não simulação Magic; SARITA não é pré-requisito de conclusão.
+
+\section{Trabalhos futuros}
+
+\begin{itemize}
+  \item Estender o motor live (taxa, tempo/dwell, eventos, estados) conforme
+        taxonomia GSE e telemetria disponível.
+  \item UI e missão MQTT alinhadas ao padrão do orientador (RPS).
+  \item Evolução TWC REST / plugin Magic em paralelo, sem bloquear a escrita.
+  \item Ensaio SARITA/CET-ADS se o evento ocorrer.
+\end{itemize}

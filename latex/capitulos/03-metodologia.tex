@@ -1,0 +1,102 @@
+\chapter{Metodologia}
+\label{cap:metodologia}
+
+% Chris Eng.ish --- III. Methodology
+% Materials used | Design of the Artefact | Use of the Artefact
+
+\section{Materiais utilizados}
+\label{sec:materiais}
+
+\begin{description}
+  \item[Laboratório] CONCEPTIO --- drones reais; broker MQTT do lab; protocolo
+        de telemetria padronizado.
+  \item[Modelo SysML~v2] Editor SysON (Docker local) como anfitrião do modelo no
+        PoC; marcador \texttt{\_go\_to\_verification}; Success Criteria como
+        atributos/itens no modelo; resultado em \texttt{VerificationResult}.
+  \item[Software] ReqValLive (FastAPI + UI); schema Vampire
+        (\texttt{simreqvalidator}); opcionalmente LLM (Ollama) para enriquecimento
+        de narrativa pós-medição.
+  \item[Referências de V\&V] SIS-08 Methods; MSFC-HDBK-3173~\cite{msfc3173}.
+\end{description}
+
+% CATIA Magic 2026x permanece contexto do lab / evolução TWC; não é runtime live
+% da PoC de medição.
+
+\section{Desenho do artefacto}
+\label{sec:desenho-artefacto}
+
+% Design of the Artefact --- método + arquitectura ReqValLive.
+
+\subsection{Ciclo operacional proposto}
+
+\begin{enumerate}
+  \item Formalizar requisito + Success Criterion no modelo (SysON / SysML~v2).
+  \item Importar e aplicar gate ACCEPT/REJECT antes da medição.
+  \item Congelar SC aprovado; subscrever MQTT; avaliar live.
+  \item Encerrar; gerar laudo HTML; publicar \texttt{VerificationResult} no modelo
+        (e marcadores textuais quando aplicável).
+\end{enumerate}
+
+\subsection{Gate de Success Criteria}
+
+Antes da run, cada critério é classificado ACCEPT ou REJECT com motivos
+explícitos (completude, mensurabilidade, unidade, escopo, coerência Method ×
+Success, temporalidade).
+
+\subsection{Avaliação temporal live}
+
+Critérios com sentido temporal (ex.: \texttt{all\_timesteps}) não podem ser
+julgados apenas pelo último valor. A evidência preserva violação (latch FAIL),
+primeira falha, extremos e contagens.
+
+Tipos suportados na PoC: \texttt{threshold}, \texttt{range},
+\texttt{statistical} (agregações \texttt{range}/\texttt{max}/\texttt{min} na
+janela); métricas agregadas entre entidades (ex.: separação mínima).
+
+\subsection{Arquitectura da prova de conceito (ReqValLive)}
+
+Aplicação web local: sessão de medição, subscriber MQTT multi-drone, motor de
+avaliação, relatório HTML, integração SysON (import SC + publish
+\texttt{VerificationResult}).
+
+\subsection{Artefatos gerados}
+
+\begin{itemize}
+  \item Relatório HTML (procedimento de V\&V: método, SC aprovado, esperado vs
+        observado, evidência).
+  \item Item \texttt{VerificationResult} ligado ao requisito no SysON (status,
+        reason, extremos, sessão).
+  \item Esqueleto \texttt{.sysml} / model.md como ponto de partida MBSE --- não
+        simulação Magic.
+\end{itemize}
+
+\subsection{Limitações de desenho assumidas}
+
+Não se pretende adoção industrial, plataforma WARA-PS, nem substituir ferramentas
+MBSE comerciais. O modelo exportado não é simulação funcional no CATIA Magic
+2026x.
+
+\section{Uso do artefacto}
+\label{sec:uso-artefacto}
+
+% Use of the Artefact --- fluxo do operador / investigador.
+
+\subsection{Fluxo típico no laboratório}
+
+\begin{enumerate}
+  \item Subir SysON + ReqValLive; garantir MQTT do lab acessível.
+  \item Autorar/importar requisitos com SC e \texttt{\_go\_to\_verification}.
+  \item Importar no app; resolver gate; montar GSE / sessão.
+  \item Conectar MQTT; iniciar medição; encerrar.
+  \item Abrir laudo HTML; publicar resultado no SysON; refrescar explorador.
+\end{enumerate}
+
+\subsection{Papéis}
+
+\begin{itemize}
+  \item \textbf{Investigador / mestrando:} define SC, conduz ensaio, interpreta
+        laudo.
+  \item \textbf{Modelo (SysON):} autoridade do requisito e do resultado escrito
+        de volta.
+  \item \textbf{ReqValLive:} motor de evidência live (não substitui o modelo).
+\end{itemize}

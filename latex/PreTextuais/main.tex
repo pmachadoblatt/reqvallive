@@ -1,0 +1,34 @@
+% Folhas pré-textuais (classe ita) — capa, dedicatória, resumo, listas, sumário
+\maketitle
+
+\begin{itadedication}
+À família e aos colegas do CONCEPTIO / CET-ADS.
+\end{itadedication}
+
+\begin{itathanks}
+\input{PreTextuais/agradecimentos}
+\end{itathanks}
+
+\ifhyperref\pdfbookmark[0]{\nameepigraphe}{epigrafe}\fi
+\begin{flushright}
+\begin{spacing}{1}
+\mbox{}\vfill
+\input{PreTextuais/epigrafe}
+\end{spacing}
+\end{flushright}
+
+\begin{abstract}
+\noindent
+\input{PreTextuais/resumo}
+\end{abstract}
+
+\begin{englishabstract}
+\noindent
+\input{PreTextuais/abstract}
+\end{englishabstract}
+
+\listoffigures
+\listoftables
+\listofabbreviations
+\listofsymbols
+\tableofcontents

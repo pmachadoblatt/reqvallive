@@ -22,3 +22,20 @@ htmlcov/
 examples/verification_update.json
 examples/verification_sync.csv
 examples/verification_update.sysml
+
+# LaTeX (Overleaf / build local) — versionar só fontes em latex/
+latex/**/*.aux
+latex/**/*.bbl
+latex/**/*.bcf
+latex/**/*.blg
+latex/**/*.fdb_latexmk
+latex/**/*.fls
+latex/**/*.lof
+latex/**/*.log
+latex/**/*.lot
+latex/**/*.out
+latex/**/*.pdf
+latex/**/*.run.xml
+latex/**/*.synctex.gz
+latex/**/*.toc
+!latex/figuras/**/*.pdf

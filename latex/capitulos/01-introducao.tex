@@ -1,0 +1,105 @@
+\chapter{Introdução}
+\label{cap:introducao}
+
+% Alinhado a: Chris (Eng.ish) Research Document Structure --- I. Introduction
+% Design Science Research (Hevner et al.): Relevance / Design / Rigor cycles.
+
+\section{Contexto e motivação}
+\label{sec:contexto}
+
+O CET-ADS articula projetos do Air Domain Study (ADS) no ecossistema CONCEPTIO.
+O ADS-VD (\emph{Virtual Demonstrator}) espera, entre outros resultados, um ambiente
+que permita a medição de métricas desejadas e a avaliação cruzada de projetos.
+
+Na prática, demos acadêmicos multiagente ainda sofrem de um gap recorrente:
+requisitos pouco formalizados antes da run; telemetria rica durante a demo sem
+laudo auditável depois; e ausência de um ponto de partida MBSE (esqueleto
+SysML~v2) ligado ao que foi validado~\cite{sis08methods}.
+
+A exploração de simulação SysML em ferramentas comerciais mostrou limite para
+refletir telemetria live, motivando uma prova de conceito \emph{standalone}
+(ReqValLive) que preserve a disciplina de Success Criteria.
+
+\section{Problema de pesquisa}
+\label{sec:problema}
+
+Como viabilizar, em escala de laboratório acadêmico (CONCEPTIO), um ciclo
+operacional em que requisitos com Success Criteria sejam aprovados antes da run,
+a telemetria real de drones via MQTT seja avaliada durante missões de teste, e
+ao final se obtenha um laudo PASS/FAIL com momentos críticos mais um esqueleto
+SysML~v2 reutilizável --- com extensibilidade natural a eventos de integração
+CET-ADS (SARITA) sob protocolo MQTT padronizado?
+
+\subsection{Perguntas derivadas}
+
+\begin{enumerate}
+  \item Que regras tornam um Success Criterion aceitável para medição live
+        (gate ACCEPT/REJECT)?
+  \item Como garantir evidência temporal íntegra (ex.: \texttt{all\_timesteps}),
+        e não apenas o último valor amostrado?
+  \item O ciclo \emph{requisito $\rightarrow$ SC aprovado $\rightarrow$ MQTT $\rightarrow$
+        laudo + esqueleto SysML} é realizável ponta a ponta no CONCEPTIO?
+\end{enumerate}
+
+\section{Hipótese}
+\label{sec:hipotese}
+
+Se Success Criteria forem (i)~tornados verificáveis e aprováveis \emph{antes}
+da run e (ii)~avaliados contra telemetria real de drones com regras temporais
+explícitas e protocolo MQTT conhecido, então é possível produzir, ao final de
+missões de teste no laboratório, um laudo e um esqueleto SysML que fechem o ciclo
+\emph{métrica de sucesso $\rightarrow$ evidência $\rightarrow$ ok/nok} de forma mais
+auditável do que demos ad~hoc sem critério pré-declarado.
+
+\section{Objetivos}
+\label{sec:objetivos}
+
+\subsection{Objetivo geral}
+
+Propor e demonstrar um método e uma prova de conceito (ReqValLive) para
+validação live de Success Criteria em missões multiagente de laboratório,
+alinhado a práticas de V\&V e ao papel de medição de métricas no ADS-VD / CET-ADS.
+
+\subsection{Objetivos específicos}
+
+\begin{enumerate}
+  \item Formalizar um gate de Success Criteria (ACCEPT/REJECT) antes da medição,
+        inspirado em SIS-08 Methods / MSFC-HDBK-3173~\cite{msfc3173}.
+  \item Implementar avaliação live de critérios numéricos
+        (\texttt{threshold}/\texttt{range}/\texttt{statistical}) contra telemetria
+        MQTT multi-entidade, com evidência temporal íntegra.
+  \item Gerar artefatos pós-missão: laudo (PASS/FAIL, momentos críticos) e
+        esqueleto SysML~v2 textual~\cite{sysmlv2}.
+  \item Demonstrar o ciclo ponta a ponta no CONCEPTIO (obrigatório); SARITA como
+        extensão desejável sob payload MQTT uniforme.
+\end{enumerate}
+
+\section{Metodologia de pesquisa --- Design Science Research}
+\label{sec:dsr}
+
+Este trabalho adopta \emph{Design Science Research} (DSR)~\cite{hevner2004},
+com três ciclos:
+
+\begin{description}
+  \item[Relevance] Necessidade de medição auditável de Success Criteria em demos
+        multiagente no CONCEPTIO / CET-ADS (ADS-VD).
+  \item[Design] Artefacto ReqValLive + método (gate, evidência live, laudo,
+        esqueleto SysML~v2 / fecho no SysON).
+  \item[Rigor] Fundamentação em V\&V / Success Criteria, MBSE SysML~v2, telemetria
+        MQTT de laboratório; avaliação por demonstração e casos controlados.
+\end{description}
+
+A avaliação do artefacto combina testes de regressão, ensaios com telemetria
+real (e fixtures) e demonstração do loop fechado modelo~$\leftrightarrow$~medição.
+
+\section{Organização do documento}
+\label{sec:estrutura}
+
+\begin{itemize}
+  \item Capítulo~\ref{cap:literatura} --- revisão da literatura (ciclo de rigor)
+        e, opcionalmente, estado da arte do domínio (ciclo de relevância).
+  \item Capítulo~\ref{cap:metodologia} --- materiais, desenho e uso do artefacto
+        (fusão método + PoC).
+  \item Capítulo~\ref{cap:resultados} --- resultados e discussão (ciclo de design).
+  \item Capítulo~\ref{cap:conclusao} --- conclusões e trabalhos futuros.
+\end{itemize}

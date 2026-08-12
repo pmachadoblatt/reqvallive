@@ -5,7 +5,8 @@ Validação de requisitos em tempo real via **MQTT multi-drone**, geração de *
 Entrada preferencial (tese / Christopher): **export CATIA SysML** com `_go_to_verification` → gate OK/NOK → Montar GSE → medir MQTT → **UPDATE CATIA** (LLM opcional). Markdown+LLM continua disponível como caminho secundário.
 
 > Schema Vampire (`simreqvalidator`) vem em **`vendor/Sim_Req_Validator`**.  
-> Setup em casa: [`docs/RODAR_EM_CASA.md`](docs/RODAR_EM_CASA.md) · detalhes: [`DEPENDENCIA_SIM_REQ_VALIDATOR.md`](DEPENDENCIA_SIM_REQ_VALIDATOR.md)
+> Setup em casa: [`docs/RODAR_EM_CASA.md`](docs/RODAR_EM_CASA.md) · detalhes: [`DEPENDENCIA_SIM_REQ_VALIDATOR.md`](DEPENDENCIA_SIM_REQ_VALIDATOR.md)  
+> Dissertação (Overleaf): pasta [`latex/`](latex/) — sync GitHub ↔ Overleaf em `latex/main.tex`.
 
 ## Fluxo
 

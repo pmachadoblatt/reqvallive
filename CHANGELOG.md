@@ -9,6 +9,17 @@ Datas no formato `AAAA-MM-DD`.
 
 ## [Unreleased]
 
+### Docs (2026-08-12) — dissertação LaTeX (template ITA)
+
+- Pasta `latex/`: `ita.cls` + capítulos DSR separados; `main.tex` só configuração
+- Overleaf: Main document = `latex/main.tex` (pdfLaTeX + biber)
+
+### Docs (2026-08-12) — resposta Jefferson (GSE)
+
+- Taxonomia de 7 naturezas de observação: `docs/JEFFERSON_NATUREZAS_OBSERVACAO.md`
+- E-mail enviado/recebido + rascunho de agradecimento: `docs/EMAIL_JEFFERSON_GSE.md`
+- Ata 2026-08-03: item Jefferson marcado como respondido
+
 ### Docs (2026-08-03) — reunião orientador
 
 - Ata + backlog: `docs/REUNIAO_2026-08-03_ORIENTADOR.md`

@@ -46,11 +46,11 @@ Pode **começar a escrever já** — não precisa esperar o Jefferson para o esq
 
 ## Backlog técnico (pós-ata)
 
-1. E-mail ao Jefferson (apresentação já feita pelo orientador via WhatsApp).
+1. ~~E-mail ao Jefferson~~ → **respondido** (2026-08). Síntese: [[JEFFERSON_NATUREZAS_OBSERVACAO]].
 2. Esqueleto de capítulos + início da escrita.
 3. UI em inglês + higiene visual (remover/ocultar fluxo CATIA antigo da face principal).
 4. Publisher de missão (ex. voo espadrilha/fumaça) no MQTT do orientador; Heartbeat + Kinematics (spec RPS).
-5. Após resposta Jefferson: estender tipos de avaliação / GSE no app (“código mágico” que lê atributos → GSE).
+5. Estender tipos de avaliação / GSE no app com base na taxonomia Jefferson (prioridade: **taxa** e **tempo/dwell**; depois eventos/frequência/estados) — “código mágico” que lê atributos → GSE.
 6. (Opcional) VerificationResult também no diagrama SysON; renomear app.
 
 ## Documentos relacionados
@@ -58,4 +58,5 @@ Pode **começar a escrever já** — não precisa esperar o Jefferson para o esq
 - Contrato modelo: [[SYSON_CONTRATO_DOC]]
 - Escopo da dissertação: [[ESCOPO_DISSERTACAO]]
 - Validação E2E: [[VALIDACAO_E2E_SYSON_CASA]]
+- Naturezas GSE (Jefferson): [[JEFFERSON_NATUREZAS_OBSERVACAO]]
 - Deploy SysON: `deploy/syson/README.md`

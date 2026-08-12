@@ -1,0 +1,68 @@
+\chapter{Resultados e discussão}
+\label{cap:resultados}
+
+% Chris Eng.ish --- IV. Results / Discussions (Design Cycle feedback)
+% Exemplify use | Discuss use | Verify if objectives are closed
+
+\section{Exemplificação do uso do artefacto}
+\label{sec:caso}
+
+\subsection{Caso CONCEPTIO --- loop fechado SysON $\leftrightarrow$ MQTT}
+
+Demonstração ponta a ponta: modelo com múltiplos Success Criteria (threshold,
+range, statistical) no SysON; import e gate no ReqValLive; medição com telemetria
+MQTT do laboratório; publicação de \texttt{VerificationResult} no modelo.
+
+% TODO: inserir figuras (explorador SysON, UI live, laudo HTML) e tabela de
+% requisitos/SC usados na demo ao orientador (2026-08-03).
+
+\subsection{Protocolo de ensaio}
+
+Descrever: missão / roteiro, tópicos MQTT, SC aprovados no gate, janela de
+medição, critérios de sucesso do experimento ($\geq$2 tipos de SC; evidência
+coerente com telemetria).
+
+\section{Discussão do uso do artefacto}
+\label{sec:discussao}
+
+\subsection{O que o ciclo resolve}
+
+Fecha o gap \emph{declarar SC $\rightarrow$ medir $\rightarrow$ laudar $\rightarrow$
+escrever no modelo} sem depender do runtime de simulação SysML no Magic.
+
+\subsection{Naturezas de observação --- cobertura actual vs.\ roadmap}
+
+A taxonomia GSE (valor, tempo, sequência, taxa, eventos, frequência, estados)
+mostra que a PoC cobre bem a natureza \textbf{valor} e amplitude em janela; taxa
+(dwell), eventos e consistência de estados permanecem trabalhos futuros --- sem
+invalidar a demonstração do ciclo duro.
+
+\subsection{Ameaças à validade}
+
+\begin{itemize}
+  \item Escala de laboratório (não industrial).
+  \item Dependência do protocolo MQTT do CONCEPTIO.
+  \item Expectativa errada sobre SysML (esqueleto vs.\ simulação).
+  \item Heterogeneidade de payload mitigada pelo padrão do lab / SARITA.
+\end{itemize}
+
+\section{Verificação dos objetivos}
+\label{sec:objetivos-fechados}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Objectivos específicos vs.\ evidência actual (esqueleto --- actualizar).}
+  \label{tab:objetivos}
+  \begin{tabular}{@{}lp{7.2cm}@{}}
+    \toprule
+    Objectivo & Estado / evidência \\
+    \midrule
+    Gate ACCEPT/REJECT & Implementado e usado em demo \\
+    Avaliação live MQTT & threshold / range / statistical; latch FAIL \\
+    Laudo + esqueleto SysML & HTML + VerificationResult / export \\
+    Demo CONCEPTIO & Loop aceite pelo orientador (2026-08) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% TODO: detalhar métricas de ensaio, laudos arquivados, regressão pytest.

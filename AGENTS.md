@@ -1,5 +1,10 @@
 # AGENTS.md — ReqValLive
 
+## Dissertação (LaTeX)
+
+Texto do mestrado em `latex/` (template ITA `ita.cls` + capítulos DSR).
+Não misturar PRs de software com redação; Overleaf aponta a `latex/main.tex`.
+
 Antes de planear ou implementar qualquer coisa sobre **CATIA / Magic / SysML / UPDATE / CSV / REST**, leia:
 
 1. **`docs/CONTEXT_OBRIGATORIO_CATIA.md`** (obrigatório)

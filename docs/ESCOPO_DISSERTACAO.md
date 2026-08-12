@@ -215,7 +215,7 @@ Com as premissas acima, **não há risco estrutural** que invalide o mestrado.
 **Fase actual do mestrado** (não substitui o escopo acima; prioriza o trabalho):
 
 1. Escrever — esqueleto de capítulos + texto (pode começar já).
-2. Ampliar naturezas de observação / avaliação (contacto Jefferson / GSE) e reflectir no app.
+2. Ampliar naturezas de observação / avaliação — **taxonomia Jefferson recebida** (`docs/JEFFERSON_NATUREZAS_OBSERVACAO.md`); implementação gradual (taxa, tempo, …) após entregas UI/MQTT.
 3. UI em inglês + missão MQTT mais realista (broker do orientador, padrão RPS).
 
 Detalhe e backlog: `docs/REUNIAO_2026-08-03_ORIENTADOR.md`.
