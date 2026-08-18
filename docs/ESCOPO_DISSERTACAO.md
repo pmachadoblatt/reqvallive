@@ -10,6 +10,8 @@ Validação live de Success Criteria em missões multiagente: do requisito verif
 **Natureza:** dissertação de mestrado com contribuição metodológica + ferramenta demonstrável em escala de laboratório acadêmico.  
 **Não é:** adoção industrial, plataforma WARA-PS, nem substituto de ferramentas MBSE comerciais; o SysML exportado **não** pretende ser simulação funcional no CATIA Magic.
 
+O modelo de *mensagem* MQTT WARA-PS (nível sensor / heartbeat) é **alvo de padronização futura** no lab, não runtime desta PoC — ver `docs/MQTT_PADRAO_MENSAGEM.md`.
+
 ---
 
 ## 1. Contexto e motivação

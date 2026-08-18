@@ -49,9 +49,18 @@ Critérios com sentido temporal (ex.: \texttt{all\_timesteps}) não podem ser
 julgados apenas pelo último valor. A evidência preserva violação (latch FAIL),
 primeira falha, extremos e contagens.
 
-Tipos suportados na PoC: \texttt{threshold}, \texttt{range},
-\texttt{statistical} (agregações \texttt{range}/\texttt{max}/\texttt{min} na
-janela); métricas agregadas entre entidades (ex.: separação mínima).
+O vocabulário de observação segue a taxonomia GSE de Jefferson
+(sete naturezas): valor, tempo, sequência, taxa, ocorrência, frequência e
+consistência de estados~\cite{jefferson2026gse}.
+
+Tipos suportados na PoC: \texttt{threshold} e \texttt{range} (valor);
+\texttt{statistical} com agregações \texttt{range}/\texttt{max}/\texttt{min}
+(amplitude na janela, sem $\Delta t$);
+\texttt{rate} (taxa $\Delta/\Delta t$);
+\texttt{dwell} (a condição só falha se persistir $\geq T$\,ms);
+métricas agregadas entre entidades (ex.: separação mínima).
+Sequência, eventos digitais, frequência e invariantes de estado
+permanecem no backlog.
 
 \subsection{Arquitectura da prova de conceito (ReqValLive)}
 

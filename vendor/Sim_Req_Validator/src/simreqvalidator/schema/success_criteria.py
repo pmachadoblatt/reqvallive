@@ -1,6 +1,6 @@
 """Tipos de Success Criteria para validação de requisitos por simulação.
 
-Define os 6 tipos de critérios de sucesso mensuráveis que a ferramenta suporta.
+Define os tipos de critérios de sucesso mensuráveis que a ferramenta suporta.
 Cada tipo mapeia para um Evaluator correspondente que executa a verificação
 contra dados de simulação.
 
@@ -17,6 +17,8 @@ Tipos suportados:
     4. StatisticalCriteria — Agregação estatística sobre série temporal
     5. TemporalCriteria   — Condição temporal (always □, eventually ◇)
     6. CountCriteria      — Contagem de ocorrências/violações
+    7. RateCriteria       — Taxa de variação (Δ/Δt / slew) — Jefferson GSE natureza 4
+    8. DwellCriteria      — Condição só falha se persistir ≥ T ms — Jefferson GSE natureza 2
 """
 
 from __future__ import annotations
@@ -468,6 +470,91 @@ class CountCriteria(BaseModel):
         return f"count({event}) {self.operator.value} {self.value}"
 
 
+class RateCriteria(BaseModel):
+    """Taxa de variação (slew): compara Δmetric/Δt contra um limiar.
+
+    Natureza Jefferson §4 — distinto de StatisticalCriteria aggregation=range
+    (amplitude peak-to-peak na janela, sem tempo).
+
+    Example:
+        >>> RateCriteria(
+        ...     type="rate",
+        ...     metric="batteryLevel",
+        ...     operator="<=",
+        ...     value=2.0,
+        ...     unit="percent/min",
+        ...     abs_rate=True,
+        ... )
+        >>> RateCriteria(
+        ...     type="rate",
+        ...     metric="altitudeAGL",
+        ...     operator="<=",
+        ...     value=5.0,
+        ...     unit="m/s",
+        ... )
+    """
+
+    type: Literal["rate"] = "rate"
+    metric: str = Field(..., min_length=1)
+    operator: Operator
+    value: float = Field(..., description="Limiar da taxa na unidade indicada")
+    unit: str = Field(..., description="Unidade da taxa (ex.: percent/min, m/s)")
+    scope: Scope = Scope.ALL_ENTITIES
+    abs_rate: bool = Field(
+        default=False,
+        description="Se True, compara |Δ/Δt| (ex.: descarga ≤ 2%/min).",
+    )
+    min_dt_s: float = Field(
+        default=0.05,
+        gt=0.0,
+        description="Ignora pares de amostras com Δt menor (evita ruído).",
+    )
+
+    @property
+    def human_readable(self) -> str:
+        mag = "|" if self.abs_rate else ""
+        return f"{mag}d({self.metric})/dt{mag} {self.operator.value} {self.value} {self.unit}"
+
+
+class DwellCriteria(BaseModel):
+    """Dwell / persistência: a condição só falha se permanecer verdadeira ≥ T.
+
+    Natureza Jefferson §2 — “bateria < 20% por no máximo 2 s”.
+    Um limiar instantâneo (ThresholdCriteria) falha na primeira amostra;
+    dwell permite transientes mais curtos que max_duration_ms.
+
+    Example:
+        >>> DwellCriteria(
+        ...     type="dwell",
+        ...     metric="batteryLevel",
+        ...     operator="<",
+        ...     value=20.0,
+        ...     unit="percent",
+        ...     max_duration_ms=2000,
+        ... )
+    """
+
+    type: Literal["dwell"] = "dwell"
+    metric: str = Field(..., min_length=1)
+    operator: Operator = Field(..., description="Condição cuja duração é medida")
+    value: float
+    unit: str
+    max_duration_ms: float = Field(
+        ...,
+        gt=0.0,
+        description="FAIL se a condição persistir pelo menos este tempo (ms)",
+    )
+    scope: Scope = Scope.ALL_ENTITIES
+    tolerance: float = Field(default=0.0, ge=0.0)
+
+    @property
+    def human_readable(self) -> str:
+        return (
+            f"{self.metric} {self.operator.value} {self.value}{self.unit} "
+            f"por no máximo {self.max_duration_ms:g} ms"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Union type para Success Criteria
 # ---------------------------------------------------------------------------
@@ -480,12 +567,9 @@ SuccessCriteria = Annotated[
         StatisticalCriteria,
         TemporalCriteria,
         CountCriteria,
+        RateCriteria,
+        DwellCriteria,
     ],
     Field(discriminator="type"),
 ]
-"""Union type que aceita qualquer um dos 6 tipos de Success Criteria.
-
-O campo 'type' é usado como discriminador para deserialização automática
-(Pydantic discriminated union). Ao carregar um JSON com type="threshold",
-o Pydantic instancia automaticamente um ThresholdCriteria.
-"""
+"""Union type (discriminador `type`) para todos os Success Criteria suportados."""

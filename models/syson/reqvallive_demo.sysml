@@ -9,6 +9,8 @@ package ReqValLiveDemo {
     //   RQ_ALT_BAND_001 range altitudeAGL → tipicamente PASS (banda 20–30 m)
     //   RQ_ALT_VAR_001 statistical range  → tipicamente FAIL (span ~2.5 > 1.0)
     //   RQ_SEP_001     threshold separação → tipicamente PASS (órbita ~60 m)
+    //   RQ_BAT_RATE_001 rate |d(battery)/dt| ≤ 30 %/min → tipicamente FAIL (~60 %/min no publisher 1 Hz)
+    //   RQ_BAT_DWELL_001 dwell battery < 20 por ≤ 2 s → tipicamente FAIL (charlie começa a 15%)
 
     requirement RQ_BAT_001 {
         doc /*
@@ -86,6 +88,38 @@ package ReqValLiveDemo {
             attribute unit = "meters";
             attribute scope = "all_timesteps";
             attribute tolerance = 0.0;
+        }
+    }
+
+    requirement RQ_BAT_RATE_001 {
+        doc /*
+        _go_to_verification
+        */
+
+        item SuccessCriteria {
+            attribute scType = "rate";
+            attribute metric = "batteryLevel";
+            attribute operator = "<=";
+            attribute value = 30.0;
+            attribute unit = "percent/min";
+            attribute scope = "all_entities";
+            attribute abs_rate = true;
+        }
+    }
+
+    requirement RQ_BAT_DWELL_001 {
+        doc /*
+        _go_to_verification
+        */
+
+        item SuccessCriteria {
+            attribute scType = "dwell";
+            attribute metric = "batteryLevel";
+            attribute operator = "<";
+            attribute value = 20.0;
+            attribute unit = "percent";
+            attribute scope = "all_entities";
+            attribute max_duration_ms = 2000.0;
         }
     }
 }

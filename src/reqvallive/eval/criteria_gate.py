@@ -23,7 +23,9 @@ from typing import Any
 from simreqvalidator.schema.requirement import RequirementRecord
 from simreqvalidator.schema.success_criteria import (
     Aggregation,
+    DwellCriteria,
     RangeCriteria,
+    RateCriteria,
     StatisticalCriteria,
     ThresholdCriteria,
 )
@@ -656,6 +658,153 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
                 )
             )
 
+    elif isinstance(sc, RateCriteria):
+        ctype = "rate"
+        metric = _normalize_metric(str(sc.metric or ""))
+        if not metric:
+            reasons.append(
+                GateReason(
+                    code="SC_METRIC_MISSING",
+                    severity=ReasonSeverity.ERROR,
+                    message="Rate sem metric (Jefferson: taxa de variação).",
+                    dimension=MsfcDimension.PERFORMANCE,
+                    suggestion="Indique a métrica MQTT (ex.: batteryLevel, altitudeAGL).",
+                )
+            )
+        try:
+            op = sc.operator
+            if op is None:
+                raise ValueError("missing")
+        except Exception:
+            reasons.append(
+                GateReason(
+                    code="SC_OPERATOR_MISSING",
+                    severity=ReasonSeverity.ERROR,
+                    message="Rate sem operador de comparação válido.",
+                    dimension=MsfcDimension.PERFORMANCE,
+                    suggestion="Use um de: >=, <=, >, <, ==, !=.",
+                )
+            )
+        if sc.value is None:
+            reasons.append(
+                GateReason(
+                    code="SC_VALUE_MISSING",
+                    severity=ReasonSeverity.ERROR,
+                    message="Rate sem value numérico (limiar de Δ/Δt).",
+                    dimension=MsfcDimension.PERFORMANCE,
+                    suggestion="Ex.: value=2 unit=percent/min com abs_rate=true (descarga).",
+                )
+            )
+        else:
+            live_executable = True
+        unit = (sc.unit or "").strip()
+        u_compact = unit.lower().replace(" ", "")
+        looks_rate_unit = bool(unit) and (
+            "/" in u_compact
+            or "per_min" in u_compact
+            or "permin" in u_compact
+            or "persec" in u_compact
+            or u_compact in ("mps",)
+        )
+        if not looks_rate_unit:
+            reasons.append(
+                GateReason(
+                    code="SC_UNIT_MISSING",
+                    severity=ReasonSeverity.ERROR,
+                    message=(
+                        "Rate exige unidade de taxa (ex.: percent/min, m/s) — "
+                        "não confundir com amplitude (statistical range)."
+                    ),
+                    dimension=MsfcDimension.PERFORMANCE,
+                    suggestion="Use percent/min para bateria ou m/s para altitude.",
+                )
+            )
+        if getattr(sc, "scope", None) is None:
+            reasons.append(
+                GateReason(
+                    code="SC_SCOPE_MISSING",
+                    severity=ReasonSeverity.ERROR,
+                    message="scope ausente no rate.",
+                    dimension=MsfcDimension.RESTRICTIONS,
+                    suggestion="Defina scope (ex.: all_entities).",
+                )
+            )
+
+    elif isinstance(sc, DwellCriteria):
+        ctype = "dwell"
+        metric = _normalize_metric(str(sc.metric or ""))
+        if not metric:
+            reasons.append(
+                GateReason(
+                    code="SC_METRIC_MISSING",
+                    severity=ReasonSeverity.ERROR,
+                    message="Dwell sem metric (Jefferson: duração de uma condição).",
+                    dimension=MsfcDimension.PERFORMANCE,
+                    suggestion="Indique a métrica MQTT (ex.: batteryLevel).",
+                )
+            )
+        try:
+            op = sc.operator
+            if op is None:
+                raise ValueError("missing")
+        except Exception:
+            reasons.append(
+                GateReason(
+                    code="SC_OPERATOR_MISSING",
+                    severity=ReasonSeverity.ERROR,
+                    message="Dwell sem operador da condição persistente.",
+                    dimension=MsfcDimension.PERFORMANCE,
+                    suggestion="Ex.: operator=< value=20 — bateria abaixo de 20%.",
+                )
+            )
+        if sc.value is None:
+            reasons.append(
+                GateReason(
+                    code="SC_VALUE_MISSING",
+                    severity=ReasonSeverity.ERROR,
+                    message="Dwell sem value da condição.",
+                    dimension=MsfcDimension.PERFORMANCE,
+                    suggestion="Defina o limiar da condição (ex.: 20 percent).",
+                )
+            )
+        try:
+            dur = float(sc.max_duration_ms)
+            if dur <= 0:
+                raise ValueError("non-positive")
+            live_executable = True
+        except (TypeError, ValueError):
+            reasons.append(
+                GateReason(
+                    code="SC_DWELL_DURATION_MISSING",
+                    severity=ReasonSeverity.ERROR,
+                    message="Dwell sem max_duration_ms positivo (MSFC: Checkpoints).",
+                    dimension=MsfcDimension.CHECKPOINTS,
+                    suggestion="Ex.: max_duration_ms=2000 (condição por no máximo 2 s).",
+                )
+            )
+            live_executable = False
+        kind = _metric_needs_unit(metric) if metric else None
+        if kind and not _unit_ok(sc.unit, kind):
+            reasons.append(
+                GateReason(
+                    code="SC_UNIT_MISSING",
+                    severity=ReasonSeverity.ERROR,
+                    message=f"Unidade ausente ou incoerente para «{metric}» (esperado: {kind}).",
+                    dimension=MsfcDimension.PERFORMANCE,
+                    suggestion=f"Preencha unit (ex.: {kind}).",
+                )
+            )
+        if getattr(sc, "scope", None) is None:
+            reasons.append(
+                GateReason(
+                    code="SC_SCOPE_MISSING",
+                    severity=ReasonSeverity.ERROR,
+                    message="scope ausente no dwell.",
+                    dimension=MsfcDimension.RESTRICTIONS,
+                    suggestion="Defina scope (ex.: all_entities).",
+                )
+            )
+
     else:
         ctype = type(sc).__name__
         reasons.append(
@@ -663,14 +812,14 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
                 code="SC_TYPE_UNSUPPORTED",
                 severity=ReasonSeverity.ERROR,
                 message=(
-                    f"Tipo de critério «{ctype}» fora do MVP live "
-                    "(threshold/range/statistical com range|max|min). "
-                    "Boolean/temporal/mean: backlog."
+                    f"Tipo de critério «{ctype}» fora do live "
+                    "(threshold/range/statistical range|max|min, rate, dwell). "
+                    "Sequência/eventos/estados: backlog Jefferson."
                 ),
                 dimension=MsfcDimension.PERFORMANCE,
                 suggestion=(
-                    "Reformule como threshold/range, ou statistical aggregation=range "
-                    "para variação peak-to-peak."
+                    "Reformule como threshold/range, statistical aggregation=range, "
+                    "rate (Δ/Δt) ou dwell (persistência ≥ T ms)."
                 ),
             )
         )
@@ -780,7 +929,7 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
                 )
             )
 
-    _LIVE_NUMERIC_TYPES = ("threshold", "range", "statistical")
+    _LIVE_NUMERIC_TYPES = ("threshold", "range", "statistical", "rate", "dwell")
     if vv == VVMethod.TEST.value and ctype not in _LIVE_NUMERIC_TYPES:
         reasons.append(
             GateReason(
@@ -788,7 +937,7 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
                 severity=ReasonSeverity.ERROR,
                 message="Método Test sem limiar numérico claro (Methods: Test obtém dados detalhados).",
                 dimension=MsfcDimension.METHOD_COHERENCE,
-                suggestion="Associe threshold/range ou statistical (range|max|min) com value.",
+                suggestion="Associe threshold/range, statistical (range|max|min), rate ou dwell.",
             )
         )
         method_coherence = "fail"
@@ -929,7 +1078,16 @@ def success_criteria_model_doc() -> dict[str, Any]:
             "altitudeAGL **não deve variar mais de 1 meter** na janela de medição.\n\n"
             "- **Success Criteria:** statistical metric=altitudeAGL aggregation=range "
             "operator=<= value=1 unit=meters\n"
-            "- **Nota:** não inventar métrica `altitude_variation` — o agregado é sobre o campo MQTT\n"
+            "- **Nota:** não inventar métrica `altitude_variation` — o agregado é sobre o campo MQTT\n\n"
+            "## RQ-BAT-RATE-001 — Taxa de descarga (Jefferson §4)\n"
+            "batteryLevel **não deve descarregar mais de 2 percent/min**.\n\n"
+            "- **Success Criteria:** rate metric=batteryLevel operator=<= value=2 "
+            "unit=percent/min abs_rate=true\n"
+            "- **Nota:** distinto de statistical aggregation=range (amplitude, sem tempo)\n\n"
+            "## RQ-BAT-DWELL-001 — Persistência (Jefferson §2)\n"
+            "batteryLevel **< 20 percent por no máximo 2 s**.\n\n"
+            "- **Success Criteria:** dwell metric=batteryLevel operator=< value=20 "
+            "unit=percent max_duration_ms=2000\n"
         ),
         "live_statistical_window": {
             "aggregations": ["range", "max", "min"],
@@ -939,6 +1097,15 @@ def success_criteria_model_doc() -> dict[str, Any]:
                 "min": "mínimo da série na janela",
             },
             "not_supported_yet": ["mean", "std", "percentile", "median"],
+        },
+        "jefferson_natures": {
+            "implemented": {
+                "valor": ["threshold", "range"],
+                "amplitude_janela": ["statistical aggregation=range"],
+                "taxa": ["rate"],
+                "tempo_dwell": ["dwell"],
+            },
+            "backlog": ["sequence", "event", "frequency", "state_consistency"],
         },
         "json_example": {
             "req_id": "RQ-BAT-001",

@@ -49,8 +49,8 @@ Pode **começar a escrever já** — não precisa esperar o Jefferson para o esq
 1. ~~E-mail ao Jefferson~~ → **respondido** (2026-08). Síntese: [[JEFFERSON_NATUREZAS_OBSERVACAO]].
 2. Esqueleto de capítulos + início da escrita.
 3. UI em inglês + higiene visual (remover/ocultar fluxo CATIA antigo da face principal).
-4. Publisher de missão (ex. voo espadrilha/fumaça) no MQTT do orientador; Heartbeat + Kinematics (spec RPS).
-5. Estender tipos de avaliação / GSE no app com base na taxonomia Jefferson (prioridade: **taxa** e **tempo/dwell**; depois eventos/frequência/estados) — “código mágico” que lê atributos → GSE.
+4. Publisher de missão (ex. voo espadrilha/fumaça) no MQTT do orientador; Heartbeat + Kinematics (spec RPS). **Decisão 2026-08-18:** envelope WARA-PS L1 como padrão *futuro* de distribuição; payload actual mantém-se na PoC — [[MQTT_PADRAO_MENSAGEM]].
+5. ~~Estender tipos de avaliação / GSE (Jefferson: **taxa** e **dwell**)~~ → `scType` `rate` / `dwell` no motor live (2026-08-18). Restam eventos/frequência/estados.
 6. (Opcional) VerificationResult também no diagrama SysON; renomear app.
 
 ## Documentos relacionados

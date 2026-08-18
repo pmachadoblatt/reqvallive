@@ -45,9 +45,11 @@ Responda APENAS com JSON válido (sem markdown fences, sem texto antes/depois) n
 
 Regras:
 - Extraia APENAS os requisitos explicitamente pedidos no Markdown. NÃO invente requisitos extra (ex.: bateria) se o documento não os mencionar.
-- success_criteria.type: "threshold", "range" OU "statistical"
+- success_criteria.type: "threshold", "range", "statistical", "rate" OU "dwell"
 - metric deve ser exactamente o campo MQTT (NÃO invente métricas derivadas): batteryLevel, altitudeAGL, distanceToHome, min_separation_m, speed_horizontal, satelliteCount, remainingFlightTime, etc.
 - Variação / amplitude / «não variar mais de X» / peak-to-peak: use type "statistical", aggregation "range", operator "<=", value = X, metric = o campo telemetria (ex.: altitudeAGL). NÃO crie metric inventada tipo altitude_variation.
+- Taxa / slew / %/min / m/s de variação temporal: type "rate", operator, value, unit de taxa (percent/min ou m/s). Para magnitude |Δ/Δt| use abs_rate=true (ex. descarga). NÃO confundir com amplitude (statistical range).
+- Persistência / «por no máximo N segundos»: type "dwell", operator+value da condição, max_duration_ms (ex. 2000).
 - Máximo/mínimo na janela de medição: statistical com aggregation "max" ou "min".
 - NÃO use aggregation mean/std/percentile (ainda não suportadas no live).
 - operator: ">=", "<=", ">", "<", "==", "!="
@@ -137,7 +139,7 @@ def _normalize_requirement(raw: dict[str, Any], idx: int) -> dict[str, Any]:
     if not isinstance(sc, dict):
         sc = {}
     sc_type = str(sc.get("type") or "threshold").lower()
-    if sc_type not in ("threshold", "range", "statistical"):
+    if sc_type not in ("threshold", "range", "statistical", "rate", "dwell"):
         sc_type = "threshold"
     sc["type"] = sc_type
 
@@ -210,6 +212,68 @@ def _normalize_requirement(raw: dict[str, Any], idx: int) -> dict[str, Any]:
         if scope not in allowed:
             scope = "all_entities"
         sc["scope"] = scope
+    elif sc_type == "rate":
+        op = str(sc.get("operator") or "<=")
+        if op not in (">=", "<=", ">", "<", "==", "!="):
+            op = "<="
+        sc["operator"] = op
+        try:
+            sc["value"] = float(sc.get("value", 0))
+        except (TypeError, ValueError):
+            sc["value"] = 0.0
+        unit = str(sc.get("unit") or "").strip()
+        if not unit:
+            metric_l = metric.lower()
+            unit = "percent/min" if "battery" in metric_l else "m/s"
+        sc["unit"] = unit
+        abs_raw = sc.get("abs_rate", False)
+        if isinstance(abs_raw, str):
+            sc["abs_rate"] = abs_raw.strip().lower() in ("true", "1", "yes")
+        else:
+            sc["abs_rate"] = bool(abs_raw)
+        scope = str(sc.get("scope") or "all_entities")
+        allowed = {
+            "all_timesteps",
+            "all_flights",
+            "final_state",
+            "any_timestep",
+            "all_entities",
+            "per_entity",
+        }
+        if scope not in allowed:
+            scope = "all_entities"
+        sc["scope"] = scope
+        sc.pop("aggregation", None)
+        sc.pop("max_duration_ms", None)
+    elif sc_type == "dwell":
+        op = str(sc.get("operator") or "<")
+        if op not in (">=", "<=", ">", "<", "==", "!="):
+            op = "<"
+        sc["operator"] = op
+        try:
+            sc["value"] = float(sc.get("value", 0))
+        except (TypeError, ValueError):
+            sc["value"] = 0.0
+        try:
+            sc["max_duration_ms"] = float(sc.get("max_duration_ms", 2000))
+        except (TypeError, ValueError):
+            sc["max_duration_ms"] = 2000.0
+        sc.setdefault("unit", "")
+        sc.setdefault("tolerance", 0.0)
+        scope = str(sc.get("scope") or "all_entities")
+        allowed = {
+            "all_timesteps",
+            "all_flights",
+            "final_state",
+            "any_timestep",
+            "all_entities",
+            "per_entity",
+        }
+        if scope not in allowed:
+            scope = "all_entities"
+        sc["scope"] = scope
+        sc.pop("aggregation", None)
+        sc.pop("abs_rate", None)
     else:
         # statistical — janela live: range | max | min
         agg = str(sc.get("aggregation") or "range").lower().strip()

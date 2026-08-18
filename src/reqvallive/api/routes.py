@@ -464,7 +464,7 @@ def start_session(session_id: str) -> dict[str, Any]:
     if not all(is_mvp_supported(r) for r in session.requirements):
         raise HTTPException(
             400,
-            detail="Há requisitos com critério não suportado (use threshold/range ou statistical range|max|min)",
+            detail="Há requisitos com critério não suportado (use threshold/range, statistical range|max|min, rate ou dwell)",
         )
     if not session.connected:
         mqtt_manager.connect(session)

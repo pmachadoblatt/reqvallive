@@ -234,6 +234,39 @@ def _parse_success_criteria(doc: str, notes: list[str]) -> dict[str, Any] | None
             except ValueError:
                 notes.append("value estatístico não numérico")
                 return None
+        if ctype == "rate":
+            try:
+                abs_raw = kv.get("abs_rate", False)
+                if isinstance(abs_raw, str):
+                    abs_rate = abs_raw.strip().lower() in ("true", "1", "yes")
+                else:
+                    abs_rate = bool(abs_raw)
+                return {
+                    "type": "rate",
+                    "metric": kv["metric"],
+                    "operator": kv.get("operator", "<="),
+                    "value": float(kv.get("value", 0)),
+                    "unit": kv.get("unit", ""),
+                    "scope": kv.get("scope", "all_entities"),
+                    "abs_rate": abs_rate,
+                }
+            except ValueError:
+                notes.append("value de taxa não numérico")
+                return None
+        if ctype == "dwell":
+            try:
+                return {
+                    "type": "dwell",
+                    "metric": kv["metric"],
+                    "operator": kv.get("operator", "<"),
+                    "value": float(kv.get("value", 0)),
+                    "unit": kv.get("unit", ""),
+                    "scope": kv.get("scope", "all_entities"),
+                    "max_duration_ms": float(kv.get("max_duration_ms", 0)),
+                }
+            except ValueError:
+                notes.append("dwell max_duration_ms/value não numérico")
+                return None
         try:
             return {
                 "type": "threshold",

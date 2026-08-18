@@ -94,7 +94,15 @@ def test_demo_sysml_sc_from_item_not_doc():
     tagged = requirements_for_verification(text)
     assert len(tagged) >= 4
     by_name = {r.name: r for r in tagged}
-    for name in ("RQ_BAT_001", "RQ_01", "RQ_ALT_BAND_001", "RQ_ALT_VAR_001", "RQ_SEP_001"):
+    for name in (
+        "RQ_BAT_001",
+        "RQ_01",
+        "RQ_ALT_BAND_001",
+        "RQ_ALT_VAR_001",
+        "RQ_SEP_001",
+        "RQ_BAT_RATE_001",
+        "RQ_BAT_DWELL_001",
+    ):
         assert name in by_name
         r = by_name[name]
         assert "_go_to_verification" in r.doc_raw
@@ -110,6 +118,10 @@ def test_demo_sysml_sc_from_item_not_doc():
     assert by_name["RQ_ALT_VAR_001"].success_criteria["aggregation"] == "range"
     assert by_name["RQ_ALT_VAR_001"].success_criteria["value"] == 1.0
     assert by_name["RQ_SEP_001"].success_criteria["metric"] == "min_separation_m"
+    assert by_name["RQ_BAT_RATE_001"].success_criteria["type"] == "rate"
+    assert by_name["RQ_BAT_RATE_001"].success_criteria["abs_rate"] is True
+    assert by_name["RQ_BAT_DWELL_001"].success_criteria["type"] == "dwell"
+    assert by_name["RQ_BAT_DWELL_001"].success_criteria["max_duration_ms"] == 2000.0
 
 
 def test_textual_success_criteria_range_and_statistical():
@@ -176,3 +188,5 @@ def test_parse_sysml_export_finds_rq01():
     assert "RQ_ALT_BAND_001" in names
     assert "RQ_ALT_VAR_001" in names
     assert "RQ_SEP_001" in names
+    assert "RQ_BAT_RATE_001" in names
+    assert "RQ_BAT_DWELL_001" in names

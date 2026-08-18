@@ -29,6 +29,8 @@ Ficheiro: `models/syson/reqvallive_demo.sysml`
 | `RQ_ALT_BAND_001` | `range` | `altitudeAGL ∈ [20, 30]` | **PASS** (órbita ~24.5 ± span) |
 | `RQ_ALT_VAR_001` | `statistical` | `altitudeAGL` agg=`range` `<= 1.0` | **FAIL** (span default 2.5 m) |
 | `RQ_SEP_001` | `threshold` | `min_separation_m >= 20` | **PASS** (órbita raio 60 m) |
+| `RQ_BAT_RATE_001` | `rate` | `\|d(batteryLevel)/dt\| <= 30 %/min` | **FAIL** (~60 %/min a 1 Hz, ±1 %/s) |
+| `RQ_BAT_DWELL_001` | `dwell` | `batteryLevel < 20` por no máximo 2 s | **FAIL** (charlie começa a 15%) |
 
 Objectivo do passo 2: **vários requisitos**, **três tipos de SC** no modelo, e no explorador SysON distinguir **PASS vs FAIL** só pelo nome do item (`VerificationResult_PASS_…` / `VerificationResult_FAIL_…`).
 
@@ -85,6 +87,8 @@ requirement RQ_01 {
 | `threshold` | metric, operator, value, unit?, scope?, tolerance? | `RQ_BAT_001`, `RQ_SEP_001` |
 | `range` | metric, min_value, max_value, unit?, scope? | `RQ_ALT_BAND_001` |
 | `statistical` | metric, aggregation (`range`/`max`/`min`), operator, value, unit? | `RQ_ALT_VAR_001` |
+| `rate` | metric, operator, value, unit de taxa (`percent/min`, `m/s`), `abs_rate`? | `RQ_BAT_RATE_001` |
+| `dwell` | metric, operator, value, unit, `max_duration_ms` | `RQ_BAT_DWELL_001` |
 
 #### Exemplo `range`
 
@@ -111,6 +115,38 @@ item SuccessCriteria {
     attribute unit = "meters";
 }
 ```
+
+#### Exemplo `rate` (Jefferson §4 — taxa, não amplitude)
+
+```sysml
+item SuccessCriteria {
+    attribute scType = "rate";
+    attribute metric = "batteryLevel";
+    attribute operator = "<=";
+    attribute value = 30.0;
+    attribute unit = "percent/min";
+    attribute scope = "all_entities";
+    attribute abs_rate = true;
+}
+```
+
+Distinto de `statistical` + `aggregation=range` (max−min na janela, sem Δt).
+
+#### Exemplo `dwell` (Jefferson §2 — persistência)
+
+```sysml
+item SuccessCriteria {
+    attribute scType = "dwell";
+    attribute metric = "batteryLevel";
+    attribute operator = "<";
+    attribute value = 20.0;
+    attribute unit = "percent";
+    attribute scope = "all_entities";
+    attribute max_duration_ms = 2000.0;
+}
+```
+
+Um limiar instantâneo (`threshold`) falha na primeira amostra; `dwell` só falha se a condição durar ≥ `max_duration_ms`.
 
 ## Depois da medição — item `VerificationResult` (não Documentation)
 
@@ -227,7 +263,7 @@ Se o upload falhar: erros comuns são dependências em falta ou sintaxe que a v2
 ## Checklist passo 2 (contrato endurecido)
 
 1. Importar (ou recriar) os 4+ requisitos do demo no SysON.  
-2. No ReqValLive → SysON → Importar → confirmar **threshold + range + statistical**.  
+2. No ReqValLive → SysON → Importar → confirmar **threshold + range + statistical + rate + dwell**.  
 3. Com MQTT a publicar (`--mode both`), medir e **Publicar no SysON**.  
 4. No explorador: sob cada RQ, um `VerificationResult_PASS_…` ou `VerificationResult_FAIL_…` sem abrir o item.
 

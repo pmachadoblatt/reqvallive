@@ -21,6 +21,13 @@ _ATTR_ALIASES = {
     "max_value": "max_value",
     "maxvalue": "max_value",
     "aggregation": "aggregation",
+    "abs_rate": "abs_rate",
+    "absrate": "abs_rate",
+    "max_duration_ms": "max_duration_ms",
+    "maxduration_ms": "max_duration_ms",
+    "maxdurationms": "max_duration_ms",
+    "min_dt_s": "min_dt_s",
+    "mindts": "min_dt_s",
 }
 
 _ATTR_LINE = re.compile(
@@ -117,6 +124,45 @@ def success_criteria_from_attr_map(attrs: dict[str, Any]) -> dict[str, Any] | No
                 "operator": str(attrs.get("operator") or "<="),
                 "value": float(attrs["value"]),
                 "unit": str(attrs.get("unit") or ""),
+            }
+        except (TypeError, ValueError, KeyError):
+            return None
+    if ctype == "rate":
+        if "value" not in attrs:
+            return None
+        try:
+            abs_raw = attrs.get("abs_rate", False)
+            if isinstance(abs_raw, str):
+                abs_rate = abs_raw.strip().lower() in ("true", "1", "yes")
+            else:
+                abs_rate = bool(abs_raw)
+            sc_rate: dict[str, Any] = {
+                "type": "rate",
+                "metric": metric,
+                "operator": str(attrs.get("operator") or "<="),
+                "value": float(attrs["value"]),
+                "unit": str(attrs.get("unit") or ""),
+                "scope": str(attrs.get("scope") or "all_entities"),
+                "abs_rate": abs_rate,
+            }
+            if attrs.get("min_dt_s") is not None:
+                sc_rate["min_dt_s"] = float(attrs["min_dt_s"])
+            return sc_rate
+        except (TypeError, ValueError, KeyError):
+            return None
+    if ctype == "dwell":
+        if "value" not in attrs or "max_duration_ms" not in attrs:
+            return None
+        try:
+            return {
+                "type": "dwell",
+                "metric": metric,
+                "operator": str(attrs.get("operator") or "<"),
+                "value": float(attrs["value"]),
+                "unit": str(attrs.get("unit") or ""),
+                "scope": str(attrs.get("scope") or "all_entities"),
+                "max_duration_ms": float(attrs["max_duration_ms"]),
+                "tolerance": float(attrs.get("tolerance") or 0),
             }
         except (TypeError, ValueError, KeyError):
             return None

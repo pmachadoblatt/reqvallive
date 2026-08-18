@@ -61,6 +61,10 @@ function buildMermaid(session) {
       lines.push(`  +constraint actual ${sc.operator} ${sc.value}`);
     } else if (sc.type === "range") {
       lines.push(`  +constraint [${sc.min_value} .. ${sc.max_value}]`);
+    } else if (sc.type === "rate") {
+      lines.push(`  +constraint d/dt ${sc.operator} ${sc.value} ${sc.unit || ""}`);
+    } else if (sc.type === "dwell") {
+      lines.push(`  +constraint dwell ${sc.operator} ${sc.value} ≤ ${sc.max_duration_ms}ms`);
     }
     lines.push("}");
     lines.push(`SystemUnderTest ..> ${id} : satisfy`);
@@ -158,7 +162,11 @@ function renderReqBoxes(reqs) {
           ? `{ actualValue ${sc.operator} ${sc.value} }`
           : sc.type === "range"
             ? `{ ${sc.min_value} ≤ actualValue ≤ ${sc.max_value} }`
-            : "{ … }";
+            : sc.type === "rate"
+              ? `{ d(metric)/dt ${sc.operator} ${sc.value} ${sc.unit || ""} }`
+              : sc.type === "dwell"
+                ? `{ ${sc.operator} ${sc.value} por ≤ ${sc.max_duration_ms} ms }`
+                : "{ … }";
       return `<div class="req-box">
           <div class="box-title req">«requirement» ${escapeHtml(r.req_id)}</div>
           <div class="box-body">

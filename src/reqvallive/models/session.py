@@ -21,7 +21,9 @@ from reqvallive.eval.live import (
     constraint_text,
     evaluate_sample,
     evaluate_value,
+    is_dwell,
     is_mvp_supported,
+    is_rate,
     is_window_statistical,
     metric_name,
 )
@@ -67,6 +69,10 @@ class DroneState:
     fail_actual_by_req: dict[str, float] = field(default_factory=dict)
     fail_detail_by_req: dict[str, str] = field(default_factory=dict)
     fail_ts_by_req: dict[str, float] = field(default_factory=dict)
+    # Taxa (Jefferson): última amostra bruta + instante
+    prev_sample_by_req: dict[str, tuple[float, float]] = field(default_factory=dict)
+    # Dwell (Jefferson): instante em que a condição se tornou verdadeira
+    dwell_since_by_req: dict[str, float] = field(default_factory=dict)
     # compat: actual_by_req = evidência para relatório (1ª falha se FAIL, senão último)
     actual_by_req: dict[str, float] = field(default_factory=dict)
 
@@ -231,6 +237,8 @@ class MeasurementSession:
                 d.fail_actual_by_req.clear()
                 d.fail_detail_by_req.clear()
                 d.fail_ts_by_req.clear()
+                d.prev_sample_by_req.clear()
+                d.dwell_since_by_req.clear()
 
     def stop_measurement(self) -> None:
         with self._lock:
@@ -260,23 +268,24 @@ class MeasurementSession:
             ext["min"] = min(ext["min"], value)
             ext["max"] = max(ext["max"], value)
 
-    def ingest_payload(self, payload: dict[str, Any]) -> None:
+    def ingest_payload(self, payload: dict[str, Any], now: float | None = None) -> None:
         with self._lock:
+            ts = time.time() if now is None else now
             # Medição já encerrada: não alterar resultados (só heartbeat MQTT)
             if self.measurement_ended:
                 if self.mqtt_status in ("connecting", "no_messages", "listening"):
                     self.mqtt_status = "listening"
-                self.last_message_at = time.time()
+                self.last_message_at = ts
                 return
 
             self.message_count += 1
-            self.last_message_at = time.time()
+            self.last_message_at = ts
             if self.mqtt_status in ("connecting", "no_messages", "listening"):
                 self.mqtt_status = "listening"
 
             did = drone_id(payload)
             drone = self.drones.get(did) or DroneState(id=did)
-            drone.last_seen = time.time()
+            drone.last_seen = ts
             drone.last_payload = payload
 
             needed = set(self.tracked_metrics())
@@ -318,12 +327,38 @@ class MeasurementSession:
                         raw,
                         sample_min=drone.min_actual_by_req[rid],
                         sample_max=drone.max_actual_by_req[rid],
+                        prev_value=(
+                            drone.prev_sample_by_req[rid][0]
+                            if rid in drone.prev_sample_by_req
+                            else None
+                        ),
+                        prev_ts=(
+                            drone.prev_sample_by_req[rid][1]
+                            if rid in drone.prev_sample_by_req
+                            else None
+                        ),
+                        now=ts,
+                        dwell_since=drone.dwell_since_by_req.get(rid),
                     )
-                    sample_ok = verdict.ok if verdict.supported else None
+                    if is_rate(req):
+                        if not verdict.pending:
+                            drone.prev_sample_by_req[rid] = (raw, ts)
+                        elif rid not in drone.prev_sample_by_req:
+                            drone.prev_sample_by_req[rid] = (raw, ts)
+                    if is_dwell(req):
+                        if verdict.dwell_since is None:
+                            drone.dwell_since_by_req.pop(rid, None)
+                        else:
+                            drone.dwell_since_by_req[rid] = verdict.dwell_since
+                    sample_ok = (
+                        None
+                        if (not verdict.supported or verdict.pending)
+                        else verdict.ok
+                    )
                     prev = drone.ok_by_req.get(rid)
                     latched = self._latch_ok(prev, sample_ok)
                     drone.ok_by_req[rid] = latched
-                    # Valor observado no critério: amostra (threshold/range) ou agregado (statistical)
+                    # Valor observado: amostra, agregado, taxa, ou métrica do dwell
                     observed = (
                         float(verdict.value)
                         if verdict.value is not None
@@ -331,21 +366,27 @@ class MeasurementSession:
                     )
                     drone.last_actual_by_req[rid] = observed
                     drone.last_detail_by_req[rid] = verdict.detail
-                    drone.sample_count_by_req[rid] = drone.sample_count_by_req.get(rid, 0) + 1
+                    if not verdict.pending:
+                        drone.sample_count_by_req[rid] = drone.sample_count_by_req.get(rid, 0) + 1
                     if sample_ok is False:
                         drone.fail_count_by_req[rid] = drone.fail_count_by_req.get(rid, 0) + 1
                         if rid not in drone.fail_actual_by_req:
                             drone.fail_actual_by_req[rid] = observed
                             drone.fail_detail_by_req[rid] = verdict.detail
-                            drone.fail_ts_by_req[rid] = time.time()
+                            drone.fail_ts_by_req[rid] = ts
                     # Relatório: evidência de falha se FAIL, senão último valor
                     if latched is False and rid in drone.fail_actual_by_req:
                         drone.actual_by_req[rid] = drone.fail_actual_by_req[rid]
-                        series_note = (
-                            f"série=[{drone.min_actual_by_req[rid]:g}..{drone.max_actual_by_req[rid]:g}]"
-                            if is_window_statistical(req)
-                            else f"min={drone.min_actual_by_req[rid]:g}"
-                        )
+                        if is_window_statistical(req):
+                            series_note = (
+                                f"série=[{drone.min_actual_by_req[rid]:g}..{drone.max_actual_by_req[rid]:g}]"
+                            )
+                        elif is_rate(req):
+                            series_note = "taxa"
+                        elif is_dwell(req):
+                            series_note = "dwell"
+                        else:
+                            series_note = f"min={drone.min_actual_by_req[rid]:g}"
                         drone.detail_by_req[rid] = (
                             f"1ª violação: {drone.fail_detail_by_req[rid]} "
                             f"(atual={observed:g}, {series_note}, "
@@ -403,14 +444,17 @@ class MeasurementSession:
                             self.global_detail_by_req[rid] = verdict.detail
 
             # Log só com campos relevantes aos requisitos + id
-            log_entry: dict[str, Any] = {"ts": time.time(), "drone": did, "violation": False}
+            log_entry: dict[str, Any] = {"ts": ts, "drone": did, "violation": False}
             sample_violation = False
             for req in self.active_requirements():
                 metric = metric_name(req)
                 if metric in DISTANCE_METRICS:
                     continue
                 if metric in drone.metrics and self.measuring and is_mvp_supported(req):
-                    # amostra deste payload: violação se o valor actual falha o limiar
+                    if is_dwell(req):
+                        if drone.ok_by_req.get(req.req_id) is False:
+                            sample_violation = True
+                        continue
                     vnow = drone.last_actual_by_req.get(req.req_id)
                     if vnow is not None:
                         sample_verdict = evaluate_value(req, vnow)
@@ -434,7 +478,7 @@ class MeasurementSession:
             if self.measuring:
                 self.samples.append(
                     {
-                        "timestamp": time.time(),
+                        "timestamp": ts,
                         "drone": did,
                         "metrics": dict(drone.metrics),
                         "ok": dict(drone.ok_by_req),

@@ -157,6 +157,8 @@ def test_criteria_model_endpoint():
     assert len(data["msfc_dimensions"]) == 8
     assert "markdown_example" in data
     assert "method_coherence" in data
+    assert "jefferson_natures" in data
+    assert "rate" in data["jefferson_natures"]["implemented"]["taxa"]
 
 
 def test_evaluate_session_all_accept():

@@ -1,4 +1,4 @@
-"""Avaliação ao vivo de threshold/range/statistical (window aggregations)."""
+"""Avaliação ao vivo de threshold/range/statistical/rate/dwell."""
 
 from __future__ import annotations
 
@@ -7,8 +7,10 @@ from dataclasses import dataclass
 from simreqvalidator.schema.requirement import RequirementRecord
 from simreqvalidator.schema.success_criteria import (
     Aggregation,
+    DwellCriteria,
     Operator,
     RangeCriteria,
+    RateCriteria,
     StatisticalCriteria,
     ThresholdCriteria,
 )
@@ -32,6 +34,8 @@ class LiveVerdict:
     supported: bool
     detail: str
     value: float | None = None
+    pending: bool = False
+    dwell_since: float | None = None
 
 
 def criteria_type(req: RequirementRecord) -> str:
@@ -55,12 +59,20 @@ def is_window_statistical(req: RequirementRecord) -> bool:
     return _agg_value(sc.aggregation) in {"range", "max", "min"}
 
 
+def is_rate(req: RequirementRecord) -> bool:
+    return isinstance(req.success_criteria, RateCriteria)
+
+
+def is_dwell(req: RequirementRecord) -> bool:
+    return isinstance(req.success_criteria, DwellCriteria)
+
+
 def is_mvp_supported(req: RequirementRecord) -> bool:
-    """Live MVP: threshold/range + statistical window (range/max/min) sobre métrica MQTT."""
+    """Live: threshold/range/statistical window + Jefferson rate e dwell."""
     sc = req.success_criteria
     from reqvallive.metrics.registry import is_live_supported
 
-    if isinstance(sc, (ThresholdCriteria, RangeCriteria)):
+    if isinstance(sc, (ThresholdCriteria, RangeCriteria, RateCriteria, DwellCriteria)):
         return is_live_supported(sc.metric)
     if isinstance(sc, StatisticalCriteria) and is_window_statistical(req):
         return is_live_supported(sc.metric)
@@ -81,6 +93,27 @@ def window_observed(
     if key == "min":
         return sample_min
     raise ValueError(f"Agregação live não suportada: {aggregation}")
+
+
+def rate_unit_scale(unit: str | None) -> float:
+    """Converte dV/dt em 1/s para a unidade do critério (×60 se for por minuto)."""
+    u = (unit or "").lower().replace(" ", "")
+    if "/min" in u or "permin" in u or "per_min" in u:
+        return 60.0
+    return 1.0
+
+
+def observed_rate(
+    prev_value: float,
+    value: float,
+    dt_s: float,
+    unit: str | None,
+    abs_rate: bool,
+) -> float:
+    if dt_s <= 0:
+        raise ValueError("dt_s deve ser positivo")
+    signed = ((value - prev_value) / dt_s) * rate_unit_scale(unit)
+    return abs(signed) if abs_rate else signed
 
 
 def _eval_operator(
@@ -106,7 +139,7 @@ def _eval_operator(
 
 
 def evaluate_value(req: RequirementRecord, value: float) -> LiveVerdict:
-    """Avalia um valor já resolvido (amostra instantânea ou agregado de janela)."""
+    """Avalia um valor já resolvido (amostra, agregado, taxa)."""
     sc = req.success_criteria
 
     if isinstance(sc, ThresholdCriteria):
@@ -145,6 +178,27 @@ def evaluate_value(req: RequirementRecord, value: float) -> LiveVerdict:
             value=value,
         )
 
+    if isinstance(sc, RateCriteria):
+        op = sc.operator if isinstance(sc.operator, Operator) else Operator(sc.operator)
+        passed, detail = _eval_operator(op, value, float(sc.value), 0.0)
+        mag = "|" if sc.abs_rate else ""
+        return LiveVerdict(
+            ok=passed,
+            supported=True,
+            detail=f"{mag}d({sc.metric})/dt{mag} {detail} {sc.unit}",
+            value=value,
+        )
+
+    if isinstance(sc, DwellCriteria):
+        op = sc.operator if isinstance(sc.operator, Operator) else Operator(sc.operator)
+        holds, detail = _eval_operator(op, value, float(sc.value), sc.tolerance or 0.0)
+        return LiveVerdict(
+            ok=not holds,
+            supported=True,
+            detail=f"condição ({detail}) {'activa' if holds else 'inactiva'}",
+            value=value,
+        )
+
     return LiveVerdict(
         ok=False,
         supported=False,
@@ -158,8 +212,13 @@ def evaluate_sample(
     sample: float,
     sample_min: float | None = None,
     sample_max: float | None = None,
+    *,
+    prev_value: float | None = None,
+    prev_ts: float | None = None,
+    now: float | None = None,
+    dwell_since: float | None = None,
 ) -> LiveVerdict:
-    """Avalia uma amostra; para statistical window usa min/max da série."""
+    """Avalia uma amostra; rate/dwell usam histórico temporal opcional."""
     if is_window_statistical(req):
         sc = req.success_criteria
         assert isinstance(sc, StatisticalCriteria)
@@ -167,6 +226,59 @@ def evaluate_sample(
         hi = sample if sample_max is None else sample_max
         observed = window_observed(sc.aggregation, lo, hi)
         return evaluate_value(req, observed)
+
+    if is_rate(req):
+        sc = req.success_criteria
+        assert isinstance(sc, RateCriteria)
+        if prev_value is None or prev_ts is None or now is None:
+            return LiveVerdict(
+                ok=True,
+                supported=True,
+                detail="à espera de segunda amostra para taxa",
+                value=None,
+                pending=True,
+            )
+        dt = now - prev_ts
+        if dt < float(sc.min_dt_s):
+            return LiveVerdict(
+                ok=True,
+                supported=True,
+                detail=f"Δt={dt:g}s < min_dt {sc.min_dt_s:g}s",
+                value=None,
+                pending=True,
+            )
+        observed = observed_rate(prev_value, sample, dt, sc.unit, sc.abs_rate)
+        return evaluate_value(req, observed)
+
+    if is_dwell(req):
+        sc = req.success_criteria
+        assert isinstance(sc, DwellCriteria)
+        ts = now if now is not None else 0.0
+        op = sc.operator if isinstance(sc.operator, Operator) else Operator(sc.operator)
+        holds, cond_detail = _eval_operator(op, sample, float(sc.value), sc.tolerance or 0.0)
+        if not holds:
+            return LiveVerdict(
+                ok=True,
+                supported=True,
+                detail=f"condição inactiva ({cond_detail})",
+                value=sample,
+                dwell_since=None,
+            )
+        since = dwell_since if dwell_since is not None else ts
+        elapsed_ms = max(0.0, (ts - since) * 1000.0)
+        limit = float(sc.max_duration_ms)
+        passed = elapsed_ms < limit
+        return LiveVerdict(
+            ok=passed,
+            supported=True,
+            detail=(
+                f"condição activa {elapsed_ms:g} ms "
+                f"(máx. {limit:g} ms; {cond_detail})"
+            ),
+            value=sample,
+            dwell_since=since,
+        )
+
     return evaluate_value(req, sample)
 
 
@@ -181,4 +293,14 @@ def constraint_text(req: RequirementRecord) -> str:
         op = sc.operator if isinstance(sc.operator, Operator) else Operator(sc.operator)
         agg = _agg_value(sc.aggregation)
         return f"{agg}(metricValue) {op.value} {sc.value}"
+    if isinstance(sc, RateCriteria):
+        op = sc.operator if isinstance(sc.operator, Operator) else Operator(sc.operator)
+        mag = "|" if sc.abs_rate else ""
+        return f"{mag}d(metricValue)/dt{mag} {op.value} {sc.value} {sc.unit}"
+    if isinstance(sc, DwellCriteria):
+        op = sc.operator if isinstance(sc.operator, Operator) else Operator(sc.operator)
+        return (
+            f"metricValue {op.value} {sc.value} por no máximo "
+            f"{sc.max_duration_ms:g} ms"
+        )
     return "true /* critério não suportado no MVP */"

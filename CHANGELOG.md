@@ -9,6 +9,18 @@ Datas no formato `AAAA-MM-DD`.
 
 ## [Unreleased]
 
+### Docs (2026-08-18) — MQTT: WARA-PS só como dialecto futuro
+
+- Opinião: `docs/MQTT_PADRAO_MENSAGEM.md` — L1 (heartbeat + sensores) como padrão a distribuir; JSON actual permanece o contrato live
+- Código MQTT **não** alterado nesta decisão
+
+### Added (2026-08-18) — naturezas Jefferson no motor live
+
+- `scType=rate`: taxa Δ/Δt sobre métrica MQTT (`percent/min`, `m/s`; `abs_rate` opcional)
+- `scType=dwell`: condição só FAIL se persistir ≥ `max_duration_ms` (transiente curto passa)
+- Demo SysON: `RQ_BAT_RATE_001`, `RQ_BAT_DWELL_001`
+- Distinto de amplitude `statistical`+`aggregation=range` (sem tempo)
+
 ### Docs (2026-08-12) — dissertação LaTeX (template ITA)
 
 - Pasta `latex/`: `ita.cls` + capítulos DSR separados; `main.tex` só configuração
