@@ -1,4 +1,4 @@
-"""Relatório HTML — procedimento de V&V + evidência auditável."""
+"""HTML report — V&V procedure + auditable evidence."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ def _ok_label(ok: bool | None) -> tuple[str, str]:
         return "PASS", "pass"
     if ok is False:
         return "FAIL", "fail"
-    return "PENDENTE", "na"
+    return "PENDING", "na"
 
 
 def _fmt(v: float | None, unit: str = "") -> str:
@@ -42,7 +42,7 @@ def _duration_text(started: float | None, ended: float | None, measuring: bool) 
     if started is None:
         return "—"
     if ended is None:
-        return "em curso" if measuring else "—"
+        return "in progress" if measuring else "—"
     secs = max(0.0, ended - started)
     if secs < 60:
         return f"{secs:.0f} s"
@@ -63,7 +63,7 @@ def _vv_methods(session: MeasurementSession) -> str:
 
 
 def _gate_for_report(session: MeasurementSession) -> dict:
-    """Prefere o gate congelado no snapshot; senão o gate actual da sessão."""
+    """Prefer gate frozen in snapshot; otherwise current session gate."""
     snap = session.approved_sc_snapshot or {}
     gate = snap.get("gate")
     if isinstance(gate, dict):
@@ -94,7 +94,7 @@ def _procedure_section(session: MeasurementSession) -> str:
             f"<td>{html.escape(str(r.get('vv_method') or '—'))}</td>"
             f"<td><code>{html.escape(str(r.get('metric') or '—'))}</code></td>"
             f"<td>{html.escape(str(r.get('criteria_type') or '—'))}</td>"
-            f"<td>{err_n} erro(s) · {warn_n} aviso(s)</td>"
+            f"<td>{err_n} error(s) · {warn_n} warning(s)</td>"
             "</tr>"
         )
 
@@ -105,20 +105,20 @@ def _procedure_section(session: MeasurementSession) -> str:
         theory_html = f"<ul class='meta refs'>{items}</ul>"
 
     return f"""
-<div class="card" id="procedimento-vv">
-  <h2>1. Procedimento de V&amp;V</h2>
-  <p class="muted">Método declarado e aprovação do Success Criteria <em>antes</em> da medição
+<div class="card" id="procedure-vv">
+  <h2>1. V&amp;V procedure</h2>
+  <p class="muted">Declared method and Success Criteria approval <em>before</em> measurement
      (MSFC / SIS-08 Methods).</p>
   <dl class="proc">
-    <dt>Método V&amp;V</dt><dd><code>{methods}</code></dd>
-    <dt>Gate global</dt><dd><strong class="{'pass' if gate.get('global_status')=='ACCEPT' else 'fail'}">{gate_status}</strong>
-      · aceites: {accepted} · rejeitados: {rejected} · avisos: {warnings}</dd>
-    <dt>Pode medir?</dt><dd>{"Sim — critério aprovado para evidência live MQTT"
+    <dt>V&amp;V method</dt><dd><code>{methods}</code> <span class="muted">(MVP: live Test evidence via MQTT)</span></dd>
+    <dt>Global gate</dt><dd><strong class="{'pass' if gate.get('global_status')=='ACCEPT' else 'fail'}">{gate_status}</strong>
+      · accepted: {accepted} · rejected: {rejected} · warnings: {warnings}</dd>
+    <dt>May measure?</dt><dd>{"Yes — criteria approved for live MQTT evidence"
       if gate.get("global_status") == "ACCEPT" or gate.get("can_start_measurement")
-      else "Não — medição bloqueada até ACCEPT"}</dd>
+      else "No — measurement blocked until ACCEPT"}</dd>
   </dl>
   <table><thead><tr>
-    <th>Requisito</th><th>Gate</th><th>Método</th><th>Métrica</th><th>Tipo SC</th><th>Motivos</th>
+    <th>Requirement</th><th>Gate</th><th>Method</th><th>Metric</th><th>SC type</th><th>Reasons</th>
   </tr></thead>
   <tbody>{''.join(rows) or '<tr><td colspan=6>—</td></tr>'}</tbody></table>
   {theory_html}
@@ -134,30 +134,30 @@ def _measurement_conditions_section(session: MeasurementSession, summary: dict) 
     user = html.escape(session.mqtt_username or "—")
     duration = _duration_text(session.started_at, session.ended_at, session.measuring)
     state = (
-        "ENCERRADA"
+        "ENDED"
         if session.measurement_ended
-        else ("A MEDIR" if session.measuring else "não iniciada")
+        else ("MEASURING" if session.measuring else "not started")
     )
     drones = ", ".join(sorted(session.drones.keys())) or "—"
 
     return f"""
-<div class="card" id="condicoes-medicao">
-  <h2>2. Condições de medição</h2>
-  <p class="muted">Protocolo, tópico e janela temporal da evidência coletada.</p>
+<div class="card" id="measurement-conditions">
+  <h2>2. Measurement conditions</h2>
+  <p class="muted">Protocol, MQTT topic, and temporal window of collected evidence.</p>
   <dl class="proc">
-    <dt>Protocolo</dt><dd>MQTT (Paho) · QoS conforme subscriber da sessão</dd>
+    <dt>Protocol</dt><dd>MQTT (Paho) · QoS per session subscriber</dd>
     <dt>Broker</dt><dd><code>{broker}:{port}</code></dd>
-    <dt>Tópico</dt><dd><code>{topic}</code></dd>
-    <dt>Utilizador MQTT</dt><dd><code>{user}</code> <span class="muted">(senha omitida)</span></dd>
-    <dt>Sessão</dt><dd><code>{html.escape(session.id)}</code></dd>
-    <dt>Criada em</dt><dd>{_fmt_dt(session.created_at)}</dd>
-    <dt>Início medição</dt><dd>{_fmt_dt(session.started_at)}</dd>
-    <dt>Fim medição</dt><dd>{_fmt_dt(session.ended_at) if session.ended_at else ("em curso" if session.measuring else "—")}</dd>
-    <dt>Duração</dt><dd>{html.escape(duration)} · estado: <strong>{state}</strong></dd>
-    <dt>Entidades</dt><dd>{summary.get("drone_count", 0)} drone(s): {html.escape(drones)}</dd>
-    <dt>Amostras</dt><dd>{summary.get("message_count", 0)} mensagens MQTT ·
-      {summary.get("sample_count", 0)} amostras registadas na janela</dd>
-    <dt>Métricas pedidas</dt><dd><code>{html.escape(", ".join(summary.get("tracked_metrics") or session.tracked_metrics()) or "—")}</code></dd>
+    <dt>Topic</dt><dd><code>{topic}</code></dd>
+    <dt>MQTT user</dt><dd><code>{user}</code> <span class="muted">(password omitted)</span></dd>
+    <dt>Session</dt><dd><code>{html.escape(session.id)}</code></dd>
+    <dt>Created</dt><dd>{_fmt_dt(session.created_at)}</dd>
+    <dt>Measurement start</dt><dd>{_fmt_dt(session.started_at)}</dd>
+    <dt>Measurement end</dt><dd>{_fmt_dt(session.ended_at) if session.ended_at else ("in progress" if session.measuring else "—")}</dd>
+    <dt>Duration</dt><dd>{html.escape(duration)} · state: <strong>{state}</strong></dd>
+    <dt>Entities</dt><dd>{summary.get("drone_count", 0)} drone(s): {html.escape(drones)}</dd>
+    <dt>Samples</dt><dd>{summary.get("message_count", 0)} MQTT messages ·
+      {summary.get("sample_count", 0)} samples in the measurement window</dd>
+    <dt>Tracked metrics</dt><dd><code>{html.escape(", ".join(summary.get("tracked_metrics") or session.tracked_metrics()) or "—")}</code></dd>
   </dl>
 </div>"""
 
@@ -166,8 +166,8 @@ def _snapshot_section(session: MeasurementSession) -> str:
     snap = session.approved_sc_snapshot
     if not snap:
         return (
-            '<div class="card" id="snapshot-sc"><h2>3. Success Criteria aprovado (snapshot)</h2>'
-            '<p class="muted">Ainda sem snapshot — o SC é congelado ao iniciar a medição.</p></div>'
+            '<div class="card" id="snapshot-sc"><h2>3. Approved Success Criteria (snapshot)</h2>'
+            '<p class="muted">No snapshot yet — SC is frozen when measurement starts.</p></div>'
         )
     frozen = _fmt_dt(snap.get("frozen_at"))
     gate_st = html.escape(str(snap.get("gate_status") or "—"))
@@ -186,13 +186,13 @@ def _snapshot_section(session: MeasurementSession) -> str:
         )
     return f"""
 <div class="card" id="snapshot-sc">
-  <h2>3. Success Criteria aprovado (snapshot)</h2>
-  <p class="meta">Congelado em <strong>{frozen}</strong> · gate <strong>{gate_st}</strong>
-     · sessão <code>{html.escape(str(snap.get('session_id') or ''))}</code></p>
-  <p class="muted">Cópia imutável do critério que valeu nesta corrida
-     (não muda se o requisito de trabalho for alterado depois).</p>
+  <h2>3. Approved Success Criteria (snapshot)</h2>
+  <p class="meta">Frozen at <strong>{frozen}</strong> · gate <strong>{gate_st}</strong>
+     · session <code>{html.escape(str(snap.get('session_id') or ''))}</code></p>
+  <p class="muted">Immutable copy of the criteria that applied in this run
+     (unchanged if the working requirement is edited later).</p>
   <table><thead><tr>
-    <th>ID</th><th>Título</th><th>Texto</th><th>Método</th><th>success_criteria</th>
+    <th>ID</th><th>Title</th><th>Text</th><th>Method</th><th>success_criteria</th>
   </tr></thead>
   <tbody>{''.join(rows) or '<tr><td colspan=5>—</td></tr>'}</tbody></table>
 </div>"""
@@ -204,16 +204,16 @@ def build_html_report(session: MeasurementSession) -> str:
     overall = summary.get("overall_ok")
     verdict, verdict_class = _ok_label(overall if isinstance(overall, bool) else None)
     if overall is None:
-        verdict, verdict_class = "INCONCLUSIVO", "na"
+        verdict, verdict_class = "INCONCLUSIVE", "na"
 
     tracked = summary.get("tracked_metrics") or session.tracked_metrics()
     show_battery = any("batter" in str(m).lower() or m == "remainingCharge" for m in tracked)
 
     note = (
-        "<p class='note'>O resultado usa âmbito <strong>all_timesteps</strong>: "
-        "se qualquer amostra violar o limiar, o requisito fica <strong>FAIL</strong> até ao fim. "
-        "A tabela mostra o valor <em>atual</em> (último), o <em>mínimo</em> da corrida e a "
-        "<em>1ª violação</em> — para não confundir o número «travado» do fail com o valor presente.</p>"
+        "<p class='note'>Results use <strong>all_timesteps</strong> scope: "
+        "if any sample violates the criterion, the requirement stays <strong>FAIL</strong> until the end. "
+        "Tables show the <em>current</em> (last) value, run <em>minimum</em>, and "
+        "<em>first violation</em> — so a latched fail is not confused with the present reading.</p>"
     )
 
     fail_cards = []
@@ -242,8 +242,8 @@ def build_html_report(session: MeasurementSession) -> str:
                 )
             entities_html = (
                 "<table class='mini'><thead><tr>"
-                "<th>Drone</th><th>Atual</th><th>Mín</th><th>Máx</th>"
-                "<th>1ª violação</th><th>Hora</th><th>Falhas / amostras</th><th>Resultado</th>"
+                "<th>Drone</th><th>Current</th><th>Min</th><th>Max</th>"
+                "<th>1st violation</th><th>Time</th><th>Fails / samples</th><th>Result</th>"
                 "</tr></thead>"
                 f"<tbody>{''.join(rows)}</tbody></table>"
             )
@@ -257,10 +257,10 @@ def build_html_report(session: MeasurementSession) -> str:
           </div>
           <p class="why">{html.escape(f.get('why') or '')}</p>
           <dl>
-            <dt>Métrica</dt><dd><code>{html.escape(str(f.get('metric')))}</code></dd>
-            <dt>Esperado</dt><dd><code>{html.escape(str(f.get('expected')))}</code></dd>
-            <dt>Observado</dt><dd>{_fmt(f.get('actual'), unit) if f.get('actual') is not None else "ver tabela por drone"}</dd>
-            <dt>Âmbito</dt><dd>{html.escape(str(f.get('scope')))} (todas as amostras)</dd>
+            <dt>Metric</dt><dd><code>{html.escape(str(f.get('metric')))}</code></dd>
+            <dt>Expected</dt><dd><code>{html.escape(str(f.get('expected')))}</code></dd>
+            <dt>Observed</dt><dd>{_fmt(f.get('actual'), unit) if f.get('actual') is not None else "see per-drone table"}</dd>
+            <dt>Scope</dt><dd>{html.escape(str(f.get('scope')))} (all samples)</dd>
           </dl>
           {entities_html}
         </div>"""
@@ -285,7 +285,7 @@ def build_html_report(session: MeasurementSession) -> str:
             f"<td>{html.escape(f.get('why') or '')}</td></tr>"
         )
 
-    msg_headers = ["Hora", "Drone"] + [html.escape(m) for m in tracked] + ["Estado", "Lat", "Lon"]
+    msg_headers = ["Time", "Drone"] + [html.escape(m) for m in tracked] + ["State", "Lat", "Lon"]
     msg_rows = []
     for m in session.message_log[-50:]:
         ts = datetime.fromtimestamp(m["ts"], tz=timezone.utc).strftime("%H:%M:%S")
@@ -294,7 +294,7 @@ def build_html_report(session: MeasurementSession) -> str:
         for metric in tracked:
             val = m.get(metric)
             cells.append("—" if val is None else str(val))
-        cells.append("VIOLAÇÃO" if viol else "ok")
+        cells.append("VIOLATION" if viol else "ok")
         cells.append(str(m.get("lat") if m.get("lat") is not None else "—"))
         cells.append(str(m.get("lon") if m.get("lon") is not None else "—"))
         cls = " class='sample-fail'" if viol else ""
@@ -303,20 +303,20 @@ def build_html_report(session: MeasurementSession) -> str:
     bat_li = ""
     if show_battery:
         bat_li = (
-            f"<li>Bateria min/max na medição: {summary.get('min_battery')} / "
+            f"<li>Battery min/max during run: {summary.get('min_battery')} / "
             f"{summary.get('max_battery')}</li>"
         )
     sep_li = ""
     if any(m in DISTANCE_METRICS for m in tracked):
-        sep_li = f"<li>Separação mínima observada: {summary.get('min_separation_m')}</li>"
+        sep_li = f"<li>Minimum separation observed: {summary.get('min_separation_m')}</li>"
 
     procedure_html = _procedure_section(session)
     conditions_html = _measurement_conditions_section(session, summary)
     snapshot_html = _snapshot_section(session)
 
     return f"""<!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="utf-8"/>
-<title>Relatório ReqValLive — {verdict}</title>
+<html lang="en"><head><meta charset="utf-8"/>
+<title>ReqValLive report — {verdict}</title>
 <style>
 :root {{ --bg:#f4f6f8; --card:#fff; --ink:#16202a; --muted:#5a6a7a; --line:#e2e8ee;
   --pass:#0a7a2f; --fail:#b00020; --na:#6b7280; --pass-bg:#e8f7ee; --fail-bg:#fde8ec; --na-bg:#f3f4f6; }}
@@ -359,26 +359,27 @@ code{{background:#eef2f6;padding:.1rem .35rem;border-radius:4px;font-size:.88em}
 </style></head><body><div class="wrap">
 <div class="hero">
   <div class="verdict {verdict_class}">{verdict}</div>
-  <p class="meta">Relatório de procedimento ReqValLive · gerado {generated}</p>
-  <p class="meta">Sessão <code>{html.escape(session.id)}</code>
-     · método <code>{html.escape(_vv_methods(session))}</code>
-     · gate <strong>{html.escape(str((_gate_for_report(session) or {}).get("global_status") or "—"))}</strong></p>
+  <p class="meta">ReqValLive procedure report · generated {generated}</p>
+  <p class="meta">Session <code>{html.escape(session.id)}</code>
+     · method <code>{html.escape(_vv_methods(session))}</code>
+     · gate <strong>{html.escape(str((_gate_for_report(session) or {}).get("global_status") or "—"))}</strong>
+     · MQTT topic <code>{html.escape(session.mqtt_topic)}</code></p>
   <div class="grid">
-    <div class="stat"><span class="muted">Requisitos OK</span><b class="pass">{summary.get("reqs_pass", 0)}</b></div>
-    <div class="stat"><span class="muted">Requisitos FAIL</span><b class="fail">{summary.get("reqs_fail", 0)}</b></div>
-    <div class="stat"><span class="muted">Pendentes</span><b class="na">{summary.get("reqs_pending", 0)}</b></div>
+    <div class="stat"><span class="muted">Requirements PASS</span><b class="pass">{summary.get("reqs_pass", 0)}</b></div>
+    <div class="stat"><span class="muted">Requirements FAIL</span><b class="fail">{summary.get("reqs_fail", 0)}</b></div>
+    <div class="stat"><span class="muted">Pending</span><b class="na">{summary.get("reqs_pending", 0)}</b></div>
   </div>
   <ul class="meta">
-    <li>Drones: {summary.get("drone_count")} · Mensagens: {summary.get("message_count")}</li>
-    <li>Métricas: <code>{html.escape(", ".join(tracked) or "—")}</code></li>
+    <li>Drones: {summary.get("drone_count")} · Messages: {summary.get("message_count")}</li>
+    <li>Metrics: <code>{html.escape(", ".join(tracked) or "—")}</code></li>
     {bat_li}{sep_li}
   </ul>
   <ol class="toc">
-    <li><a href="#procedimento-vv">Procedimento de V&amp;V</a></li>
-    <li><a href="#condicoes-medicao">Condições de medição</a></li>
-    <li><a href="#snapshot-sc">Success Criteria aprovado (snapshot)</a></li>
-    <li><a href="#resultados">Resultados (esperado × observado)</a></li>
-    <li><a href="#amostras">Últimas amostras MQTT</a></li>
+    <li><a href="#procedure-vv">V&amp;V procedure</a></li>
+    <li><a href="#measurement-conditions">Measurement conditions</a></li>
+    <li><a href="#snapshot-sc">Approved Success Criteria (snapshot)</a></li>
+    <li><a href="#results">Results (expected × observed)</a></li>
+    <li><a href="#samples">Latest MQTT samples</a></li>
   </ol>
   {note}
 </div>
@@ -387,22 +388,22 @@ code{{background:#eef2f6;padding:.1rem .35rem;border-radius:4px;font-size:.88em}
 {conditions_html}
 {snapshot_html}
 
-<div class="card" id="resultados">
-  <h2>4. Resultados — esperado × observado</h2>
-  <p class="muted">Veredicto por requisito com evidência da corrida (1ª violação, min/máx, contagens).</p>
+<div class="card" id="results">
+  <h2>4. Results — expected × observed</h2>
+  <p class="muted">Verdict per requirement with run evidence (first violation, min/max, counts).</p>
   <table><thead><tr>
-    <th>ID</th><th>Título</th><th>Métrica</th><th>Esperado</th><th>Resultado</th><th>Porquê</th>
+    <th>ID</th><th>Title</th><th>Metric</th><th>Expected</th><th>Result</th><th>Why</th>
   </tr></thead>
   <tbody>{''.join(summary_rows) or '<tr><td colspan=6>—</td></tr>'}</tbody></table>
 </div>
 
-{f'<div class="card"><h2>Evidência das falhas</h2>{"".join(fail_cards)}</div>' if fail_cards else ''}
-{f'<div class="card"><h2>O que passou</h2>{"".join(pass_cards)}</div>' if pass_cards else ''}
-{f'<div class="card"><h2>Pendentes</h2>{"".join(pending_cards)}</div>' if pending_cards else ''}
+{f'<div class="card"><h2>Failure evidence</h2>{"".join(fail_cards)}</div>' if fail_cards else ''}
+{f'<div class="card"><h2>Passed</h2>{"".join(pass_cards)}</div>' if pass_cards else ''}
+{f'<div class="card"><h2>Pending</h2>{"".join(pending_cards)}</div>' if pending_cards else ''}
 
-<div class="card" id="amostras">
-  <h2>5. Últimas amostras MQTT</h2>
-  <p class="muted">Linhas vermelhas = amostra que violou o limiar naquele instante.</p>
+<div class="card" id="samples">
+  <h2>5. Latest MQTT samples</h2>
+  <p class="muted">Red rows = sample that violated the criterion at that instant.</p>
   <table><thead><tr>{''.join(f"<th>{h}</th>" for h in msg_headers)}</tr></thead>
   <tbody>{''.join(msg_rows) or '<tr><td colspan="' + str(len(msg_headers)) + '">—</td></tr>'}</tbody></table>
 </div>

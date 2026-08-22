@@ -72,7 +72,7 @@ Cada bloco abaixo traduz isso em **features**.
 | F-SC-04 | Checagem de texto **não mensurável** (“adequado”, “bom desempenho”) | **P0** | “Requirements verifiable as written” | **BASE** |
 | F-SC-05 | Warnings vs errors (tolerância, CONOPS, environment) sem bloquear à toa | **P1** | Madureza sem burocracia artificial | Parcial |
 | F-SC-06 | Campos / metadados de **Environment, Restrictions, Checkpoints** (mesmo que Markdown estruturado) | **P1** | Fecha as 8 considerações MSFC na PoC | Parcial — expandir no modelo + gate |
-| F-SC-07 | Congelar **versão do SC aprovado** ligada à sessão/laudo | **P0** | Configuration control * leve* (o que valeu na run) | Gap — implementar |
+| F-SC-07 | Congelar **versão do SC aprovado** ligada à sessão/laudo | **P0** | Configuration control * leve* (o que valeu na run) | **BASE** — `approved_sc_snapshot` + secção no laudo HTML |
 | F-SC-08 | Sugestões de reescrita quando REJECT | **P1** | Fecha o loop de verifiability | Parcial no motor |
 
 ### 3.3 Método V&V e procedimento
@@ -91,7 +91,7 @@ Cada bloco abaixo traduz isso em **features**.
 |----|---------|------------|--------------|---------------|
 | F-EV-01 | Ingestão MQTT conforme **protocolo padronizado do lab** | **P0** | Evidência real, contrato conhecido | **BASE** (Conceptio) |
 | F-EV-02 | Multi-entidade (`droneName`) e métricas por entidade + agregadas | **P0** | Missões multiagente | **BASE** |
-| F-EV-03 | Avaliação `threshold`/`range`/`statistical(range|max|min)` com regra temporal honesta (`all_timesteps` → **FAIL latch**) | **P0** | Veredicto ≠ último valor; variação = peak-to-peak na janela | **BASE** |
+| F-EV-03 | Avaliação `threshold`/`range`/`statistical`/`rate`/`dwell` com regra temporal honesta (`all_timesteps` → **FAIL latch**) | **P0** | Veredicto ≠ último valor; taxa e persistência (Jefferson) | **BASE** |
 | F-EV-04 | Registrar **atual, mínimo/máximo, 1ª violação, #falhas/amostras** | **P0** | Momentos críticos / evidência objetiva | **BASE** |
 | F-EV-05 | Timeline / lista de eventos críticos no laudo (instantes de violação) | **P1** | Narrativa SE da missão | Parcial — aprofundar |
 | F-EV-06 | Contagem e qualidade da amostra (perda de link, gaps) | **P1** | Validade da evidência | Gap leve |
@@ -103,7 +103,8 @@ Cada bloco abaixo traduz isso em **features**.
 |----|---------|------------|--------------|---------------|
 | F-RP-01 | Laudo PASS/FAIL por requisito com esperado vs observado e *porquê* | **P0** | Produto clássico de V&V | **BASE** |
 | F-RP-02 | Secção “O que falhou” + momentos críticos | **P0** | Utilidade para o engenheiro / demo | **BASE**/P1 |
-| F-RP-03 | Incluir no laudo: SC aprovado (snapshot), método, protocolo/topic, janela temporal | **P0** | Rastreabilidade do procedimento | Gap — fechar |
+| F-RP-03 | Incluir no laudo: SC aprovado (snapshot), método, protocolo/topic, janela temporal | **P0** | Rastreabilidade do procedimento | **BASE** — secções 1–3 do laudo HTML (EN) |
+| F-RP-03b | Narrativa LLM **opcional** da missão (duração, nº requisitos, síntese) | **P2** | Comunicação; não altera PASS/FAIL | **BASE** — `POST …/report/narrative` + botão UI |
 | F-RP-04 | Export pack (HTML + MD + CSV amostras + SysML) | **P1** | Entrega ao projeto CET-ADS | Gap |
 | F-RP-05 | Integridade leve do laudo (hash do snapshot SC + sumário) | **P2** | Credibilidade acadêmica | Opcional |
 
@@ -112,7 +113,7 @@ Cada bloco abaixo traduz isso em **features**.
 | ID | Feature | Prioridade | Por quê (SE) | Status / nota |
 |----|---------|------------|--------------|---------------|
 | F-MB-01 | Geração de esqueleto SysML v2 (requirement, satisfy, verify, atributos de métrica) | **P0** | Ponte requisito → modelo | **BASE** |
-| F-MB-02 | Claim UI/docs: **não é simulação Magic** — apenas partida | **P0** | Honesty SE / banca | Docs — reforçar na UI |
+| F-MB-02 | Claim UI/docs: **não é simulação Magic** — apenas partida | **P0** | Honesty SE / banca | **BASE** — disclaimer na UI (passo 2) + docs |
 | F-MB-03 | Diagrama visual / Mermaid de apoio à comunicação | **P2** | Comunicação, não prova V&V | **BASE** |
 | F-MB-04 | Export `model.md` com notas de SC / MQTT | **P1** | Documentação paralela ao `.sysml` | **BASE** |
 
@@ -124,7 +125,7 @@ Cada bloco abaixo traduz isso em **features**.
 | F-GOV-02 | Campo `project_id` / nome do lab CET-ADS na sessão e no laudo | **P1** | Preparação SARITA | Gap |
 | F-GOV-03 | Reavaliar gate após edição (`POST .../criteria/evaluate`) | **BASE** | Ciclo de aprovação | Já existe API |
 | F-GOV-04 | Painel “organizador” multi-projeto (visão PASS/FAIL agregada) | **P2** | Útil no SARITA; não fecha o mestrado | Backlog |
-| F-GOV-05 | UI passo explícito “Critério de validação” (errors/warnings/sugestões) | **P1** | Torna o método SE visível ao usuário | Backlog changelog |
+| F-GOV-05 | UI passo explícito “Critério de validação” (errors/warnings/sugestões) | **P1** | Torna o método SE visível ao usuário | **BASE** — painel gate nos passos 1–2 (EN) |
 
 ---
 
@@ -140,10 +141,12 @@ Cada bloco abaixo traduz isso em **features**.
 
 ### Lacunas P0 a fechar antes de considerar a PoC “fechada” para a dissertação
 
-1. **Snapshot imutável do SC aprovado** associado à sessão e reproduzido no laudo  
-2. **Laudo completo de procedimento:** método, topic/protocolo, janela, SC congelado, evidência crítica  
-3. **Metadados de missão** mínimos (nome/projeto, start/end, nº entidades) estáveis no relatório  
-4. **Claim do SysML** explícito na UI do export (“esqueleto, não simulação”)  
+1. ~~**Snapshot imutável do SC aprovado** associado à sessão e reproduzido no laudo~~ — **feito**
+2. ~~**Laudo completo de procedimento:** método, topic/protocolo, janela, SC congelado~~ — **feito**
+3. **Metadados de missão** mínimos (nome/projeto, start/end, nº entidades) — parcial no laudo
+4. ~~**Claim do SysML** explícito na UI do export~~ — **feito**
+5. ~~**UI principal em inglês**; SysON como fluxo principal~~ — **feito** (2026-08-22)
+6. **Ensaio documentado** rate/dwell — protocolo em `docs/ENSAIO_SYSON_RATE_DWELL.md`; capturas cap. IV pendentes  
 
 ### Lacunas P1 que a banca de SE tende a valorizar
 
@@ -180,12 +183,14 @@ A PoC é considerada **adequada ao nível de mestrado em Engenharia de Sistemas*
 
 ## 6. Ordem sugerida de implementação (após o que já existe)
 
-1. Snapshot SC aprovado + secção no laudo (P0)  
-2. Metadados de missão/procedimento no relatório (P0)  
-3. Disclaimer SysML na UI (P0, rápido)  
-4. UI do passo “Critério de validação” (P1)  
-5. Timeline de violações + export pack (P1)  
-6. `project_id` / preparação SARITA (P1–P2)  
+1. ~~Snapshot SC aprovado + secção no laudo (P0)~~ — feito  
+2. ~~Metadados de missão/procedimento no relatório (P0)~~ — feito (laudo EN)  
+3. ~~Disclaimer SysML na UI (P0)~~ — feito  
+4. ~~UI em inglês + SysON principal (P0)~~ — feito  
+5. Capturas do ensaio rate/dwell para cap. IV (P0 escrita)  
+6. Timeline de violações + export pack (P1)  
+7. `project_id` / preparação SARITA (P1–P2)  
+8. MQTT `concept/...` / adaptador L1 — **aguardar orientador** (`docs/MQTT_AGUARDANDO_ORIENTADOR.md`)  
 
 ---
 

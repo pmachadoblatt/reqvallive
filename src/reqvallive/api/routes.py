@@ -18,6 +18,7 @@ from reqvallive.eval.criteria_gate import success_criteria_model_doc
 from reqvallive.eval.live import is_mvp_supported
 from reqvallive.llm.client import (
     enrich_verification_update_with_llm,
+    generate_mission_narrative_report,
     interpret_requirements_markdown,
 )
 from reqvallive.models.session import store
@@ -771,7 +772,7 @@ def patch_success_criteria(
 
 
 @router.post("/sessions/{session_id}/syson/publish")
-async def publish_syson_update(session_id: str, use_llm: bool = True) -> dict[str, Any]:
+async def publish_syson_update(session_id: str, use_llm: bool = False) -> dict[str, Any]:
     """Após medição: cria/atualiza item VerificationResult sob cada requirement no SysON."""
     session = store.get(session_id)
     if session is None:
@@ -859,6 +860,49 @@ def download_report(session_id: str) -> HTMLResponse:
     if session is None:
         raise HTTPException(404, detail="Sessão não encontrada")
     return HTMLResponse(build_html_report(session))
+
+
+@router.post("/sessions/{session_id}/report/narrative")
+async def mission_narrative_report(session_id: str) -> dict[str, Any]:
+    """Optional LLM narrative of the finished run (does not change PASS/FAIL)."""
+    session = store.get(session_id)
+    if session is None:
+        raise HTTPException(404, detail="Sessão não encontrada")
+    if not session.measurement_ended:
+        raise HTTPException(
+            409,
+            detail="Stop the measurement before generating a narrative report.",
+        )
+    if not settings.llm_base_url:
+        raise HTTPException(503, detail="LLM_BASE_URL not configured.")
+
+    duration_s = None
+    if session.started_at is not None and session.ended_at is not None:
+        duration_s = max(0.0, float(session.ended_at) - float(session.started_at))
+
+    payload = {
+        "session_id": session.id,
+        "mqtt_topic": session.mqtt_topic,
+        "vv_method": "test",
+        "duration_seconds": duration_s,
+        "started_at": session.started_at,
+        "ended_at": session.ended_at,
+        "summary": session.summary(),
+        "findings": session.findings(),
+        "gate": session.criteria_gate.to_dict() if session.criteria_gate else None,
+        "approved_sc_snapshot": session.approved_sc_snapshot,
+        "drone_count": len(session.drones),
+        "message_count": session.message_count,
+    }
+    try:
+        report = await generate_mission_narrative_report(payload)
+    except Exception as exc:
+        raise HTTPException(502, detail=str(exc)) from exc
+
+    session.llm_mission_report = report
+    public = session.to_public_dict()
+    public["llm_mission_report"] = report
+    return public
 
 
 @router.get("/sessions/{session_id}/stream")

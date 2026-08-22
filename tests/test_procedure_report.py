@@ -1,4 +1,4 @@
-"""Relatório de procedimento V&V (item P0 1.2)."""
+"""V&V procedure report (P0 item 1.2)."""
 
 from __future__ import annotations
 
@@ -37,26 +37,26 @@ def test_procedure_report_has_required_sections():
     client.post(f"/api/sessions/{sid}/stop")
 
     html = build_html_report(session)
-    assert "Relatório de procedimento" in html
-    assert 'id="procedimento-vv"' in html
-    assert "1. Procedimento de V&amp;V" in html or "1. Procedimento de V&V" in html
-    assert 'id="condicoes-medicao"' in html
-    assert "2. Condições de medição" in html
+    assert "ReqValLive procedure report" in html
+    assert 'id="procedure-vv"' in html
+    assert "1. V&amp;V procedure" in html or "1. V&V procedure" in html
+    assert 'id="measurement-conditions"' in html
+    assert "2. Measurement conditions" in html
     assert "MQTT" in html
     assert "lab/test" in html
     assert 'id="snapshot-sc"' in html
-    assert "3. Success Criteria aprovado (snapshot)" in html
-    assert 'id="resultados"' in html
-    assert "4. Resultados" in html
-    assert "esperado" in html.lower()
-    assert 'id="amostras"' in html
+    assert "3. Approved Success Criteria (snapshot)" in html
+    assert 'id="results"' in html
+    assert "4. Results" in html
+    assert "expected" in html.lower()
+    assert 'id="samples"' in html
     assert "vv_method" in html or ">test<" in html
     assert "ACCEPT" in html
-    assert "FAIL" in html  # bateria 15% violou
+    assert "FAIL" in html  # battery 15% violated
 
-    # Endpoint HTTP também devolve o HTML novo
+    # HTTP endpoint also returns the new HTML
     report = client.get(f"/api/sessions/{sid}/report")
     assert report.status_code == 200
     body = report.text
-    assert "Condições de medição" in body
-    assert "Procedimento de V" in body
+    assert "Measurement conditions" in body
+    assert "V&amp;V procedure" in body or "V&V procedure" in body

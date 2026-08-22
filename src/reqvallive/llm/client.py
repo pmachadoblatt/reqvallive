@@ -501,3 +501,91 @@ async def enrich_verification_update_with_llm(update: dict[str, Any]) -> dict[st
             if act.get("evidenceSummary"):
                 req["syson_evidence_summary"] = str(act["evidenceSummary"])
     return update
+
+
+MISSION_NARRATIVE_PROMPT = """You are a systems engineer writing a short V&V mission narrative.
+You receive structured evidence from a live MQTT measurement session (Success Criteria + PASS/FAIL).
+
+Respond ONLY with valid JSON:
+{
+  "title": "short English title",
+  "summary": "3-6 sentences: duration, how many requirements, overall PASS/FAIL, what failed and why (facts only)",
+  "timeline": ["key moment 1", "key moment 2"],
+  "per_requirement": [
+    {"req_id": "RQ_...", "verdict": "PASS|FAIL|PENDING", "note": "one factual sentence"}
+  ],
+  "recommendations": ["optional follow-up for the systems engineer"]
+}
+
+Rules:
+- Do not invent requirements, metrics, or verdicts not present in the payload.
+- Prefer numbers from the evidence (min/max, first fail, counts).
+- English only.
+- Keep the whole narrative under ~400 words.
+"""
+
+
+async def generate_mission_narrative_report(payload: dict[str, Any]) -> dict[str, Any]:
+    """Optional LLM narrative of a finished measurement (does not change verdicts)."""
+    if not settings.llm_base_url:
+        raise RuntimeError("LLM_BASE_URL not configured")
+
+    url = settings.llm_base_url.rstrip("/") + "/chat/completions"
+    headers = {"Content-Type": "application/json"}
+    if settings.llm_api_key:
+        headers["Authorization"] = f"Bearer {settings.llm_api_key}"
+
+    body = {
+        "model": settings.llm_model,
+        "temperature": 0.2,
+        "messages": [
+            {"role": "system", "content": MISSION_NARRATIVE_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    "Measurement evidence JSON:\n"
+                    + json.dumps(payload, ensure_ascii=False, default=str)[:12000]
+                ),
+            },
+        ],
+        "response_format": {"type": "json_object"},
+    }
+    timeout = httpx.Timeout(settings.llm_timeout_seconds, connect=30.0)
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.post(url, headers=headers, json=body)
+            if response.status_code >= 400:
+                raise RuntimeError(
+                    f"LLM HTTP {response.status_code}: {response.text[:400]}"
+                )
+            data = response.json()
+    except httpx.TimeoutException as exc:
+        raise RuntimeError(
+            f"LLM timeout ({settings.llm_timeout_seconds}s) while writing narrative."
+        ) from exc
+    except httpx.HTTPError as exc:
+        raise RuntimeError(f"Network error to LLM: {exc}") from exc
+
+    try:
+        message = data["choices"][0]["message"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise RuntimeError(f"Unexpected LLM response: {str(data)[:400]}") from exc
+
+    content = _message_text(message if isinstance(message, dict) else {})
+    parsed = _extract_json(content)
+    if not isinstance(parsed, dict):
+        raise RuntimeError("LLM did not return a JSON object for the mission report.")
+    return {
+        "title": str(parsed.get("title") or "Mission narrative"),
+        "summary": str(parsed.get("summary") or ""),
+        "timeline": parsed.get("timeline")
+        if isinstance(parsed.get("timeline"), list)
+        else [],
+        "per_requirement": parsed.get("per_requirement")
+        if isinstance(parsed.get("per_requirement"), list)
+        else [],
+        "recommendations": parsed.get("recommendations")
+        if isinstance(parsed.get("recommendations"), list)
+        else [],
+        "model": settings.llm_model,
+    }

@@ -152,8 +152,21 @@ Um limiar instantâneo (`threshold`) falha na primeira amostra; `dwell` só falh
 
 O Documentation **permanece** só com `_go_to_verification`.
 
-O resultado live é um **item** SysML v2 filho do requirement (categoria Structure / `ItemUsage`),
-ligado ao RQ — com vários requisitos, cada um tem o seu bloco:
+O resultado live é um **item** SysML v2 **filho** do requirement (categoria Structure / `ItemUsage`),
+ligado ao RQ — com vários requisitos, cada um tem o seu bloco. O ReqValLive escreve via
+GraphQL `insertTextualSysMLv2` **sob** o requirement (mesmo mecanismo validado em 2026-07/08).
+
+### Explorador vs diagrama (fluxo que você já usava)
+
+| Onde | O que acontece |
+|------|----------------|
+| **Explorador** | Após **Publish to SysON**, aparece `VerificationResult_PASS_…` ou `VerificationResult_FAIL_…` **como filho** de cada RQ. |
+| **Diagrama** | O SysON **não** coloca o item no diagrama sozinho. Se quiser ver no canvas: **arraste** do explorador para o diagrama (uma vez por item). |
+| **Atualização** | Re-publicar na mesma sessão **atualiza** o item existente (não duplica). O explorador costuma refletir sem passos extra; se a árvore parecer antiga, clique noutro nó e volte ao RQ ou recarregue a página do SysON. |
+
+Isto **continua igual** ao demo aceite pelo orientador (2026-08-03): write-back no modelo + arrastar para o diagrama quando quiser visualizar. **Não** é bloqueio da PoC.
+
+O ReqValLive **não** controla o layout do diagrama SysON — só cria/atualiza o item ligado ao requisito.
 
 ```text
 RQ_BAT_001
@@ -173,15 +186,28 @@ RQ_SEP_001
   └── VerificationResult_PASS_threshold_…_minseparationm_<sessão>
 ```
 
-O explorador SysON só mostra o **nome** do item por defeito — por isso o app usa um nome
-visível:
+O explorador SysON mostra um **nome curto** por requisito — o contexto vem do pai (`RQ_BAT_001`, …):
 
-`VerificationResult_<PASS|FAIL>_<scType>_<extremo>_<métrica>_<sessão>`
+`VerificationResult_PASS` ou `VerificationResult_FAIL`
 
-Seleccione o item para ler o Documentation (`status`, `scType`, `reason`, …); expanda para os atributos.
+Seleccione o item → **Documentation** (texto legível):
+
+```text
+=== FAIL ===
+
+Criterion: batteryLevel
+Expected: >= 20.0 percent
+
+When: first violation at 2026-08-22 14:32:05 UTC
+Minimum during run: 15.2 percent
+
+ReqValLive session: <id>
+```
+
+Atributos no modelo ficam mínimos (`status`, `sessionId`, `failedAt`, `extremeValue`, `unit`) — o resumo está no Documentation.
 
 Escrita automática via GraphQL `insertTextualSysMLv2` sob o requirement (validado na API REST).
-Antes de escrever, o LLM (se disponível) enriquece `reason` e `evidenceSummary`.
+Publicação **sem LLM** por defeito (rápida); LLM opcional via `POST …/syson/publish?use_llm=true`.
 
 **Não** usar copy-paste no Documentation do requisito para o laudo.
 

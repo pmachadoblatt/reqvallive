@@ -3,6 +3,7 @@
 from reqvallive.syson.verification_result import (
     build_verification_result_fields,
     is_verification_result_name,
+    verification_result_doc_body,
     verification_result_item_name,
     verification_result_textual,
 )
@@ -14,7 +15,7 @@ def test_verification_result_textual_fail_battery():
             "ok": False,
             "metric": "batteryLevel",
             "expected": ">= 20.0",
-            "why": "violação",
+            "why": "below threshold",
             "success_criteria": {
                 "type": "threshold",
                 "metric": "batteryLevel",
@@ -36,20 +37,19 @@ def test_verification_result_textual_fail_battery():
         measured_at=1720000100.0,
     )
     assert fields["status"] == "FAIL"
-    assert fields["scType"] == "threshold"
-    assert fields["extremeKind"] == "min"
     assert fields["extremeValue"] == 15.2
     assert fields["failedAt"]
     name = verification_result_item_name(fields)
-    assert name.startswith("VerificationResult_FAIL_threshold_min15p2")
-    assert "abc123" in name
+    assert name == "VerificationResult_FAIL"
     text = verification_result_textual(fields)
-    assert f"item {name}" in text or "item VerificationResult_FAIL" in text
+    assert f"item {name}" in text
     assert "doc /*" in text
-    assert "status: FAIL" in text
-    assert "scType: threshold" in text
+    assert "=== FAIL ===" in verification_result_doc_body(fields)
+    assert "Criterion: batteryLevel" in verification_result_doc_body(fields)
     assert 'status = "FAIL"' in text
     assert "extremeValue = 15.2" in text
+    assert "scType" not in text
+    assert 'attribute sessionId = "abc123"' in text
 
 
 def test_verification_result_pass_has_min():
@@ -68,8 +68,9 @@ def test_verification_result_pass_has_min():
     assert fields["status"] == "PASS"
     assert fields["extremeValue"] == 55.0
     assert is_verification_result_name("VerificationResult")
-    assert is_verification_result_name("VerificationResult_PASS_threshold_min55")
+    assert is_verification_result_name("VerificationResult_PASS")
+    assert is_verification_result_name("VerificationResult_FAIL_threshold_min55")
     assert not is_verification_result_name("SuccessCriteria")
     name = verification_result_item_name(fields)
-    assert "PASS" in name
-    assert "threshold" in name
+    assert name == "VerificationResult_PASS"
+    assert "=== PASS ===" in verification_result_doc_body(fields)

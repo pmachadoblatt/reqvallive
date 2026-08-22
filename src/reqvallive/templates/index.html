@@ -1,24 +1,33 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ReqValLive — Validador de requisitos</title>
-  <link rel="stylesheet" href="/static/styles.css?v=13" />
+  <title>Pingo — Live requirement validation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css?v=17" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script type="module">
     import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
     mermaid.initialize({
       startOnLoad: false,
-      theme: "base",
+      theme: "dark",
       securityLevel: "loose",
       themeVariables: {
-        primaryColor: "#9ad0a8",
-        primaryTextColor: "#1c1917",
-        primaryBorderColor: "#1e293b",
-        lineColor: "#334155",
-        secondaryColor: "#e8a0bc",
-        tertiaryColor: "#9db4e0",
+        primaryColor: "#1a3d24",
+        primaryTextColor: "#f8fafc",
+        primaryBorderColor: "#39ff14",
+        lineColor: "#00aeef",
+        secondaryColor: "#1a2a3d",
+        tertiaryColor: "#141414",
+        background: "#0a0a0a",
+        mainBkg: "#141414",
+        nodeBorder: "#39ff14",
+        clusterBkg: "#111",
+        titleColor: "#39ff14",
+        edgeLabelBackground: "#141414",
       },
     });
     window.mermaid = mermaid;
@@ -26,190 +35,195 @@
 </head>
 <body>
   <header class="top">
-    <p class="brand">ReqValLive</p>
-    <h1>Validador de requisitos durante a missão</h1>
-    <p class="lede">
-      Importa requisitos do SysON: Documentation = marcador
-      <code>_go_to_verification</code>; Success Criteria = elementos no modelo.
-      O app interpreta o que vem do SysON, valida (OK/NOK) e mede via MQTT.
-    </p>
+    <div class="top-bar">
+      <div>
+        <p class="brand">Pingo</p>
+        <p class="brand-sub">CONCEPTIO</p>
+      </div>
+      <button type="button" id="btn-help" class="button help-btn" aria-expanded="false" aria-controls="help-drawer">Help</button>
+    </div>
+    <h1>Live requirement validation</h1>
   </header>
 
-  <nav class="steps" aria-label="Passos do assistente">
-    <button type="button" class="step active" data-step="1">1. Entrada</button>
-    <button type="button" class="step" data-step="2" disabled>2. Modelo</button>
+  <aside id="help-drawer" class="help-drawer hidden" role="region" aria-label="Help">
+    <div class="help-head">
+      <h2>How this works</h2>
+      <button type="button" class="modal-close" data-close-help aria-label="Close help">×</button>
+    </div>
+    <ol class="help-steps">
+      <li><strong>Import</strong> requirements from SysON. Documentation = marker <code>_go_to_verification</code>; Success Criteria = model elements.</li>
+      <li><strong>Gate</strong> ACCEPT/REJECT runs before measurement (MSFC / SIS-08 Methods).</li>
+      <li><strong>Connect</strong> MQTT, then <strong>Start measurement</strong> to collect live evidence.</li>
+      <li><strong>Stop</strong>, open the HTML report, optionally generate an LLM narrative, and <strong>Publish to SysON</strong>.</li>
+    </ol>
+    <p class="muted small">The app does not invent criteria — it reads SysON as-is. Exported <code>.sysml</code> is an MBSE skeleton, not Magic simulation.</p>
+    <p class="muted small">Contract: <code>docs/SYSON_CONTRATO_DOC.md</code></p>
+  </aside>
+
+  <nav class="steps" aria-label="Wizard steps">
+    <button type="button" class="step active" data-step="1">1. Input</button>
+    <button type="button" class="step" data-step="2" disabled>2. Model</button>
     <button type="button" class="step" data-step="3" disabled>3. MQTT</button>
-    <button type="button" class="step" data-step="4" disabled>4. Medição</button>
+    <button type="button" class="step" data-step="4" disabled>4. Measurement</button>
   </nav>
 
   <main>
-    <section id="panel-1" class="panel active" aria-labelledby="entrada-title">
-      <h2 id="entrada-title" class="panel-title">1. Entrada do requisito</h2>
-      <div class="source-tabs" role="tablist" aria-label="Fonte dos requisitos">
-        <button type="button" class="source-tab active" data-source="syson" role="tab" aria-selected="true">SysON</button>
-        <button type="button" class="source-tab" data-source="catia" role="tab" aria-selected="false">Export CATIA (.sysml)</button>
-        <button type="button" class="source-tab" data-source="markdown" role="tab" aria-selected="false">Markdown + LLM</button>
-      </div>
+    <section id="panel-1" class="panel active" aria-labelledby="input-title">
+      <h2 id="input-title" class="panel-title">1. Import from SysON</h2>
 
       <div id="source-syson" class="source-panel">
-        <p class="muted small">
-          No SysON: <strong>Documentation</strong> = só <code>_go_to_verification</code>.
-          O <strong>Success Criteria</strong> fica no modelo (item <code>SuccessCriteria</code> sob o requirement).
-          O app <em>não</em> inventa o critério — só lê o SysON.
-          Ver <code>docs/SYSON_CONTRATO_DOC.md</code>.
-        </p>
         <div class="hero-actions row">
-          <button type="button" id="btn-syson-probe" class="button">Ligar / listar projetos</button>
-          <label class="syson-project-label">Projeto
-            <select id="syson-project"></select>
+          <button type="button" id="btn-syson-probe" class="button">Connect / list projects</button>
+          <label class="syson-project-label" for="syson-project">
+            <span>Project</span>
+            <select id="syson-project" aria-label="SysON project"></select>
           </label>
-          <button type="button" id="btn-syson-import" class="primary">Importar do SysON</button>
-          <a class="button" href="/api/examples/syson-demo" download="reqvallive_demo.sysml">Baixar demo .sysml</a>
-          <button type="button" id="btn-open-sc-help">Como deve ser o critério?</button>
+          <button type="button" id="btn-syson-import" class="primary">Import from SysON</button>
+          <a class="button" href="/api/examples/syson-demo" download="reqvallive_demo.sysml">Download demo .sysml</a>
+          <button type="button" id="btn-open-sc-help" class="button">Success Criteria guide</button>
         </div>
         <pre id="syson-probe-out" class="out muted small-out hidden"></pre>
       </div>
 
-      <div id="source-catia" class="source-panel hidden">
-        <p class="muted small">
-          Use o campo <code>doc</code> com <code>_go_to_verification</code> (dica do orientador).
-          O app só valida o que estiver marcado.
-        </p>
-        <div class="hero-actions row">
-          <label class="file-btn button">
-            Carregar .sysml
-            <input type="file" id="sysml-file" accept=".sysml,.txt,text/plain" hidden />
-          </label>
-          <button type="button" id="btn-load-catia-example" class="button">Carregar exemplo CATIA</button>
-          <button type="button" id="btn-validate-catia" class="primary">Validar export (OK/NOK)</button>
-          <a class="button" href="/api/examples/catia-sysml" download="catia_export_go_to_verification.sysml">Baixar exemplo .sysml</a>
+      <details class="advanced source-advanced">
+        <summary>Advanced import (CATIA export, Markdown + LLM)</summary>
+        <div class="source-tabs" role="tablist" aria-label="Alternative sources">
+          <button type="button" class="source-tab" data-source="catia" role="tab" aria-selected="false">CATIA export (.sysml)</button>
+          <button type="button" class="source-tab" data-source="markdown" role="tab" aria-selected="false">Markdown + LLM</button>
         </div>
-        <textarea
-          id="sysml-input"
-          rows="14"
-          spellcheck="false"
-          placeholder="Cole aqui o export textual SysML v2 do CATIA Magic&#10;&#10;requirement RQ_… {&#10;  doc /* _go_to_verification … */&#10;}"
-        ></textarea>
-      </div>
 
-      <div id="source-markdown" class="source-panel hidden">
-        <div class="hero-actions row">
-          <label class="file-btn button">
-            Carregar documento
-            <input type="file" id="md-file" accept=".md,text/markdown,text/plain" hidden />
-          </label>
-          <button type="button" id="btn-interpret" class="primary">Interpretar com LLM</button>
-          <a id="btn-dl-sc-example" class="button" href="/api/criteria/example.md" download="success_criteria_modelo.md">Baixar exemplo MD</a>
-        </div>
-        <textarea
-          id="md-input"
-          rows="12"
-          spellcheck="false"
-          placeholder="Cole aqui os requisitos da missão&#10;&#10;Ex.: Cada drone não deve ficar com a bateria abaixo de 20%."
-        ></textarea>
-        <details class="advanced">
-          <summary>Opções avançadas</summary>
-          <div class="row">
-            <button type="button" id="btn-load-sample-md">Preencher com exemplo completo</button>
-            <button type="button" id="btn-probe-llm">Testar ligação LLM</button>
+        <div id="source-catia" class="source-panel hidden">
+          <div class="hero-actions row">
+            <label class="file-btn button">
+              Load .sysml
+              <input type="file" id="sysml-file" accept=".sysml,.txt,text/plain" hidden />
+            </label>
+            <button type="button" id="btn-load-catia-example" class="button">Load CATIA example</button>
+            <button type="button" id="btn-validate-catia" class="primary">Validate export (ACCEPT/REJECT)</button>
+            <a class="button" href="/api/examples/catia-sysml" download="catia_export_go_to_verification.sysml">Download example .sysml</a>
           </div>
-        </details>
-      </div>
+          <textarea
+            id="sysml-input"
+            rows="12"
+            spellcheck="false"
+            placeholder="Paste CATIA Magic SysML v2 textual export here"
+          ></textarea>
+        </div>
+
+        <div id="source-markdown" class="source-panel hidden">
+          <div class="hero-actions row">
+            <label class="file-btn button">
+              Load document
+              <input type="file" id="md-file" accept=".md,text/markdown,text/plain" hidden />
+            </label>
+            <button type="button" id="btn-interpret" class="primary">Interpret with LLM</button>
+            <a id="btn-dl-sc-example" class="button" href="/api/criteria/example.md" download="success_criteria_modelo.md">Download example MD</a>
+          </div>
+          <textarea
+            id="md-input"
+            rows="10"
+            spellcheck="false"
+            placeholder="Paste mission requirements here"
+          ></textarea>
+          <div class="row">
+            <button type="button" id="btn-load-sample-md">Fill with full example</button>
+            <button type="button" id="btn-probe-llm">Test LLM connection</button>
+          </div>
+        </div>
+      </details>
 
       <div id="gate-preview" class="gate-preview muted hidden">Gate: —</div>
       <pre id="out-1" class="out muted small-out"></pre>
     </section>
 
     <section id="panel-2" class="panel">
-      <h2>2. Validação OK/NOK e GSE</h2>
+      <h2 class="panel-title">2. Gate and GSE</h2>
       <div id="gate-panel-2" class="gate-preview muted hidden"></div>
-      <p class="muted small">
-        Se o gate estiver <strong>ACCEPT (OK)</strong>, monte o GSE (config de medição) e avance para o MQTT.
-        Se estiver <strong>REJECT (NOK)</strong>, corrija o SC no CATIA/export e valide de novo.
-      </p>
-      <div class="row">
-        <a id="btn-dl-validation" class="button" href="#" download="validation_status.json">Baixar validation_status.json</a>
-        <button type="button" id="btn-mount-gse" class="primary" disabled>Montar GSE</button>
-        <a id="btn-dl-gse" class="button hidden" href="#" download="gse_config.json">Baixar gse_config.json</a>
-        <button type="button" id="btn-goto-mqtt" class="primary" disabled>Continuar para MQTT</button>
+      <div class="row action-row">
+        <a id="btn-dl-validation" class="button" href="#" download="validation_status.json">validation_status.json</a>
+        <button type="button" id="btn-mount-gse" class="primary" disabled>Mount GSE</button>
+        <a id="btn-dl-gse" class="button hidden" href="#" download="gse_config.json">gse_config.json</a>
+        <button type="button" id="btn-goto-mqtt" class="primary" disabled>Continue to MQTT</button>
       </div>
       <pre id="gse-preview" class="out muted small-out hidden"></pre>
       <div class="grid-2">
         <div>
-          <h3>Diagrama</h3>
+          <h3>Diagram</h3>
           <div id="sysml-canvas" class="sysml-canvas"></div>
           <div class="row">
-            <a id="btn-dl-sysml" class="button" href="#">Baixar .sysml</a>
-            <a id="btn-dl-md" class="button" href="#">Baixar modelo .md</a>
+            <a id="btn-dl-sysml" class="button" href="#">Download .sysml</a>
+            <a id="btn-dl-md" class="button" href="#">Download model .md</a>
           </div>
+          <details class="advanced">
+            <summary>About SysML export</summary>
+            <p class="muted small">MBSE skeleton only — not live simulation in CATIA Magic. Import creates a separate namespace.</p>
+          </details>
         </div>
         <div>
-          <h3>SysML V2 (textual)</h3>
+          <h3>SysML v2 (textual)</h3>
           <pre id="sysml-preview" class="code"></pre>
         </div>
       </div>
     </section>
 
     <section id="panel-3" class="panel">
-      <h2>3. Ligação MQTT (GSE em campo)</h2>
-      <p id="gse-mqtt-hint" class="muted small hidden">
-        GSE montado — confirme broker/tópico e conecte para medir.
-      </p>
+      <h2 class="panel-title">3. MQTT</h2>
+      <p id="gse-mqtt-hint" class="status-line muted small hidden">GSE ready — connect, then start measurement.</p>
       <div class="mqtt-form">
         <label>Broker IP <input id="mqtt-broker" /></label>
-        <label>Porta <input id="mqtt-port" type="number" /></label>
-        <label>Tópico <input id="mqtt-topic" /></label>
+        <label>Port <input id="mqtt-port" type="number" /></label>
+        <label>Topic <input id="mqtt-topic" /></label>
         <label>User <input id="mqtt-user" /></label>
         <label>Password <input id="mqtt-pass" type="password" /></label>
       </div>
-      <div class="row">
-        <button type="button" id="btn-connect" class="primary">Conectar</button>
-        <button type="button" id="btn-disconnect">Desconectar</button>
-        <span id="conn-pill" class="pill">desconectado</span>
+      <div class="row action-row">
+        <button type="button" id="btn-connect" class="primary">Connect</button>
+        <button type="button" id="btn-disconnect">Disconnect</button>
+        <span id="conn-pill" class="pill">disconnected</span>
+        <button type="button" id="btn-start-monitor" class="primary" disabled>Start measurement</button>
       </div>
-      <button type="button" id="btn-start-monitor" class="primary" disabled>Iniciar medição</button>
       <pre id="out-3" class="out"></pre>
     </section>
 
     <section id="panel-4" class="panel">
-      <h2>Medição ao vivo</h2>
-      <div class="row">
+      <h2 class="panel-title">4. Measurement</h2>
+      <div class="row action-row">
         <span id="mqtt-status-pill" class="pill">—</span>
         <span id="verdict-pill" class="pill">—</span>
-        <button type="button" id="btn-stop-monitor">Encerrar medição</button>
-        <a id="btn-report" class="button primary" href="#" target="_blank">Relatório HTML</a>
-        <button type="button" id="btn-syson-publish" class="primary" disabled>Publicar no SysON</button>
-        <button type="button" id="btn-catia-update" class="button" disabled>UPDATE CATIA (LLM)</button>
-        <a id="btn-dl-catia-update" class="button hidden" href="#" download="verification_update.json">Baixar JSON</a>
-        <a id="btn-dl-catia-csv" class="button hidden" href="#" download="verification_sync.csv" title="Atualiza Documentation no projeto Magic aberto via Excel/CSV Sync">Baixar CSV Sync (modelo aberto)</a>
-        <a id="btn-dl-catia-sysml" class="button hidden" href="#" download="verification_update.sysml" title="Arquivo/diff — import cria namespace NOVO, não edita o aberto">Baixar .sysml (arquivo)</a>
+        <button type="button" id="btn-stop-monitor">Stop measurement</button>
+        <a id="btn-report" class="button primary" href="#" target="_blank">HTML report</a>
+        <button type="button" id="btn-llm-narrative" class="button" disabled title="Optional — uses Ollama; does not change PASS/FAIL">LLM narrative</button>
+        <button type="button" id="btn-syson-publish" class="primary" disabled>Publish to SysON</button>
       </div>
-      <p id="syson-publish-hint" class="muted small hidden">
-        Publica um item <code>VerificationResult_FAIL_…</code> (ou PASS) <strong>ligado a cada requisito</strong>.
-        O nome já mostra o veredicto; seleccione o item no SysON para ler o Documentation com motivo/extremos.
-        O Documentation do requisito fica só com <code>_go_to_verification</code>. LLM enriquece reason/evidence.
-      </p>
       <pre id="syson-publish-preview" class="out muted small-out hidden"></pre>
-      <p id="catia-update-hint" class="muted small hidden">
-        Para atualizar o modelo <strong>já aberto</strong> no CATIA: use o <strong>CSV Sync</strong>
-        (não o .sysml). Ver <code>docs/CATIA_UPDATE_FORMATOS.md</code>.
-      </p>
-      <pre id="catia-update-preview" class="out muted small-out hidden"></pre>
-      <div id="live-verdict" class="live-verdict muted">Aguardando início da medição…</div>
+      <div id="llm-narrative-panel" class="narrative-panel hidden"></div>
+
+      <details class="advanced">
+        <summary>Advanced: CATIA Magic update (legacy)</summary>
+        <div class="row">
+          <button type="button" id="btn-catia-update" class="button" disabled>Generate CATIA update (LLM)</button>
+          <a id="btn-dl-catia-update" class="button hidden" href="#" download="verification_update.json">Download JSON</a>
+          <a id="btn-dl-catia-csv" class="button hidden" href="#" download="verification_sync.csv">Download CSV Sync</a>
+          <a id="btn-dl-catia-sysml" class="button hidden" href="#" download="verification_update.sysml">Download .sysml</a>
+        </div>
+        <p id="catia-update-hint" class="muted small hidden">Open-model update: use CSV Sync. See docs.</p>
+        <pre id="catia-update-preview" class="out muted small-out hidden"></pre>
+      </details>
+
+      <div id="live-verdict" class="live-verdict muted">Waiting for measurement to start…</div>
       <div class="grid-2">
         <div>
-          <h3>Evidência por drone</h3>
-          <p class="muted small">Atual continua a actualizar; FAIL fica latched se houve violação.</p>
+          <h3>Evidence per drone</h3>
           <div class="live-stats" id="drone-stats"></div>
           <details class="advanced">
-            <summary>Diagrama SysML ao vivo</summary>
+            <summary>Live SysML diagram</summary>
             <div id="sysml-live" class="sysml-canvas"></div>
           </details>
         </div>
         <div>
-          <h3>Tendência e limiar</h3>
+          <h3>Trend</h3>
           <canvas id="live-chart" height="140"></canvas>
-          <h3>Feed MQTT</h3>
+          <h3>MQTT feed</h3>
           <div id="msg-feed" class="msg-feed"></div>
         </div>
       </div>
@@ -221,29 +235,29 @@
     <div class="modal-backdrop" data-close-modal></div>
     <div class="modal-card">
       <div class="modal-head">
-        <h2 id="sc-modal-title">Como deve ser o critério de validação</h2>
-        <button type="button" class="modal-close" data-close-modal aria-label="Fechar">×</button>
+        <h2 id="sc-modal-title">How Success Criteria should be written</h2>
+        <button type="button" class="modal-close" data-close-modal aria-label="Close">×</button>
       </div>
       <p class="muted">
-        O critério (Success Criteria) define o que é «passar» na verificação — idealmente aprovado
-        <em>antes</em> de medir (MSFC / SIS-08 Methods).
+        Success Criteria define what “pass” means — ideally approved
+        <em>before</em> measuring (MSFC / SIS-08 Methods).
       </p>
       <ol id="sc-lifecycle" class="sc-lifecycle"></ol>
-      <h3>8 pontos a cobrir</h3>
+      <h3>8 dimensions to cover</h3>
       <div id="sc-dimensions" class="sc-dimensions"></div>
-      <h3>Método × critério</h3>
+      <h3>Method × criteria</h3>
       <ul id="sc-methods" class="sc-methods"></ul>
-      <h3>Exemplo bem feito</h3>
+      <h3>Good example</h3>
       <pre id="sc-md-example" class="code sc-example"></pre>
       <div class="row">
-        <button type="button" id="btn-load-sc-model" class="primary">Usar no editor</button>
-        <a class="button" href="/api/criteria/example.md" download="success_criteria_modelo.md">Baixar .md</a>
-        <button type="button" data-close-modal>Fechar</button>
+        <button type="button" id="btn-load-sc-model" class="primary">Use in editor</button>
+        <a class="button" href="/api/criteria/example.md" download="success_criteria_modelo.md">Download .md</a>
+        <button type="button" data-close-modal>Close</button>
       </div>
     </div>
   </div>
 
-  <script src="/static/diagram.js?v=9"></script>
-  <script src="/static/app.js?v=14"></script>
+  <script src="/static/diagram.js?v=11"></script>
+  <script src="/static/app.js?v=17"></script>
 </body>
 </html>

@@ -14,7 +14,7 @@ window.ReqValDiagram = {
         <div class="board-label">«view» Solution Architecture</div>
         <div class="diagram-tabs">
           <span class="pill">UML (Mermaid)</span>
-          <span class="muted small">Motor gratuito no browser — alternativa leve a Magic/TomSawyer</span>
+          <span class="muted small">Free browser engine — lightweight alternative to Magic/TomSawyer</span>
         </div>
         <pre class="mermaid" id="${container.id}-mmd">${escapeHtml(mermaidSrc)}</pre>
         <div class="board-label">Instâncias / satisfy (runtime)</div>
@@ -144,9 +144,9 @@ function renderDroneBoxes(drones, reqs, session) {
       return `<div class="${klass}">
           <div class="box-title part">«part» ${escapeHtml(d.id)} :> SystemUnderTest</div>
           <div class="box-body">
-            ${metricLines || '<div class="muted">sem métricas por entidade</div>'}
-            <div class="muted">${d.latitude != null ? `${Number(d.latitude).toFixed(5)}, ${d.longitude}` : "sem posição"}</div>
-            ${satInner || '<div class="muted">sem requisito por entidade</div>'}
+            ${metricLines || '<div class="muted">no per-entity metrics</div>'}
+            <div class="muted">${d.latitude != null ? `${Number(d.latitude).toFixed(5)}, ${d.longitude}` : "no position"}</div>
+            ${satInner || '<div class="muted">no per-entity requirement</div>'}
           </div>
         </div>`;
     })
@@ -165,7 +165,7 @@ function renderReqBoxes(reqs) {
             : sc.type === "rate"
               ? `{ d(metric)/dt ${sc.operator} ${sc.value} ${sc.unit || ""} }`
               : sc.type === "dwell"
-                ? `{ ${sc.operator} ${sc.value} por ≤ ${sc.max_duration_ms} ms }`
+                ? `{ ${sc.operator} ${sc.value} for ≤ ${sc.max_duration_ms} ms }`
                 : "{ … }";
       return `<div class="req-box">
           <div class="box-title req">«requirement» ${escapeHtml(r.req_id)}</div>
@@ -200,7 +200,7 @@ function renderVerif(topic, sep, overall, reqs, session) {
   return `<div class="ver-box">
       <div class="box-title ver">«verification» VerifyMission</div>
       <div class="box-body">
-        <div>objective: verify requisitos da missão</div>
+        <div>objective: verify mission requirements</div>
         <div>MQTT topic: <code>${escapeHtml(topic)}</code></div>
         <div>min_separation_m: <strong>${sep != null ? Number(sep).toFixed(2) : "—"}</strong></div>
         <div>overall: <strong class="${overall === true ? "ok" : overall === false ? "nok" : ""}">${

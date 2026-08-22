@@ -9,6 +9,9 @@ from typing import Any
 
 VR_ITEM_NAME = "VerificationResult"
 
+# Atributos expostos no SysON (resto fica só no Documentation legível).
+_SYSML_ATTRIBUTES = ("status", "sessionId", "failedAt", "extremeValue", "unit")
+
 
 def _esc(s: Any) -> str:
     text = str(s if s is not None else "").replace("\\", "\\\\").replace('"', '\\"')
@@ -21,7 +24,7 @@ def _iso(ts: float | None) -> str:
         return ""
     try:
         return datetime.fromtimestamp(float(ts), tz=timezone.utc).strftime(
-            "%Y-%m-%dT%H:%M:%SZ"
+            "%Y-%m-%d %H:%M:%S UTC"
         )
     except (TypeError, ValueError, OSError):
         return ""
@@ -41,53 +44,70 @@ def is_verification_result_name(name: str) -> bool:
 
 
 def verification_result_item_name(fields: dict[str, Any]) -> str:
-    """Nome visível no explorador SysON — PASS/FAIL no 2º segmento (sem abrir o item)."""
+    """Nome curto no explorador — o requisito pai já dá o contexto (RQ_BAT_001, …)."""
     status = re.sub(r"[^A-Za-z0-9]", "", str(fields.get("status") or "NA")) or "NA"
-    parts = [VR_ITEM_NAME, status]
-    sc_type = re.sub(r"[^A-Za-z0-9]", "", str(fields.get("scType") or ""))[:12]
-    if sc_type:
-        parts.append(sc_type)
-    ek = re.sub(r"[^A-Za-z0-9]", "", str(fields.get("extremeKind") or ""))
+    return f"{VR_ITEM_NAME}_{status}"
+
+
+def _human_extreme(fields: dict[str, Any]) -> str:
     ev = fields.get("extremeValue")
-    if ek and ev is not None:
-        try:
-            num = f"{float(ev):g}".replace(".", "p").replace("-", "m")
-        except (TypeError, ValueError):
-            num = "x"
-        parts.append(f"{ek}{num}")
-    metric = re.sub(r"[^A-Za-z0-9]", "", str(fields.get("metric") or ""))[:24]
-    if metric:
-        parts.append(metric)
-    sid = re.sub(r"[^A-Za-z0-9]", "", str(fields.get("sessionId") or ""))[:8]
-    if sid:
-        parts.append(sid)
-    return "_".join(parts)[:80]
+    if ev is None:
+        return ""
+    unit = str(fields.get("unit") or "").strip()
+    u = f" {unit}" if unit else ""
+    kind = str(fields.get("extremeKind") or "value")
+    if kind == "min":
+        return f"Minimum during run: {ev:g}{u}"
+    if kind == "max":
+        return f"Maximum during run: {ev:g}{u}"
+    if kind == "first_fail":
+        return f"Value at first violation: {ev:g}{u}"
+    return f"Observed extreme: {ev:g}{u}"
 
 
 def verification_result_doc_body(fields: dict[str, Any]) -> str:
-    """Texto no Documentation do item — legível ao seleccionar no SysON."""
-    lines = [
-        f"status: {fields.get('status') or ''}",
-        f"scType: {fields.get('scType') or ''}",
-        f"metric: {fields.get('metric') or ''}",
-        f"expected: {fields.get('expected') or ''}",
-    ]
-    if fields.get("failedAt"):
-        lines.append(f"failedAt: {fields['failedAt']}")
-    if fields.get("extremeValue") is not None and fields.get("extremeKind"):
-        unit = f" {fields['unit']}" if fields.get("unit") else ""
-        lines.append(
-            f"extreme: {fields['extremeKind']}={fields['extremeValue']}{unit}"
-        )
-    if fields.get("reason"):
-        lines.append(f"reason: {fields['reason']}")
-    if fields.get("evidenceSummary"):
-        lines.append(f"evidence: {fields['evidenceSummary']}")
+    """Documentation do item — texto para leitura humana (bater o olho)."""
+    status = str(fields.get("status") or "?")
+    metric = str(fields.get("metric") or "").strip()
+    expected = str(fields.get("expected") or "").strip()
+
+    lines: list[str] = [f"=== {status} ===", ""]
+
+    if metric and expected:
+        lines.append(f"Criterion: {metric}")
+        lines.append(f"Expected: {expected}")
+    elif expected:
+        lines.append(f"Expected: {expected}")
+    elif metric:
+        lines.append(f"Metric: {metric}")
+
+    lines.append("")
+
+    if status == "FAIL":
+        if fields.get("failedAt"):
+            lines.append(f"When: first violation at {fields['failedAt']}")
+        extreme = _human_extreme(fields)
+        if extreme:
+            lines.append(extreme)
+    elif status == "PASS":
+        extreme = _human_extreme(fields)
+        if extreme:
+            lines.append(extreme)
+        else:
+            lines.append("All samples met the criterion during the run.")
+
+    reason = str(fields.get("reason") or "").strip()
+    if reason and reason.upper() not in (status, "PASS", "FAIL", "INCONCLUSIVE"):
+        lines.append("")
+        lines.append(f"Detail: {reason}")
+
     if fields.get("sessionId"):
-        lines.append(f"sessionId: {fields['sessionId']}")
+        lines.append("")
+        lines.append(f"ReqValLive session: {fields['sessionId']}")
+
     if fields.get("measuredAt"):
-        lines.append(f"measuredAt: {fields['measuredAt']}")
-    # doc /* */ não gosta de */
+        lines.append(f"Measurement ended: {fields['measuredAt']}")
+
     return "\n".join(lines).replace("*/", "* /")
 
 
@@ -108,7 +128,6 @@ def build_verification_result_fields(
     expected = str(req_update.get("expected") or finding.get("expected") or "")
     why = str(req_update.get("why") or finding.get("why") or "")
 
-    # LLM pode já ter preenchido reason / evidenceSummary
     reason = str(req_update.get("syson_reason") or why or status)
     evidence = str(req_update.get("syson_evidence_summary") or "")
 
@@ -119,7 +138,6 @@ def build_verification_result_fields(
 
     entities = finding.get("entities") or []
     if status == "FAIL" and entities:
-        # Escolhe a 1ª falha mais cedo; extreme = min (threshold baixo) ou valor da 1ª falha
         best = None
         for e in entities:
             ts = e.get("first_fail_ts")
@@ -130,6 +148,8 @@ def build_verification_result_fields(
         if best is None:
             best = entities[0]
         failed_at = _iso(best.get("first_fail_ts"))
+        if best.get("id"):
+            reason = f"{best['id']}: {why}" if why else str(best["id"])
         if best.get("min") is not None:
             extreme_value = float(best["min"])
             extreme_kind = "min"
@@ -140,7 +160,6 @@ def build_verification_result_fields(
             extreme_value = float(best["max"])
             extreme_kind = "max"
     elif status == "PASS" and entities:
-        # Em PASS: regista extremo observado (útil p/ bateria = min)
         mins = [float(e["min"]) for e in entities if e.get("min") is not None]
         maxs = [float(e["max"]) for e in entities if e.get("max") is not None]
         if mins:
@@ -150,7 +169,6 @@ def build_verification_result_fields(
             extreme_value = max(maxs)
             extreme_kind = "max"
 
-    # unit / scType a partir do SC
     sc = req_update.get("success_criteria") or finding.get("success_criteria") or {}
     sc_type = ""
     if isinstance(sc, dict):
@@ -162,11 +180,11 @@ def build_verification_result_fields(
     if not evidence:
         bits = []
         if failed_at:
-            bits.append(f"falhou em {failed_at}")
+            bits.append(f"first violation at {failed_at}")
         if extreme_value is not None and extreme_kind:
             bits.append(f"{extreme_kind}={extreme_value:g}{(' ' + unit) if unit else ''}")
         if expected:
-            bits.append(f"esperado {expected}")
+            bits.append(f"expected {expected}")
         evidence = "; ".join(bits) if bits else reason
 
     return {
@@ -182,7 +200,7 @@ def build_verification_result_fields(
         "unit": unit,
         "sessionId": session_id,
         "measuredAt": _iso(measured_at),
-        "itemName": "",  # preenchido abaixo
+        "itemName": "",
     }
 
 
@@ -203,21 +221,7 @@ def verification_result_textual(fields: dict[str, Any]) -> str:
         *[f"    {ln}" if ln else "    " for ln in doc.splitlines()],
         "    */",
     ]
-    order = [
-        "status",
-        "scType",
-        "metric",
-        "expected",
-        "reason",
-        "evidenceSummary",
-        "failedAt",
-        "extremeValue",
-        "extremeKind",
-        "unit",
-        "sessionId",
-        "measuredAt",
-    ]
-    for key in order:
+    for key in _SYSML_ATTRIBUTES:
         val = fields.get(key)
         if val is None or val == "":
             continue

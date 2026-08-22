@@ -5,7 +5,7 @@ const $ = (id) => document.getElementById(id);
 function on(id, event, handler) {
   const el = $(id);
   if (!el) {
-    console.warn(`[ReqValLive] elemento #${id} não encontrado — skip ${event}`);
+    console.warn(`[Pingo] element #${id} not found — skip ${event}`);
     return;
   }
   el.addEventListener(event, handler);
@@ -52,12 +52,12 @@ async function loadDefaults() {
     if ($("mqtt-user")) $("mqtt-user").value = state.defaults.mqtt_username || "";
     const hint = [];
     if (!state.defaults.llm_configured) {
-      hint.push("LLM_API_KEY não configurada no .env.");
+      hint.push("LLM_API_KEY not set in .env.");
     }
     hint.push(`LLM: ${state.defaults.llm_model} @ ${state.defaults.llm_base_url}`);
     if ($("out-1")) $("out-1").textContent = hint.join(" ");
   } catch (e) {
-    if ($("out-1")) $("out-1").textContent = `Falha ao carregar defaults: ${e}`;
+    if ($("out-1")) $("out-1").textContent = `Failed to load defaults: ${e}`;
   }
 }
 
@@ -136,7 +136,7 @@ function renderGatePreview(session, targetId) {
         .join("")}</ul>`;
     }
     if (warns.length) {
-      body += `<div class="gate-warn-label">Avisos (não bloqueiam a medição — critério ainda incompleto face à MSFC)</div>
+      body += `<div class="gate-warn-label">Warnings (do not block measurement — criteria still incomplete vs MSFC)</div>
         <ul class="gate-list warnings">${warns
           .map(
             (w) =>
@@ -147,20 +147,20 @@ function renderGatePreview(session, targetId) {
           .join("")}</ul>`;
     }
     if (r.status === "ACCEPT" && !warns.length) {
-      body += `<p class="muted">Critério completo o suficiente para medição live.</p>`;
+      body += `<p class="muted">Criteria complete enough for live measurement.</p>`;
     }
     return head + body;
   });
 
   const title = ok
     ? warnN
-      ? `Aprovado com ${warnN} aviso(s) — pode medir, mas o critério pode ser enriquecido`
-      : `Aprovado — pode seguir para MQTT / medição`
-    : `Recusado — medição bloqueada até corrigir`;
+      ? `Approved with ${warnN} warning(s) — you may measure, but criteria can be enriched`
+      : `Approved — continue to MQTT / measurement`
+    : `Rejected — measurement blocked until fixed`;
 
   el.innerHTML =
     `<div class="gate-title">${escapeHtml(g.global_status)} — ${escapeHtml(title)}</div>` +
-    `<div class="muted">${g.accepted_count} ACCEPT · ${g.rejected_count} REJECT · ${warnN} avisos</div>` +
+    `<div class="muted">${g.accepted_count} ACCEPT · ${g.rejected_count} REJECT · ${warnN} warnings</div>` +
     blocks.join("");
 }
 
@@ -172,6 +172,80 @@ function openScModal() {
 function closeScModal() {
   const modal = $("sc-modal");
   if (modal) modal.classList.add("hidden");
+}
+
+function toggleHelp(force) {
+  const drawer = $("help-drawer");
+  const btn = $("btn-help");
+  if (!drawer) return;
+  const open = force != null ? force : drawer.classList.contains("hidden");
+  drawer.classList.toggle("hidden", !open);
+  if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function renderNarrative(report) {
+  const panel = $("llm-narrative-panel");
+  if (!panel || !report) return;
+  panel.classList.remove("hidden");
+  const timeline = (report.timeline || [])
+    .map((t) => `<li>${escapeHtml(String(t))}</li>`)
+    .join("");
+  const reqs = (report.per_requirement || [])
+    .map(
+      (r) =>
+        `<li><strong>${escapeHtml(String(r.verdict || "?"))}</strong> ${escapeHtml(
+          String(r.req_id || "")
+        )} — ${escapeHtml(String(r.note || ""))}</li>`
+    )
+    .join("");
+  const recs = (report.recommendations || [])
+    .map((t) => `<li>${escapeHtml(String(t))}</li>`)
+    .join("");
+  panel.innerHTML = `
+    <div class="narrative-head">
+      <h3>${escapeHtml(report.title || "Mission narrative")}</h3>
+      <span class="muted small">LLM · ${escapeHtml(report.model || "")}</span>
+    </div>
+    <p>${escapeHtml(report.summary || "")}</p>
+    ${timeline ? `<h4>Timeline</h4><ul>${timeline}</ul>` : ""}
+    ${reqs ? `<h4>Per requirement</h4><ul>${reqs}</ul>` : ""}
+    ${recs ? `<h4>Recommendations</h4><ul>${recs}</ul>` : ""}
+  `;
+}
+
+async function generateNarrative() {
+  if (!state.sessionId) return;
+  const panel = $("llm-narrative-panel");
+  if (panel) {
+    panel.classList.remove("hidden");
+    panel.innerHTML = "<p class='muted'>Generating narrative with LLM… (may take 30–90s)</p>";
+  }
+  try {
+    const res = await fetch(`/api/sessions/${state.sessionId}/report/narrative`, {
+      method: "POST",
+    });
+    const raw = await res.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      if (panel) panel.innerHTML = `<pre class="out">${escapeHtml(raw.slice(0, 500))}</pre>`;
+      return;
+    }
+    if (!res.ok) {
+      const detail = data.detail || data;
+      if (panel) {
+        panel.innerHTML = `<p class="live-verdict fail">${escapeHtml(
+          typeof detail === "string" ? detail : JSON.stringify(detail)
+        )}</p>`;
+      }
+      return;
+    }
+    renderSession(data);
+    if (data.llm_mission_report) renderNarrative(data.llm_mission_report);
+  } catch (e) {
+    if (panel) panel.innerHTML = `<p class="live-verdict fail">${escapeHtml(String(e))}</p>`;
+  }
 }
 
 
@@ -252,6 +326,12 @@ function renderSession(session) {
     const canPublish = !!session.measurement_ended && !!session.syson_link;
     $("btn-syson-publish").disabled = !canPublish;
   }
+  if ($("btn-llm-narrative")) {
+    $("btn-llm-narrative").disabled = !session.measurement_ended;
+  }
+  if ($("llm-narrative-panel") && session.llm_mission_report) {
+    renderNarrative(session.llm_mission_report);
+  }
   if ($("syson-publish-hint")) {
     $("syson-publish-hint").classList.toggle("hidden", !session.syson_link);
   }
@@ -263,13 +343,13 @@ function renderSession(session) {
     $("catia-update-preview").classList.remove("hidden");
     const enr = session.catia_update.llm_enrichment;
     const summary = enr?.engineer_summary_pt
-      ? `\n\nResumo LLM:\n${enr.engineer_summary_pt}`
+      ? `\n\nLLM summary:\n${enr.engineer_summary_pt}`
       : "";
     const ch = session.catia_update.catia_channels?.open_model_update?.how_pt || "";
     $("catia-update-preview").textContent =
-      `UPDATE CATIA pronto (${session.catia_update.overall_tag}).` +
+      `CATIA update ready (${session.catia_update.overall_tag}).` +
       summary +
-      (ch ? `\n\nModelo aberto:\n${ch}` : "") +
+      (ch ? `\n\nOpen model:\n${ch}` : "") +
       "\n\n" +
       JSON.stringify(session.catia_update, null, 2);
   }
@@ -285,7 +365,7 @@ function renderSession(session) {
     if (session.gse_config) {
       $("gse-preview").classList.remove("hidden");
       $("gse-preview").textContent =
-        "GSE montado.\n" + JSON.stringify(session.gse_config, null, 2);
+        "GSE mounted.\n" + JSON.stringify(session.gse_config, null, 2);
     } else {
       $("gse-preview").classList.add("hidden");
       $("gse-preview").textContent = "";
@@ -303,7 +383,7 @@ async function mountGse() {
   if (!state.sessionId) {
     if ($("gse-preview")) {
       $("gse-preview").classList.remove("hidden");
-      $("gse-preview").textContent = "Valide o export CATIA antes de montar o GSE.";
+      $("gse-preview").textContent = "Validate the SysON import before mounting GSE.";
     }
     return;
   }
@@ -333,19 +413,19 @@ async function mountGse() {
 
 function statusLabel(s) {
   const map = {
-    disconnected: "desconectado",
-    connecting: "conectando…",
-    listening: "escutando",
-    no_messages: "sem mensagens",
-    error: "falha de conexão",
+    disconnected: "disconnected",
+    connecting: "connecting…",
+    listening: "listening",
+    no_messages: "no messages",
+    error: "connection failed",
   };
   return map[s] || s || "—";
 }
 
 function measurePill(session) {
-  if (session.measurement_ended) return "medição encerrada";
-  if (session.measuring) return "a medir";
-  return "aguardando início";
+  if (session.measurement_ended) return "measurement ended";
+  if (session.measuring) return "measuring";
+  return "waiting to start";
 }
 
 function updateMonitor(session) {
@@ -362,7 +442,7 @@ function updateMonitor(session) {
   }
   if ($("conn-pill")) {
     $("conn-pill").textContent = session.connected
-      ? `conectado · ${measurePill(session)}`
+      ? `connected · ${measurePill(session)}`
       : statusLabel(session.mqtt_status);
   }
   if ($("btn-start-monitor")) {
@@ -370,8 +450,8 @@ function updateMonitor(session) {
   }
   if ($("btn-stop-monitor")) {
     $("btn-stop-monitor").disabled = !session.measuring && !session.measurement_ended;
-    if (session.measurement_ended) $("btn-stop-monitor").textContent = "Medição encerrada";
-    else $("btn-stop-monitor").textContent = "Encerrar medição";
+    if (session.measurement_ended) $("btn-stop-monitor").textContent = "Measurement ended";
+    else $("btn-stop-monitor").textContent = "Stop measurement";
   }
 
   const metrics = trackedMetrics(session);
@@ -386,26 +466,26 @@ function updateMonitor(session) {
     const ov = session.overall_ok;
     if (!session.measuring && !session.measurement_ended) {
       lv.className = "live-verdict muted";
-      lv.textContent = "Aguardando início da medição…";
+      lv.textContent = "Waiting for measurement to start…";
       if (vp) vp.textContent = "—";
     } else if (ov === true) {
       lv.className = "live-verdict pass";
-      lv.textContent = "PASS — todos os drones cumprem o critério em todas as amostras até agora.";
+      lv.textContent = "PASS — all drones meet the criteria on every sample so far.";
       if (vp) { vp.textContent = "PASS"; vp.className = "pill pass-pill"; }
     } else if (ov === false) {
       const fails = (session.findings || []).filter((f) => f.ok === false);
       const bits = fails
         .flatMap((f) => (f.entities || []).filter((e) => e.ok === false))
-        .map((e) => `${e.id}: min=${e.min ?? "—"} 1ª=${e.first_fail ?? "—"} atual=${e.last ?? "—"}`)
+        .map((e) => `${e.id}: min=${e.min ?? "—"} 1st=${e.first_fail ?? "—"} now=${e.last ?? "—"}`)
         .join(" · ");
       lv.className = "live-verdict fail";
       lv.textContent =
-        "FAIL — houve violação (latched). Valores atuais continuam a actualizar. " +
+        "FAIL — violation occurred (latched). Current values keep updating. " +
         (bits || (session.findings || []).map((f) => f.why).join(" "));
       if (vp) { vp.textContent = "FAIL"; vp.className = "pill fail-pill"; }
     } else {
       lv.className = "live-verdict muted";
-      lv.textContent = "A medir… a aguardar amostras suficientes.";
+      lv.textContent = "Measuring… waiting for enough samples.";
       if (vp) { vp.textContent = "…"; vp.className = "pill"; }
     }
   }
@@ -431,10 +511,10 @@ function updateMonitor(session) {
             latched === true ? "pass" : latched === false ? "fail" : ""
           }">${badge}</span></div>
           <div class="drone-metrics">
-            <span><em>atual</em> ${last ?? "—"}</span>
-            <span><em>mín</em> ${minV ?? "—"}</span>
-            <span><em>1ª falha</em> ${first ?? "—"}</span>
-            <span><em>falhas</em> ${nFail}/${nSamp}</span>
+            <span><em>current</em> ${last ?? "—"}</span>
+            <span><em>min</em> ${minV ?? "—"}</span>
+            <span><em>1st fail</em> ${first ?? "—"}</span>
+            <span><em>fails</em> ${nFail}/${nSamp}</span>
           </div>
           <div class="muted">${metric}${
             d.latitude != null
@@ -443,7 +523,7 @@ function updateMonitor(session) {
           }</div>
         </div>`;
       })
-      .join("") || '<div class="muted">Nenhum drone ainda</div>';
+      .join("") || '<div class="muted">No drones yet</div>';
 
     const sep = session.global_metrics?.min_separation_m;
     if (sep != null && metrics.some((m) => /separation|min_separation/i.test(m))) {
@@ -478,7 +558,7 @@ function updateMonitor(session) {
         if (!parts.length && m.lat != null) parts.push(`lat=${m.lat}`, `lon=${m.lon}`);
         const cls = m.violation ? "msg-fail" : "";
         return `<div class="${cls}">[${t}] ${m.drone} ${parts.join(" ")}${
-          m.violation ? " · VIOLAÇÃO" : ""
+          m.violation ? " · VIOLATION" : ""
         }</div>`;
       })
       .join("");
@@ -489,7 +569,7 @@ function updateMonitor(session) {
     if (findings.length) {
       $("out-4").textContent = findings
         .map((f) => {
-          const st = f.ok === true ? "PASS" : f.ok === false ? "FAIL" : "PENDENTE";
+          const st = f.ok === true ? "PASS" : f.ok === false ? "FAIL" : "PENDING";
           return `[${st}] ${f.req_id} (${f.metric})\n  ${f.why}`;
         })
         .join("\n\n");
@@ -525,9 +605,9 @@ function updateChart(session) {
   const limiar = thr?.type === "threshold" ? thr.value : thr?.type === "range" ? thr.min_value : null;
   const thrLabel =
     thr?.type === "threshold"
-      ? `limiar ${thr.operator} ${thr.value}`
+      ? `threshold ${thr.operator} ${thr.value}`
       : thr?.type === "range"
-        ? `faixa [${thr.min_value}, ${thr.max_value}]`
+        ? `range [${thr.min_value}, ${thr.max_value}]`
         : "";
 
   let labels;
@@ -538,7 +618,7 @@ function updateChart(session) {
   const primaryId = (session.requirements || [])[0]?.req_id;
 
   if (/separation|min_separation/i.test(metric)) {
-    labels = ["atual", "1ª violação"];
+    labels = ["current", "1st violation"];
     const gReq = (session.requirements || []).find((r) => /separation/i.test(r.metric || ""));
     values = [
       session.global_metrics?.min_separation_m ?? null,
@@ -559,14 +639,14 @@ function updateChart(session) {
 
   const datasets = [
     {
-      label: `${metric} atual${thrLabel ? ` · ${thrLabel}` : ""}`,
+      label: `${metric} current${thrLabel ? ` · ${thrLabel}` : ""}`,
       data: values,
       backgroundColor: colors,
     },
   ];
   if (mins) {
     datasets.push({
-      label: "mínimo na medição",
+      label: "minimum during run",
       data: mins,
       backgroundColor: "rgba(185, 28, 28, 0.35)",
     });
@@ -609,7 +689,7 @@ function startStream() {
 }
 
 async function interpretMd() {
-  if ($("out-1")) $("out-1").textContent = "Chamando LLM… (pode demorar 30–90s)";
+  if ($("out-1")) $("out-1").textContent = "Calling LLM… (may take 30–90s)";
   try {
     const res = await fetch("/api/requirements/from-markdown", {
       method: "POST",
@@ -623,7 +703,7 @@ async function interpretMd() {
     } catch {
       if ($("out-1")) {
         $("out-1").textContent =
-          `Erro HTTP ${res.status}: resposta não-JSON do servidor.\n${raw.slice(0, 500)}`;
+          `HTTP error ${res.status}: non-JSON response from server.\n${raw.slice(0, 500)}`;
       }
       return;
     }
@@ -645,13 +725,13 @@ function applyEntryResult(data, sourceLabel) {
     const warns = data.criteria_gate?.warning_count || 0;
     const tagged = data.parse_summary?.tagged_for_verification;
     $("out-1").textContent =
-      `${sourceLabel} — ${data.requirements?.length || 0} requisito(s). Gate: ${gate}` +
-      (warns ? ` (${warns} avisos)` : "") +
+      `${sourceLabel} — ${data.requirements?.length || 0} requirement(s). Gate: ${gate}` +
+      (warns ? ` (${warns} warnings)` : "") +
       (tagged != null ? `. Tagged: ${tagged}` : "") +
-      `. Métricas: ${metrics || "—"}.`;
+      `. Metrics: ${metrics || "—"}.`;
     if (warns > 0 && gate === "ACCEPT") {
       $("out-1").textContent +=
-        "\nCritério aprovado para medir, mas ainda incompleto face à checklist MSFC — veja os avisos abaixo.";
+        "\nCriteria approved for measurement, but still incomplete vs MSFC checklist — see warnings below.";
     }
   }
   renderSession(data);
@@ -669,10 +749,10 @@ function applyEntryResult(data, sourceLabel) {
 async function validateCatiaExport() {
   const text = $("sysml-input")?.value || "";
   if (!text.trim()) {
-    if ($("out-1")) $("out-1").textContent = "Cole ou carregue um export .sysml antes de validar.";
+    if ($("out-1")) $("out-1").textContent = "Paste or load a .sysml export before validating.";
     return;
   }
-  if ($("out-1")) $("out-1").textContent = "Lendo export CATIA e aplicando gate OK/NOK…";
+  if ($("out-1")) $("out-1").textContent = "Reading CATIA export and running ACCEPT/REJECT gate…";
   try {
     const res = await fetch("/api/requirements/from-sysml", {
       method: "POST",
@@ -686,7 +766,7 @@ async function validateCatiaExport() {
     } catch {
       if ($("out-1")) {
         $("out-1").textContent =
-          `Erro HTTP ${res.status}: resposta não-JSON.\n${raw.slice(0, 500)}`;
+          `HTTP error ${res.status}: non-JSON response.\n${raw.slice(0, 500)}`;
       }
       return;
     }
@@ -699,14 +779,14 @@ async function validateCatiaExport() {
       );
       return;
     }
-    applyEntryResult(data, "Export CATIA");
+    applyEntryResult(data, "CATIA export");
   } catch (e) {
     if ($("out-1")) $("out-1").textContent = String(e);
   }
 }
 
 async function loadCatiaExample() {
-  if ($("out-1")) $("out-1").textContent = "Carregando exemplo CATIA…";
+  if ($("out-1")) $("out-1").textContent = "Loading CATIA example…";
   try {
     const res = await fetch("/api/examples/catia-sysml");
     const text = await res.text();
@@ -717,7 +797,7 @@ async function loadCatiaExample() {
     if ($("sysml-input")) $("sysml-input").value = text;
     if ($("out-1")) {
       $("out-1").textContent =
-        "Exemplo carregado. Clique em «Validar export (OK/NOK)» para o passo 1.";
+        "Example loaded. Click «Validate export (ACCEPT/REJECT)» for step 1.";
     }
   } catch (e) {
     if ($("out-1")) $("out-1").textContent = String(e);
@@ -725,12 +805,13 @@ async function loadCatiaExample() {
 }
 
 function setSourceTab(source) {
+  const advanced = document.querySelector(".source-advanced");
+  if (advanced && !advanced.open) advanced.open = true;
   document.querySelectorAll(".source-tab").forEach((btn) => {
     const on = btn.dataset.source === source;
     btn.classList.toggle("active", on);
     btn.setAttribute("aria-selected", on ? "true" : "false");
   });
-  $("source-syson")?.classList.toggle("hidden", source !== "syson");
   $("source-catia")?.classList.toggle("hidden", source !== "catia");
   $("source-markdown")?.classList.toggle("hidden", source !== "markdown");
 }
@@ -739,7 +820,7 @@ async function probeSyson() {
   const out = $("syson-probe-out");
   if (out) {
     out.classList.remove("hidden");
-    out.textContent = "A contactar SysON…";
+    out.textContent = "Contacting SysON…";
   }
   try {
     const res = await fetch("/api/syson/probe?req=RQ_");
@@ -763,10 +844,8 @@ async function probeSyson() {
         .map((r) => `${r.name} @ ${r.project} (${r.doc_status})`)
         .join("\n");
       out.textContent =
-        `SysON OK — ${data.health?.project_count || 0} projeto(s).\n` +
-        (reqs || "Nenhum requisito RQ_* encontrado.") +
-        "\n\nLembrete: Documentation = só _go_to_verification; " +
-        "SC = item SuccessCriteria no modelo.";
+        `SysON OK — ${data.health?.project_count || 0} project(s).\n` +
+        (reqs || "No RQ_* requirements found.");
     }
   } catch (e) {
     if (out) out.textContent = String(e);
@@ -775,7 +854,7 @@ async function probeSyson() {
 
 async function importSyson() {
   const projectId = $("syson-project")?.value || null;
-  if ($("out-1")) $("out-1").textContent = "A importar do SysON (marcador + SC do modelo)…";
+  if ($("out-1")) $("out-1").textContent = "Importing from SysON (marker + model SC)…";
   try {
     const res = await fetch("/api/syson/import", {
       method: "POST",
@@ -805,8 +884,8 @@ async function importSyson() {
     applyEntryResult(data, "SysON");
     if (data.parse_summary?.missing_sc?.length && $("out-1")) {
       $("out-1").textContent +=
-        `\nSC em falta no modelo: ${data.parse_summary.missing_sc.join(", ")}. ` +
-        "Crie o item SuccessCriteria sob o requirement no SysON.";
+        `\nMissing SC in model: ${data.parse_summary.missing_sc.join(", ")}. ` +
+        "Create the SuccessCriteria item under the requirement in SysON.";
     }
   } catch (e) {
     if ($("out-1")) $("out-1").textContent = String(e);
@@ -818,10 +897,10 @@ async function publishSyson() {
   const prev = $("syson-publish-preview");
   if (prev) {
     prev.classList.remove("hidden");
-    prev.textContent = "A publicar VerificationResult no SysON…";
+    prev.textContent = "Publishing VerificationResult to SysON (deterministic, no LLM)…";
   }
   try {
-    const res = await fetch(`/api/sessions/${state.sessionId}/syson/publish`, {
+    const res = await fetch(`/api/sessions/${state.sessionId}/syson/publish?use_llm=false`, {
       method: "POST",
     });
     const raw = await res.text();
@@ -846,21 +925,18 @@ async function publishSyson() {
       const pub = data.syson_publish || {};
       const lines = [
         pub.ok
-          ? "OK — VerificationResult escrito no SysON. Refresque o explorador (F5) sob o requisito."
-          : "Publish parcial/falhou — veja results abaixo.",
+          ? "OK — VerificationResult written under each requirement in SysON. Check the explorer; drag onto the diagram if needed."
+          : "Publish partial/failed — see results below.",
         pub.note || "",
         "",
       ];
       for (const r of pub.results || []) {
         const f = r.fields || {};
-        const v = (r.verified && r.verified.attributes) || {};
         lines.push(
-          `• ${r.req_id}: ${f.itemName || "VerificationResult"} → ` +
-            `status=${v.status || f.status || "?"} ` +
-            `extreme=${v.extremeKind || f.extremeKind || ""}=${v.extremeValue ?? f.extremeValue ?? "—"}`
+          `• ${r.req_id}: ${f.itemName || "VerificationResult"} — ${f.status || "?"}` +
+            (f.failedAt ? ` · ${f.failedAt}` : "") +
+            (f.extremeValue != null ? ` · ${f.extremeKind || "value"}=${f.extremeValue}` : "")
         );
-        if (f.reason || v.reason) lines.push(`  reason: ${v.reason || f.reason}`);
-        if (f.failedAt || v.failedAt) lines.push(`  failedAt: ${v.failedAt || f.failedAt}`);
       }
       lines.push("", JSON.stringify(pub, null, 2));
       prev.textContent = lines.filter((x) => x !== undefined).join("\n");
@@ -872,7 +948,7 @@ async function publishSyson() {
 
 async function applyMqttAndConnect() {
   if (!state.sessionId) {
-    if ($("out-3")) $("out-3").textContent = "Gere o modelo (passo 1) antes de conectar.";
+    if ($("out-3")) $("out-3").textContent = "Build the model (step 1) before connecting.";
     return;
   }
   await fetch(`/api/sessions/${state.sessionId}/mqtt`, {
@@ -931,13 +1007,13 @@ async function stopMonitor() {
   if ($("out-4")) {
     const findings = data.findings || [];
     const head = data.measurement_ended
-      ? "Medição encerrada — resultados congelados. Pacote UPDATE CATIA (base) gerado.\n\n"
+      ? "Measurement ended — results frozen. Base CATIA update package generated.\n\n"
       : "";
     $("out-4").textContent =
       head +
       findings
         .map((f) => {
-          const st = f.ok === true ? "PASS" : f.ok === false ? "FAIL" : "PENDENTE";
+          const st = f.ok === true ? "PASS" : f.ok === false ? "FAIL" : "PENDING";
           return `[${st}] ${f.req_id}: ${f.why}`;
         })
         .join("\n");
@@ -949,7 +1025,7 @@ async function generateCatiaUpdate() {
   if ($("catia-update-preview")) {
     $("catia-update-preview").classList.remove("hidden");
     $("catia-update-preview").textContent =
-      "Chamando Ollama para interpretar o laudo e montar UPDATE CATIA…";
+      "Calling Ollama to interpret the report and build CATIA update…";
   }
   const res = await fetch(
     `/api/sessions/${state.sessionId}/catia/update?use_llm=true`,
@@ -976,13 +1052,13 @@ async function generateCatiaUpdate() {
   renderSession(data);
   if (data.llm_error && $("catia-update-preview")) {
     $("catia-update-preview").textContent =
-      `LLM falhou (${data.llm_error}). Mantido UPDATE determinístico.\n\n` +
+      `LLM failed (${data.llm_error}). Kept deterministic UPDATE.\n\n` +
       ($("catia-update-preview").textContent || "");
   }
 }
 
 async function probeLlm() {
-  if ($("out-1")) $("out-1").textContent = "Testando LLM…";
+  if ($("out-1")) $("out-1").textContent = "Testing LLM…";
   try {
     const res = await fetch("/api/llm/probe");
     const data = await res.json();
@@ -1007,6 +1083,10 @@ function bindUi() {
     closeScModal();
   });
   on("btn-open-sc-help", "click", () => openScModal());
+  on("btn-help", "click", () => toggleHelp());
+  document.querySelectorAll("[data-close-help]").forEach((el) => {
+    el.addEventListener("click", () => toggleHelp(false));
+  });
   document.querySelectorAll("[data-close-modal]").forEach((el) => {
     el.addEventListener("click", () => closeScModal());
   });
@@ -1022,7 +1102,7 @@ function bindUi() {
     const file = ev.target.files?.[0];
     if (!file || !$("sysml-input")) return;
     $("sysml-input").value = await file.text();
-    if ($("out-1")) $("out-1").textContent = `Arquivo carregado: ${file.name}`;
+    if ($("out-1")) $("out-1").textContent = `File loaded: ${file.name}`;
   });
   on("btn-load-catia-example", "click", () => loadCatiaExample().catch((e) => {
     if ($("out-1")) $("out-1").textContent = String(e);
@@ -1038,10 +1118,10 @@ function bindUi() {
   on("btn-goto-mqtt", "click", () => {
     gotoStep(3);
   });
-  setSourceTab("syson");
   on("btn-syson-probe", "click", () => probeSyson().catch(console.error));
   on("btn-syson-import", "click", () => importSyson().catch(console.error));
   on("btn-syson-publish", "click", () => publishSyson().catch(console.error));
+  on("btn-llm-narrative", "click", () => generateNarrative().catch(console.error));
   on("btn-connect", "click", () => applyMqttAndConnect().catch(console.error));
   on("btn-disconnect", "click", async () => {
     if (!state.sessionId) return;
@@ -1052,7 +1132,7 @@ function bindUi() {
   on("btn-stop-monitor", "click", () => stopMonitor().catch(console.error));
   on("btn-catia-update", "click", () => generateCatiaUpdate().catch(console.error));
 
-  // Editor vazio por defeito — placeholder guia o utilizador
+  // Empty editor by default — placeholder guides the user
   loadDefaults();
   loadCriteriaModel();
   probeSyson().catch(() => {});

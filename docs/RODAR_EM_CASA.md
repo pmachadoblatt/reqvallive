@@ -66,9 +66,10 @@ reqvallive
 No SysON: criar projeto (ex. `ReqTest`) → importar/colar `models/syson/reqvallive_demo.sysml`
 (ou criar `RQ_01` + atributos SC + `_go_to_verification`). Contrato: `docs/SYSON_CONTRATO_DOC.md`.
 
-No ReqValLive: separador **SysON** → Probe → Importar (demo multi-RQ) → medir → **Publicar no SysON**.
-Aparece sob cada requisito um item `VerificationResult_PASS_…` ou `VerificationResult_FAIL_…`
-(com `scType` no nome). Contrato: `docs/SYSON_CONTRATO_DOC.md`.
+No ReqValLive: **SysON** (passo 1) → Connect / list projects → **Import from SysON** → medir → **Publish to SysON**.
+Sob cada requisito no **explorador** SysON aparece `VerificationResult_PASS_…` ou `VerificationResult_FAIL_…`
+(com `scType` no nome). Para ver no **diagrama**, arraste o item do explorador (opcional).
+Contrato completo: `docs/SYSON_CONTRATO_DOC.md`.
 
 **Validado em casa (2026-07-30) e no lab (2026-08):** medição MQTT + publicação no SysON **funcionou**.
 

@@ -105,6 +105,7 @@ class MeasurementSession:
     catia_update: dict[str, Any] | None = None
     syson_link: dict[str, Any] | None = None
     syson_publish: dict[str, Any] | None = None
+    llm_mission_report: dict[str, Any] | None = None
     mqtt_status: str = "disconnected"  # disconnected|connecting|listening|no_messages|error
     last_error: str | None = None
     drones: dict[str, DroneState] = field(default_factory=dict)
@@ -762,6 +763,9 @@ class MeasurementSession:
                 "syson_link": copy.deepcopy(self.syson_link) if self.syson_link else None,
                 "syson_publish": copy.deepcopy(self.syson_publish)
                 if self.syson_publish
+                else None,
+                "llm_mission_report": copy.deepcopy(self.llm_mission_report)
+                if self.llm_mission_report
                 else None,
             }
 

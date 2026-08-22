@@ -1,26 +1,50 @@
 \chapter{Resultados e discussão}
 \label{cap:resultados}
 
-% Chris Eng.ish --- IV. Results / Discussions (Design Cycle feedback)
-% Exemplify use | Discuss use | Verify if objectives are closed
-
 \section{Exemplificação do uso do artefacto}
 \label{sec:caso}
 
 \subsection{Caso CONCEPTIO --- loop fechado SysON $\leftrightarrow$ MQTT}
 
 Demonstração ponta a ponta: modelo com múltiplos Success Criteria (threshold,
-range, statistical) no SysON; import e gate no ReqValLive; medição com telemetria
-MQTT do laboratório; publicação de \texttt{VerificationResult} no modelo.
+range, statistical, \textbf{rate}, \textbf{dwell}) no SysON; import e gate no
+ReqValLive; medição com telemetria MQTT do laboratório ou simulador
+(\texttt{scripts/publish\_three\_drones.py}); publicação de
+\texttt{VerificationResult} no modelo.
 
-% TODO: inserir figuras (explorador SysON, UI live, laudo HTML) e tabela de
-% requisitos/SC usados na demo ao orientador (2026-08-03).
+O orientador validou o ciclo duro em agosto/2026 (SysON + MQTT + write-back).
+Este capítulo documenta o ensaio formal com critérios Jefferson de taxa e
+persistência, descrito em \texttt{docs/ENSAIO\_SYSON\_RATE\_DWELL.md}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Requisitos do demo SysON usados no ensaio rate/dwell (2026-08).}
+  \label{tab:ensaio-reqs}
+  \begin{tabular}{@{}lllp{4.2cm}@{}}
+    \toprule
+    ID & Tipo SC & Veredicto esperado & Nota \\
+    \midrule
+    \texttt{RQ\_BAT\_RATE\_001} & rate & FAIL & $\approx$60\%/min a 1\,Hz no simulador \\
+    \texttt{RQ\_BAT\_DWELL\_001} & dwell & FAIL & charlie inicia a 15\% ($<$20\%) \\
+    \texttt{RQ\_BAT\_001} & threshold & PASS/FAIL & conforme corrida \\
+    \texttt{RQ\_SEP\_001} & threshold global & PASS & separação Haversine \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% TODO: inserir figuras (explorador SysON, UI live, laudo HTML) — ver ENSAIO doc.
 
 \subsection{Protocolo de ensaio}
 
-Descrever: missão / roteiro, tópicos MQTT, SC aprovados no gate, janela de
-medição, critérios de sucesso do experimento ($\geq$2 tipos de SC; evidência
-coerente com telemetria).
+\begin{enumerate}
+  \item Importar \texttt{reqvallive\_demo.sysml} no SysON; Documentation =
+        só \texttt{\_go\_to\_verification}; SC no item \texttt{SuccessCriteria}.
+  \item ReqValLive: import $\rightarrow$ gate ACCEPT $\rightarrow$ montar GSE.
+  \item Ligar MQTT (broker/tópico do lab ou simulador local).
+  \item Iniciar medição ($\geq$30\,s); encerrar; gerar laudo HTML (secções de
+        procedimento: método Test, tópico, janela, snapshot SC).
+  \item Publicar \texttt{VerificationResult} no SysON; capturas para este capítulo.
+\end{enumerate}
 
 \section{Discussão do uso do artefacto}
 \label{sec:discussao}
@@ -32,18 +56,26 @@ escrever no modelo} sem depender do runtime de simulação SysML no Magic.
 
 \subsection{Naturezas de observação --- cobertura actual vs.\ roadmap}
 
-A taxonomia GSE (valor, tempo, sequência, taxa, eventos, frequência, estados)
-mostra que a PoC cobre bem a natureza \textbf{valor} e amplitude em janela; taxa
-(dwell), eventos e consistência de estados permanecem trabalhos futuros --- sem
-invalidar a demonstração do ciclo duro.
+A taxonomia GSE (Jefferson) distingue valor, tempo, sequência, taxa, eventos,
+frequência e consistência entre estados~\cite{jefferson2026gse}.
+A PoC implementa \textbf{quatro} naturezas no motor live:
+\begin{itemize}
+  \item \textbf{valor} --- threshold e range;
+  \item \textbf{amplitude em janela} --- statistical (range/max/min);
+  \item \textbf{taxa} --- \texttt{rate} ($\Delta/\Delta t$);
+  \item \textbf{persistência} --- \texttt{dwell} (condição por tempo máximo).
+\end{itemize}
+Sequência de eventos, ocorrência/ausência, frequência e estados permanecem
+trabalho futuro --- telemetria do lab ainda não as fornece de forma estruturada.
 
 \subsection{Ameaças à validade}
 
 \begin{itemize}
-  \item Escala de laboratório (não industrial).
-  \item Dependência do protocolo MQTT do CONCEPTIO.
-  \item Expectativa errada sobre SysML (esqueleto vs.\ simulação).
-  \item Heterogeneidade de payload mitigada pelo padrão do lab / SARITA.
+  \item Escala de laboratório (simulador + voos reais pontuais).
+  \item Dependência do protocolo MQTT do CONCEPTIO (JSON por drone).
+  \item Expectativa errada sobre SysML (esqueleto vs.\ simulação) --- mitigada
+        na UI e no laudo.
+  \item Taxa derivada sensível ao intervalo de amostragem MQTT.
 \end{itemize}
 
 \section{Verificação dos objetivos}
@@ -51,18 +83,19 @@ invalidar a demonstração do ciclo duro.
 
 \begin{table}[htbp]
   \centering
-  \caption{Objectivos específicos vs.\ evidência actual (esqueleto --- actualizar).}
+  \caption{Objectivos específicos vs.\ evidência (2026-08).}
   \label{tab:objetivos}
   \begin{tabular}{@{}lp{7.2cm}@{}}
     \toprule
     Objectivo & Estado / evidência \\
     \midrule
-    Gate ACCEPT/REJECT & Implementado e usado em demo \\
-    Avaliação live MQTT & threshold / range / statistical; rate e dwell (Jefferson); latch FAIL \\
-    Laudo + esqueleto SysML & HTML + VerificationResult / export \\
-    Demo CONCEPTIO & Loop aceite pelo orientador (2026-08) \\
+    Gate ACCEPT/REJECT & Implementado; demo orientador ago/2026 \\
+    Avaliação live MQTT & threshold, range, statistical, \textbf{rate}, \textbf{dwell}; latch FAIL \\
+    Laudo + esqueleto SysML & HTML com procedimento + snapshot SC; VerificationResult \\
+    UI principal em inglês & SysON como fluxo principal; CATIA legado secundário \\
+    Ensaio documentado rate/dwell & \texttt{docs/ENSAIO\_SYSON\_RATE\_DWELL.md} \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-% TODO: detalhar métricas de ensaio, laudos arquivados, regressão pytest.
+Regressão: 113 testes \texttt{pytest} (incl.\ \texttt{test\_jefferson\_natures.py}).

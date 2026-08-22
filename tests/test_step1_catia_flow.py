@@ -58,5 +58,5 @@ def test_step1_catia_example_to_gate_accept_and_ready_to_measure():
     session.stop_measurement()
     report = client.get(f"/api/sessions/{sid}/report")
     assert report.status_code == 200
-    assert "Procedimento de V" in report.text
-    assert "Success Criteria aprovado" in report.text
+    assert "V&amp;V procedure" in report.text or "V&V procedure" in report.text
+    assert "Approved Success Criteria (snapshot)" in report.text

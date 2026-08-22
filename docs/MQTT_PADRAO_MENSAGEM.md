@@ -48,4 +48,4 @@ O motor (threshold, range, amplitude, taxa, dwell) e o SysON não dependem do en
 - Não obriga o firmware dos drones reais a mudar nesta sprint.
 - Não abre Jefferson 5–7 (evento/frequência/sequência) — o heartbeat ajuda *depois*, não é pré-requisito da UI.
 
-Confirmar com o orientador, quando for a entrega MQTT: prefixo `concept/…` e nível **L1 apenas**.
+Confirmar com o orientador, quando for a entrega MQTT: prefixo `concept/…` e nível **L1 apenas**. Ver checklist em `docs/MQTT_AGUARDANDO_ORIENTADOR.md`.

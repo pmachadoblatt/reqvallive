@@ -79,9 +79,9 @@ def test_snapshot_frozen_on_start_survives_mutation():
     assert dedicated.json()["requirements"][0]["success_criteria"]["value"] == original_value
 
     report = build_html_report(session)
-    assert "Success Criteria aprovado (snapshot)" in report
+    assert "Approved Success Criteria (snapshot)" in report
     assert str(int(original_value)) in report or f"{original_value}" in report
-    assert "Congelado" in report
+    assert "Frozen at" in report
 
 
 def test_snapshot_survives_stop():

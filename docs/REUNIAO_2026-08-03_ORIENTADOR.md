@@ -24,7 +24,7 @@ SysML (SysON) → interpretar Success Criteria → MQTT → laudo → write-back
 
 O orientador: o “desespero” da dissertação (provar que dá) **está superado**. Daqui em diante: **enriquecer medição + escrever**.
 
-Demonstrado na reunião: multi-requisito (threshold / range / statistical), gate com avisos (MSFC), GSE, MQTT, publicação no SysON (após refresh no explorador; diagrama ainda por arrastar).
+Demonstrado na reunião: multi-requisito (threshold / range / statistical), gate com avisos (MSFC), GSE, MQTT, publicação no SysON. Itens `VerificationResult_*` aparecem no **explorador**; diagrama via **arrastar** (opcional). Refresh da página só se a árvore não atualizar.
 
 ## O que NÃO é bloqueio
 

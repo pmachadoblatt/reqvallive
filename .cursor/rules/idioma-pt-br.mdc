@@ -1,0 +1,28 @@
+---
+description: Português brasileiro formal ao falar com o usuário (evitar pt-PT e informal)
+alwaysApply: true
+---
+
+# Idioma — pt-BR formal
+
+Quando o usuário escreve em português, responder em **português do Brasil (pt-BR)**, tom **formal e acadêmico**.
+
+## Evitar
+
+- Formas de **português europeu** ou tratamento **tu**: "quiseres", "actualizar", "secundarizar" no sentido europeu, "trazes", "clica" (preferir "clique"), "arrasta" → "arraste".
+- Vocabulário europeu quando houver equivalente BR: "actual" → **atual**, "ficheiro" → **arquivo**, "telemóvel" → evitar.
+- Informalidade desnecessária: "tá", "pra", "né", "beleza".
+
+## Preferir
+
+- **Você** (ou voz impessoal): "Se você quiser", "Você pode", "É possível".
+- Ortografia BR: atualizar, conexão, laudo, requisito.
+- UI e docs do app em **inglês** na face principal; português só em docs acadêmicos (`latex/`, `docs/` para a dissertação).
+
+## Exemplos
+
+| Evitar | Usar |
+|--------|------|
+| Se quiseres testar… | Se você quiser testar… |
+| Actualiza o explorador | Atualize o explorador |
+| Clica em Importar | Clique em **Import from SysON** |

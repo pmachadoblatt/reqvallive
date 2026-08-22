@@ -1,73 +1,84 @@
 \chapter{Revisão da literatura}
 \label{cap:literatura}
 
-% Chris Eng.ish --- II. Literature Review (Rigor Cycle)
-% + Optional: State of the art of the Problem Domain (Relevance Cycle)
-
 \section{Linha de base da pesquisa}
 \label{sec:baseline}
 
-% Research Baseline --- conceitos e obras âncora que sustentam o rigor.
-
 \subsection{Success Criteria e verificação \& validação}
 
-Success Criteria verificáveis exigem desempenho, tolerâncias, escopo e
-coerência com o método de verificação~\cite{msfc3173,sis08methods}.
-
-% TODO: aprofundar Methods × Success; gate ACCEPT/REJECT como operacionalização.
+Success Criteria verificáveis exigem desempenho mensurável, tolerâncias, escopo
+temporal/espacial e coerência com o método de verificação escolhido~\cite{msfc3173,sis08methods}.
+O gate ACCEPT/REJECT do ReqValLive operacionaliza a aprovação do critério
+\emph{antes} da actividade de V\&V --- alinhado às oito considerações MSFC
+(Performance, Environment, Restrictions, Checkpoints, entre outras).
 
 \subsection{MBSE e SysML~v2}
 
 O SysML~v2 oferece notação textual e APIs para modelos de requisitos~\cite{sysmlv2}.
-Neste trabalho, o export SysML serve como \emph{esqueleto} para reuso MBSE, sem
-pretensão de runtime de simulação live no CATIA Magic.
+Neste trabalho, o export SysML serve como \emph{esqueleto} para reuso MBSE; o laudo
+HTML é a evidência primária de medição. O SysON actua como repositório do ciclo
+PoC (import de SC do modelo, write-back de \texttt{VerificationResult}).
 
-% TODO: distinguir Requirement Table v1 vs vistas SysML v2; papel do SysON no PoC.
+A distinção Requirement Table (SysML v1) vs.\ vistas SysML v2 no CATIA Magic 2026x
+é relevante: a PoC não depende de CSV Sync como caminho principal.
 
 \subsection{Telemetria e missões multiagente em laboratório}
 
-O CONCEPTIO opera drones reais com publicação MQTT sob protocolo do laboratório.
-Arenas multiagente (ex.: referências motivacionais tipo WARA-PS) ilustram o
-problema de demos sem SC pré-declarados, sem serem meta de escala deste trabalho.
+O CONCEPTIO opera drones reais com publicação MQTT (JSON por entidade).
+Trabalhos em arenas multiagente (ex.: WARA-PS) ilustram padronização de tópicos
+e presença, mas não são meta de escala desta dissertação --- adoptam-se apenas
+como referência de \emph{dialecto} futuro (\texttt{docs/MQTT\_PADRAO\_MENSAGEM.md}).
 
 \section{Mapeamento da literatura}
 \label{sec:slr}
 
-% Literature Mapping (SLR) --- protocolar busca, inclusão/exclusão, síntese.
-
-\subsection{Protocolo de busca (a completar)}
+\subsection{Protocolo de busca}
 
 \begin{itemize}
-  \item \textbf{Perguntas:} Como Success Criteria são formalizados para medição
-        live? Que gaps existem entre MBSE e telemetria real?
-  \item \textbf{Fontes:} IEEE Xplore, Scopus, ACM, repositórios CONCEPTIO/CET-ADS.
+  \item \textbf{Perguntas:} (P1) Como formalizar Success Criteria para medição
+        live? (P2) Que gaps existem entre MBSE e telemetria real de UAS?
+  \item \textbf{Fontes:} IEEE Xplore, Scopus, ACM; documentação NASA/ESA (MSFC,
+        SIS-08); repositórios CONCEPTIO/CET-ADS.
   \item \textbf{Palavras-chave:} \emph{success criteria}, \emph{live verification},
-        \emph{UAS telemetry}, \emph{SysML}, \emph{ground support equipment}, MQTT.
-  \item \textbf{Critérios de inclusão/exclusão:} a definir na execução da SLR.
+        \emph{UAS telemetry}, \emph{SysML v2}, \emph{ground support equipment}, MQTT.
+  \item \textbf{Inclusão:} trabalhos com critérios mensuráveis + evidência temporal;
+        ligação explícita requisito--método--evidência.
+  \item \textbf{Exclusão:} produtos comerciais sem artefacto replicável; simulação
+        pura sem telemetria real quando o claim é V\&V de missão.
 \end{itemize}
 
-\subsection{Síntese esperada}
+\subsection{Síntese}
 
-Tabela de trabalhos relacionados vs.\ contribuição deste mestrado (gate + live
-MQTT + laudo + esqueleto SysML / write-back). Gap: falta de ciclo operacional
-fechado em escala de laboratório acadêmico com drones reais.
+\begin{table}[htbp]
+  \centering
+  \caption{Gap identificado vs.\ contribuição deste mestrado (síntese inicial).}
+  \label{tab:slr-gap}
+  \begin{tabular}{@{}lp{5.5cm}@{}}
+    \toprule
+    Tema na literatura & Lacuna / contribuição ReqValLive \\
+    \midrule
+    SC em MBSE & Critérios no modelo; gate antes de medir \\
+    Telemetria UAS & Avaliação live multi-drone com latch temporal \\
+    Laudos de V\&V & HTML auditável + snapshot SC congelado \\
+    Write-back MBSE & \texttt{VerificationResult} no SysON (PoC) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \section{Estado da arte do domínio do problema}
 \label{sec:estado-arte}
 
-% Optional --- Relevance Cycle: práticas GSE, naturezas de observação, ADS-VD.
-
 \subsection{Naturezas de observação em GSE}
 
-Contacto com especialista em GSE (Jefferson / Sintra Lab) sugeriu uma taxonomia
-de naturezas de observação para além de limiares simples~\cite{jefferson2026gse}:
-valor; tempo (duração/latência); sequência de eventos; taxa de variação;
-ocorrência/ausência; frequência; consistência entre estados.
+Contacto com especialista GSE (Jefferson / Sintra Lab) produziu taxonomia de
+naturezas de observação~\cite{jefferson2026gse}: valor; tempo; sequência;
+taxa; ocorrência/ausência; frequência; consistência entre estados.
 
-A PoC actual cobre sobretudo \textbf{valor} (threshold/range), amplitude em
-janela e métricas entre entidades; as demais naturezas alimentam a discussão
-metodológica e o roadmap do artefacto.
+A PoC implementa valor, amplitude em janela, taxa e dwell; as restantes alimentam
+discussão e roadmap (\texttt{docs/JEFFERSON\_NATUREZAS\_OBSERVACAO.md}).
 
-\subsection{Virtual Demonstrator e medição de métricas}
+\subsection{Virtual Demonstrator e métricas cruzadas}
 
-% TODO: posicionar ADS-VD / CET-ADS como âncora de relevância (medição cruzada).
+O ADS-VD / CET-ADS ancora a relevância industrial: medição cruzada entre
+agentes reais e simulados. O ReqValLive posiciona-se na camada de \emph{validação
+de requisitos declarados}, não na simulação física completa.

@@ -274,13 +274,10 @@ class SysonPublisher:
             "block": VR_ITEM_NAME,
             "results": results,
             "note": (
-                f"Cada requisito recebe um item «{VR_ITEM_NAME}_STATUS_…» "
-                "(nome já mostra PASS/FAIL + extremo). "
-                "Seleccione o item → Documentation tem o resumo; "
-                "expanda para ver atributos status/reason/failedAt/extremeValue. "
-                "Documentation do requisito permanece só com _go_to_verification. "
-                "Refresque o explorador SysON. "
-                "Itens antigos só com o nome genérico podem ser apagados à mão."
+                f"Cada requisito recebe um item «{VR_ITEM_NAME}_PASS» ou «{VR_ITEM_NAME}_FAIL» "
+                "(nome curto — o requisito pai dá o contexto). "
+                "Abra o item → Documentation tem o resumo legível. "
+                "Itens antigos com nomes longos podem ser apagados à mão."
             ),
             "update": update,
         }
