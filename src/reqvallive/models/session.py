@@ -379,18 +379,18 @@ class MeasurementSession:
                         drone.actual_by_req[rid] = drone.fail_actual_by_req[rid]
                         if is_window_statistical(req):
                             series_note = (
-                                f"série=[{drone.min_actual_by_req[rid]:g}..{drone.max_actual_by_req[rid]:g}]"
+                                f"series=[{drone.min_actual_by_req[rid]:g}..{drone.max_actual_by_req[rid]:g}]"
                             )
                         elif is_rate(req):
-                            series_note = "taxa"
+                            series_note = "rate"
                         elif is_dwell(req):
                             series_note = "dwell"
                         else:
                             series_note = f"min={drone.min_actual_by_req[rid]:g}"
                         drone.detail_by_req[rid] = (
-                            f"1ª violação: {drone.fail_detail_by_req[rid]} "
-                            f"(atual={observed:g}, {series_note}, "
-                            f"falhas={drone.fail_count_by_req.get(rid, 0)}/"
+                            f"first violation: {drone.fail_detail_by_req[rid]} "
+                            f"(latest={observed:g}, {series_note}, "
+                            f"failures={drone.fail_count_by_req.get(rid, 0)}/"
                             f"{drone.sample_count_by_req.get(rid, 0)})"
                         )
                     else:
@@ -434,8 +434,8 @@ class MeasurementSession:
                         if latched is False and rid in self.global_fail_actual_by_req:
                             self.global_actual_by_req[rid] = self.global_fail_actual_by_req[rid]
                             self.global_detail_by_req[rid] = (
-                                f"1ª violação: {self.global_fail_detail_by_req[rid]} "
-                                f"(atual={fv:g}, falhas="
+                                f"first violation: {self.global_fail_detail_by_req[rid]} "
+                                f"(latest={fv:g}, failures="
                                 f"{self.global_fail_count_by_req.get(rid, 0)}/"
                                 f"{self.global_sample_count_by_req.get(rid, 0)})"
                             )
@@ -594,21 +594,21 @@ class MeasurementSession:
                     fails = [e for e in entities if e["ok"] is False]
                     if ok is False and fails:
                         bits = ", ".join(
-                            f"{e['id']}: 1ª={e['first_fail']} min={e['min']} "
-                            f"atual={e['last']} ({e['fail_count']}/{e['sample_count']} falhas)"
+                            f"{e['id']}: first={e['first_fail']} min={e['min']} "
+                            f"latest={e['last']} ({e['fail_count']}/{e['sample_count']} failures)"
                             for e in fails
                         )
                         why = (
-                            f"Violação durante a medição (all_timesteps). {bits}. "
-                            f"Critério: {expected}."
+                            f"Violation during the measurement (all_timesteps). {bits}. "
+                            f"Criterion: {expected}."
                         )
                     elif ok is True:
                         why = (
-                            f"Todos os drones satisfizeram «{expected}» "
-                            f"em todas as amostras da medição."
+                            f"Every aircraft satisfied «{expected}» "
+                            f"on every sample in the measurement."
                         )
                     else:
-                        why = "Aguardando telemetria com a métrica pedida."
+                        why = "Waiting for telemetry that carries the requested measure."
                     out.append(
                         {
                             "req_id": req.req_id,

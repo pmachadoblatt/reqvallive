@@ -10,7 +10,7 @@ from typing import Any
 # Import SysML v2 textual NÃO atualiza o modelo aberto — cria namespace separado.
 # Ver docs/CATIA_UPDATE_FORMATOS.md
 SYSML_IMPORT_DISCLAIMER = (
-    "// ReqValLive UPDATE — arquivo/diff.\n"
+    "// Criterion Evaluator UPDATE — arquivo/diff.\n"
     "// ATENÇÃO (docs CATIA Magic): File > Import From > SysML v2 Textual Notation\n"
     "// importa para um NAMESPACE RAIZ SEPARADO — NÃO edita o modelo já aberto.\n"
     "// Para atualizar o projeto aberto: use verification_sync.csv + Excel/CSV Sync\n"

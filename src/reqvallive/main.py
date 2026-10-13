@@ -17,8 +17,8 @@ STATIC_DIR = PACKAGE_DIR / "static"
 TEMPLATES_DIR = PACKAGE_DIR / "templates"
 
 app = FastAPI(
-    title="ReqValLive",
-    description="Validação de requisitos em tempo real via MQTT + SysML V2",
+    title="Criterion Evaluator",
+    description="Live success-criteria measurement over MQTT, with the result written back to the model",
     version="0.1.0",
 )
 app.include_router(router)

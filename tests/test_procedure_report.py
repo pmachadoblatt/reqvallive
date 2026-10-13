@@ -37,26 +37,25 @@ def test_procedure_report_has_required_sections():
     client.post(f"/api/sessions/{sid}/stop")
 
     html = build_html_report(session)
-    assert "Relatório de procedimento" in html
+    assert "Criterion Evaluator procedure report" in html
     assert 'id="procedimento-vv"' in html
-    assert "1. Procedimento de V&amp;V" in html or "1. Procedimento de V&V" in html
+    assert "1. V&amp;V procedure" in html or "1. V&V procedure" in html
     assert 'id="condicoes-medicao"' in html
-    assert "2. Condições de medição" in html
+    assert "2. Measurement conditions" in html
     assert "MQTT" in html
     assert "lab/test" in html
     assert 'id="snapshot-sc"' in html
-    assert "3. Success Criteria aprovado (snapshot)" in html
+    assert "3. Approved success criteria (snapshot)" in html
     assert 'id="resultados"' in html
-    assert "4. Resultados" in html
-    assert "esperado" in html.lower()
+    assert "4. Results" in html
+    assert "expected" in html.lower()
     assert 'id="amostras"' in html
     assert "vv_method" in html or ">test<" in html
     assert "ACCEPT" in html
-    assert "FAIL" in html  # bateria 15% violou
+    assert "FAIL" in html  # battery at 15 percent broke the criterion
 
-    # Endpoint HTTP também devolve o HTML novo
     report = client.get(f"/api/sessions/{sid}/report")
     assert report.status_code == 200
     body = report.text
-    assert "Condições de medição" in body
-    assert "Procedimento de V" in body
+    assert "Measurement conditions" in body
+    assert "V&amp;V procedure" in body or "V&V procedure" in body

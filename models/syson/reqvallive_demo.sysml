@@ -1,16 +1,16 @@
-package ReqValLiveDemo {
-    // Contrato: docs/SYSON_CONTRATO_DOC.md
-    // Documentation = só _go_to_verification
-    // Success Criteria = item SuccessCriteria no modelo
-    // Após medição: ReqValLive cria VerificationResult_PASS_* / VerificationResult_FAIL_*
+package CriterionEvaluator {
+    // Documentation holds only _go_to_verification.
+    // Each success criterion is an item SuccessCriteria under the requirement.
+    // After the measurement, Criterion Evaluator writes VerificationResult_PASS_* or VerificationResult_FAIL_*.
     //
-    // Cenário demo com publish_three_drones.py --mode both (altitude_span=2.5):
-    //   RQ_BAT_001     threshold battery  → tipicamente FAIL (charlie < 20%)
-    //   RQ_ALT_BAND_001 range altitudeAGL → tipicamente PASS (banda 20–30 m)
-    //   RQ_ALT_VAR_001 statistical range  → tipicamente FAIL (span ~2.5 > 1.0)
-    //   RQ_SEP_001     threshold separação → tipicamente PASS (órbita ~60 m)
-    //   RQ_BAT_RATE_001 rate |d(battery)/dt| ≤ 30 %/min → tipicamente FAIL (~60 %/min no publisher 1 Hz)
-    //   RQ_BAT_DWELL_001 dwell battery < 20 por ≤ 2 s → tipicamente FAIL (charlie começa a 15%)
+    // Desk publisher: python scripts/publish_three_drones.py --mode both --altitude-span 2.5
+    //   RQ_BAT_001      batteryLevel >= 20 percent          typically FAIL, then latched
+    //   RQ_ALT_BAND_001 altitudeAGL between 20 m and 30 m   typically PASS
+    //   RQ_ALT_VAR_001  altitude swing <= 1 m               typically FAIL (span 2.5 m)
+    //   RQ_SEP_001      smallest separation >= 20 m         typically PASS
+    //   RQ_BAT_RATE_001 |d(battery)/dt| <= 30 percent/min   typically FAIL
+    //   RQ_BAT_DWELL_001 below 20 percent for at most 2 s   typically FAIL
+    // RQ_01 repeats the battery criterion. Delete it in SysON before the dissertation screenshots.
 
     requirement RQ_BAT_001 {
         doc /*

@@ -162,11 +162,11 @@ def build_verification_result_fields(
     if not evidence:
         bits = []
         if failed_at:
-            bits.append(f"falhou em {failed_at}")
+            bits.append(f"failed at {failed_at}")
         if extreme_value is not None and extreme_kind:
             bits.append(f"{extreme_kind}={extreme_value:g}{(' ' + unit) if unit else ''}")
         if expected:
-            bits.append(f"esperado {expected}")
+            bits.append(f"expected {expected}")
         evidence = "; ".join(bits) if bits else reason
 
     return {

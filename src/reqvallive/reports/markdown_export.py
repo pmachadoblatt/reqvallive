@@ -13,7 +13,7 @@ def build_model_markdown(
     notes: str = "",
 ) -> str:
     lines = [
-        "# Modelo ReqValLive",
+        "# Criterion Evaluator model",
         "",
         f"**Tópico MQTT:** `{mqtt_topic}`",
         "",

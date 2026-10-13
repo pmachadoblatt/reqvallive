@@ -300,7 +300,7 @@ def constraint_text(req: RequirementRecord) -> str:
     if isinstance(sc, DwellCriteria):
         op = sc.operator if isinstance(sc.operator, Operator) else Operator(sc.operator)
         return (
-            f"metricValue {op.value} {sc.value} por no máximo "
+            f"metricValue {op.value} {sc.value} for at most "
             f"{sc.max_duration_ms:g} ms"
         )
     return "true /* critério não suportado no MVP */"

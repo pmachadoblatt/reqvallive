@@ -297,9 +297,9 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
             GateReason(
                 code="SC_CONOPS_MISSING",
                 severity=ReasonSeverity.WARNING,
-                message="Sem ligação clara a CONOPS/especificação (Specifications).",
+                message="No clear link to a CONOPS or specification (Specifications).",
                 dimension=MsfcDimension.SPECIFICATIONS,
-                suggestion="Preencha conops_ref com a secção do CONOPS (ex.: CONOPS-UTM §4.2).",
+                suggestion="Set conops_ref to the CONOPS section (for example CONOPS-UTM §4.2).",
             )
         )
     if not (req.rationale or "").strip():
@@ -307,9 +307,9 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
             GateReason(
                 code="SC_RATIONALE_MISSING",
                 severity=ReasonSeverity.WARNING,
-                message="Rationale ausente — dificulta rastreio ao «porquê» do critério.",
+                message="Rationale is missing, so the reason for the criterion is not traceable.",
                 dimension=MsfcDimension.SPECIFICATIONS,
-                suggestion="Acrescente rationale ligando o requisito à necessidade operacional.",
+                suggestion="Add a rationale that links the requirement to the operational need.",
             )
         )
 
@@ -482,9 +482,9 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
                     GateReason(
                         code="SC_MARGIN_UNDEFINED",
                         severity=ReasonSeverity.WARNING,
-                        message="Requisito de segurança/high com margem/tolerância nula — confirme se é intencional.",
+                        message="Safety or high-priority requirement with no margin beyond the limit. Confirm that this is intended.",
                         dimension=MsfcDimension.MARGINS,
-                        suggestion="Considere margin operacional (RTL, etc.) além do limiar nominal.",
+                        suggestion="Consider an operational margin beyond the nominal limit.",
                     )
                 )
 
@@ -875,10 +875,10 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
             code="SC_ENV_UNDEFINED",
             severity=ReasonSeverity.WARNING,
             message=(
-                "Environment Test Limits pouco especificados (altitude, nº mín. drones, indoor/outdoor…)."
+                "Environment of the test is left unstated (altitude, minimum number of aircraft, indoor or outdoor)."
             ),
             dimension=MsfcDimension.ENVIRONMENT,
-            suggestion="Descreva no MD as condições sob as quais o critério é válido.",
+            suggestion="State the conditions under which the criterion is valid.",
         )
     )
 
@@ -923,9 +923,9 @@ def evaluate_requirement_criteria(req: RequirementRecord) -> CriteriaGateResult:
                 GateReason(
                     code="LIVE_NEEDS_MULTI_DRONE",
                     severity=ReasonSeverity.WARNING,
-                    message="min_separation_m exige ≥2 drones com GPS publicados no tópico.",
+                    message="min_separation_m needs at least two aircraft publishing a position on the topic.",
                     dimension=MsfcDimension.LIVE_EXECUTABLE,
-                    suggestion="Garanta pelo menos duas entidades a publicar location durante a medição.",
+                    suggestion="At least two aircraft must publish a position during the measurement.",
                 )
             )
 

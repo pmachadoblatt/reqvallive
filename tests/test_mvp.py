@@ -107,7 +107,7 @@ def test_session_multi_drone(client: TestClient, battery_req: dict):
 
     md = client.get(f"/api/sessions/{sid}/model.md")
     assert md.status_code == 200
-    assert b"# Modelo ReqValLive" in md.content
+    assert b"# Criterion Evaluator model" in md.content
 
     report = client.get(f"/api/sessions/{sid}/report")
     assert report.status_code == 200

@@ -136,7 +136,7 @@ function renderGatePreview(session, targetId) {
         .join("")}</ul>`;
     }
     if (warns.length) {
-      body += `<div class="gate-warn-label">Avisos (não bloqueiam a medição — critério ainda incompleto face à MSFC)</div>
+      body += `<div class="gate-warn-label">Warnings. They do not block the measurement.</div>
         <ul class="gate-list warnings">${warns
           .map(
             (w) =>
@@ -147,20 +147,20 @@ function renderGatePreview(session, targetId) {
           .join("")}</ul>`;
     }
     if (r.status === "ACCEPT" && !warns.length) {
-      body += `<p class="muted">Critério completo o suficiente para medição live.</p>`;
+      body += `<p class="muted">The criterion is complete enough for a live measurement.</p>`;
     }
     return head + body;
   });
 
   const title = ok
     ? warnN
-      ? `Aprovado com ${warnN} aviso(s) — pode medir, mas o critério pode ser enriquecido`
-      : `Aprovado — pode seguir para MQTT / medição`
-    : `Recusado — medição bloqueada até corrigir`;
+      ? `Accepted with ${warnN} warning(s). Measurement may start.`
+      : `Accepted. Measurement may start.`
+    : `Refused. Measurement stays closed until the criterion is corrected.`;
 
   el.innerHTML =
     `<div class="gate-title">${escapeHtml(g.global_status)} — ${escapeHtml(title)}</div>` +
-    `<div class="muted">${g.accepted_count} ACCEPT · ${g.rejected_count} REJECT · ${warnN} avisos</div>` +
+    `<div class="muted">${g.accepted_count} ACCEPT · ${g.rejected_count} REJECT · ${warnN} warnings</div>` +
     blocks.join("");
 }
 
@@ -386,26 +386,26 @@ function updateMonitor(session) {
     const ov = session.overall_ok;
     if (!session.measuring && !session.measurement_ended) {
       lv.className = "live-verdict muted";
-      lv.textContent = "Aguardando início da medição…";
+      lv.textContent = "Waiting for the measurement to start…";
       if (vp) vp.textContent = "—";
     } else if (ov === true) {
       lv.className = "live-verdict pass";
-      lv.textContent = "PASS — todos os drones cumprem o critério em todas as amostras até agora.";
+      lv.textContent = "PASS — every aircraft meets the criterion on every sample so far.";
       if (vp) { vp.textContent = "PASS"; vp.className = "pill pass-pill"; }
     } else if (ov === false) {
       const fails = (session.findings || []).filter((f) => f.ok === false);
       const bits = fails
         .flatMap((f) => (f.entities || []).filter((e) => e.ok === false))
-        .map((e) => `${e.id}: min=${e.min ?? "—"} 1ª=${e.first_fail ?? "—"} atual=${e.last ?? "—"}`)
+        .map((e) => `${e.id}: min=${e.min ?? "—"} first=${e.first_fail ?? "—"} latest=${e.last ?? "—"}`)
         .join(" · ");
       lv.className = "live-verdict fail";
       lv.textContent =
-        "FAIL — houve violação (latched). Valores atuais continuam a actualizar. " +
+        "FAIL — the first break stands. Later samples still update. " +
         (bits || (session.findings || []).map((f) => f.why).join(" "));
       if (vp) { vp.textContent = "FAIL"; vp.className = "pill fail-pill"; }
     } else {
       lv.className = "live-verdict muted";
-      lv.textContent = "A medir… a aguardar amostras suficientes.";
+      lv.textContent = "Measuring… waiting for enough samples.";
       if (vp) { vp.textContent = "…"; vp.className = "pill"; }
     }
   }
@@ -525,9 +525,9 @@ function updateChart(session) {
   const limiar = thr?.type === "threshold" ? thr.value : thr?.type === "range" ? thr.min_value : null;
   const thrLabel =
     thr?.type === "threshold"
-      ? `limiar ${thr.operator} ${thr.value}`
+      ? `limit ${thr.operator} ${thr.value}`
       : thr?.type === "range"
-        ? `faixa [${thr.min_value}, ${thr.max_value}]`
+        ? `band [${thr.min_value}, ${thr.max_value}]`
         : "";
 
   let labels;
@@ -538,7 +538,7 @@ function updateChart(session) {
   const primaryId = (session.requirements || [])[0]?.req_id;
 
   if (/separation|min_separation/i.test(metric)) {
-    labels = ["atual", "1ª violação"];
+    labels = ["latest", "first violation"];
     const gReq = (session.requirements || []).find((r) => /separation/i.test(r.metric || ""));
     values = [
       session.global_metrics?.min_separation_m ?? null,
@@ -559,14 +559,14 @@ function updateChart(session) {
 
   const datasets = [
     {
-      label: `${metric} atual${thrLabel ? ` · ${thrLabel}` : ""}`,
+      label: `${metric} latest${thrLabel ? ` · ${thrLabel}` : ""}`,
       data: values,
       backgroundColor: colors,
     },
   ];
   if (mins) {
     datasets.push({
-      label: "mínimo na medição",
+      label: "minimum during the measurement",
       data: mins,
       backgroundColor: "rgba(185, 28, 28, 0.35)",
     });

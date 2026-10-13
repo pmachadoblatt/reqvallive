@@ -278,7 +278,7 @@ def example_syson_demo() -> PlainTextResponse:
         path.read_text(encoding="utf-8"),
         media_type="text/plain; charset=utf-8",
         headers={
-            "Content-Disposition": 'attachment; filename="reqvallive_demo.sysml"'
+            "Content-Disposition": 'attachment; filename="criterion-evaluator-demo.sysml"'
         },
     )
 

@@ -326,7 +326,7 @@ def main() -> None:
         f"Publicando 3 drones -> {topics}\n"
         f"Broker {args.broker}:{args.port} · mode={args.mode} · "
         f"altitude_span={args.altitude_span} m · intervalo={args.interval}s\n"
-        "Na UI do ReqValLive use o MESMO broker/tópico (wildcard # no subscriber).\n"
+        "Na UI do Criterion Evaluator use o MESMO broker/tópico (wildcard # no subscriber).\n"
         "Ctrl+C para parar\n",
         flush=True,
     )

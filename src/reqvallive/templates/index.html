@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ReqValLive — Validador de requisitos</title>
+  <title>Criterion Evaluator</title>
   <link rel="stylesheet" href="/static/styles.css?v=13" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script type="module">
@@ -26,12 +26,12 @@
 </head>
 <body>
   <header class="top">
-    <p class="brand">ReqValLive</p>
-    <h1>Validador de requisitos durante a missão</h1>
+    <p class="brand">Criterion Evaluator</p>
+    <h1>Success criteria on live measurements</h1>
     <p class="lede">
-      Importa requisitos do SysON: Documentation = marcador
-      <code>_go_to_verification</code>; Success Criteria = elementos no modelo.
-      O app interpreta o que vem do SysON, valida (OK/NOK) e mede via MQTT.
+      Reads requirements from SysON. Documentation holds the marker
+      <code>_go_to_verification</code>. Success criteria are elements in the model.
+      The program checks each criterion, then measures it over MQTT.
     </p>
   </header>
 
@@ -64,7 +64,7 @@
             <select id="syson-project"></select>
           </label>
           <button type="button" id="btn-syson-import" class="primary">Importar do SysON</button>
-          <a class="button" href="/api/examples/syson-demo" download="reqvallive_demo.sysml">Baixar demo .sysml</a>
+          <a class="button" href="/api/examples/syson-demo" download="criterion-evaluator-demo.sysml">Baixar demo .sysml</a>
           <button type="button" id="btn-open-sc-help">Como deve ser o critério?</button>
         </div>
         <pre id="syson-probe-out" class="out muted small-out hidden"></pre>
@@ -121,11 +121,11 @@
     </section>
 
     <section id="panel-2" class="panel">
-      <h2>2. Validação OK/NOK e GSE</h2>
+      <h2>2. Approval of the criteria</h2>
       <div id="gate-panel-2" class="gate-preview muted hidden"></div>
       <p class="muted small">
-        Se o gate estiver <strong>ACCEPT (OK)</strong>, monte o GSE (config de medição) e avance para o MQTT.
-        Se estiver <strong>REJECT (NOK)</strong>, corrija o SC no CATIA/export e valide de novo.
+        When the gate is <strong>ACCEPT</strong>, prepare the ground side and continue to MQTT.
+        When it is <strong>REJECT</strong>, correct the criterion and check it again.
       </p>
       <div class="row">
         <a id="btn-dl-validation" class="button" href="#" download="validation_status.json">Baixar validation_status.json</a>
@@ -172,7 +172,7 @@
     </section>
 
     <section id="panel-4" class="panel">
-      <h2>Medição ao vivo</h2>
+      <h2>Live measurement</h2>
       <div class="row">
         <span id="mqtt-status-pill" class="pill">—</span>
         <span id="verdict-pill" class="pill">—</span>
@@ -195,11 +195,11 @@
         (não o .sysml). Ver <code>docs/CATIA_UPDATE_FORMATOS.md</code>.
       </p>
       <pre id="catia-update-preview" class="out muted small-out hidden"></pre>
-      <div id="live-verdict" class="live-verdict muted">Aguardando início da medição…</div>
+      <div id="live-verdict" class="live-verdict muted">Waiting for the measurement to start…</div>
       <div class="grid-2">
         <div>
           <h3>Evidência por drone</h3>
-          <p class="muted small">Atual continua a actualizar; FAIL fica latched se houve violação.</p>
+          <p class="muted small">The latest value keeps updating. A FAIL stays latched after the first break.</p>
           <div class="live-stats" id="drone-stats"></div>
           <details class="advanced">
             <summary>Diagrama SysML ao vivo</summary>
@@ -244,6 +244,6 @@
   </div>
 
   <script src="/static/diagram.js?v=9"></script>
-  <script src="/static/app.js?v=14"></script>
+  <script src="/static/app.js?v=15"></script>
 </body>
 </html>
